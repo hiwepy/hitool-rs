@@ -1163,6 +1163,9 @@ name = "hitool-dfa"
 version = "0.1.0"
 dependencies = [
  "aho-corasick",
+ "parking_lot",
+ "serde",
+ "serde_json",
  "thiserror",
 ]
 
