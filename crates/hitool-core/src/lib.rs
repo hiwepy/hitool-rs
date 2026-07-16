@@ -9,6 +9,7 @@
 mod advanced_codec;
 mod codec;
 mod collection;
+mod collection_iter;
 mod collection_partition;
 mod collection_types;
 mod date;
@@ -31,6 +32,10 @@ pub use codec::{
     percent_decode, percent_encode_component,
 };
 pub use collection::{distinct, group_by, partition};
+pub use collection_iter::{
+    ArrayIter, CopiedIter, EnumerationIter, FilterIter, IterChain, IterableIter,
+    IteratorEnumeration, ResettableIter, TransIter,
+};
 pub use collection_partition::{
     AvgPartition, Partition, PartitionIter, RandomAccessAvgPartition, RandomAccessPartition,
 };

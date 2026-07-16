@@ -12,6 +12,42 @@ INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
 FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
 FAMILIES = {
+    "ArrayIter": (
+        "hitool_core::ArrayIter",
+        "array_iter_normalizes_bounds_and_resets",
+    ),
+    "CopiedIter": (
+        "hitool_core::CopiedIter",
+        "copied_iter_is_an_owned_read_only_snapshot",
+    ),
+    "FilterIter": (
+        "hitool_core::FilterIter",
+        "filter_iter_supports_lookahead_and_optional_filtering",
+    ),
+    "TransIter": (
+        "hitool_core::TransIter",
+        "trans_iter_maps_lazily_with_lookahead",
+    ),
+    "IterChain": (
+        "hitool_core::IterChain",
+        "iter_chain_skips_empty_sources_and_accepts_late_additions",
+    ),
+    "IterableIter": (
+        "hitool_core::IterableIter",
+        "rust_iterators_cover_iterable_and_enumeration_adapters",
+    ),
+    "ResettableIter": (
+        "hitool_core::ResettableIter",
+        "array_iter_normalizes_bounds_and_resets",
+    ),
+    "EnumerationIter": (
+        "hitool_core::EnumerationIter",
+        "rust_iterators_cover_iterable_and_enumeration_adapters",
+    ),
+    "IteratorEnumeration": (
+        "hitool_core::IteratorEnumeration",
+        "rust_iterators_cover_iterable_and_enumeration_adapters",
+    ),
     "Partition": (
         "hitool_core::Partition",
         "partition_exposes_borrowed_random_access_chunks",
@@ -79,8 +115,8 @@ def main() -> None:
             "notes": "Java collection inheritance is consolidated into an owned Rust API with matching behavioral invariants.",
         }
 
-    if selected != 58:
-        raise SystemExit(f"expected 58 reviewed collection APIs, selected {selected}")
+    if selected != 105:
+        raise SystemExit(f"expected 105 reviewed collection APIs, selected {selected}")
 
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)
