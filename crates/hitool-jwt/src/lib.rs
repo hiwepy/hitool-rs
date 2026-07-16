@@ -117,4 +117,26 @@ mod tests {
                 .is_err()
         );
     }
+
+    #[test]
+    fn rejects_malformed_standard_claim_types() {
+        let secret = b"a sufficiently long test secret";
+        let malformed = serde_json::json!({
+            "sub": "user-1",
+            "nbf": "99999999999",
+            "exp": 4_102_444_800_u64,
+        });
+        let token = encode(
+            &Header::new(Algorithm::HS256),
+            &malformed,
+            &EncodingKey::from_secret(secret),
+        )
+        .unwrap();
+        let mut validation = Validation::new(Algorithm::HS256);
+        validation.validate_nbf = true;
+
+        let decoded =
+            decode::<serde_json::Value>(&token, &DecodingKey::from_secret(secret), &validation);
+        assert!(decoded.is_err());
+    }
 }
