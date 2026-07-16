@@ -25,6 +25,7 @@ mod id;
 mod iter_util;
 mod list_util;
 mod radix_codec;
+mod stream;
 mod string;
 
 pub use advanced_codec::{
@@ -85,6 +86,7 @@ pub use radix_codec::{
     base62_decode_to_file, base62_decode_to_writer, base62_encode_file, base62_encode_reader,
     base62_encode_text, bcd_encode_ascii_prefix,
 };
+pub use stream::{CollectorCharacteristic, CollectorUtil, SimpleCollector, StreamUtil};
 pub use string::{
     StrExt, format_template, is_blank, lower_first, remove_all, remove_chars, split, upper_first,
 };

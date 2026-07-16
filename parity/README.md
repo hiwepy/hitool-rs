@@ -17,6 +17,7 @@ Regenerate and verify with:
 ./scripts/record-getter-parity.py
 ./scripts/record-clone-parity.py
 ./scripts/record-compiler-parity.py
+./scripts/record-stream-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```
