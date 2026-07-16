@@ -26,6 +26,7 @@ config = { version = "0.15.25", default-features = false, features = ["json", "t
 cron = "0.15.0"
 csv = "1.4.0"
 data-encoding = "2.11.0"
+encoding_rs = "0.8.35"
 hex = "0.4.3"
 hmac = "0.12.1"
 idna = "1.1.0"

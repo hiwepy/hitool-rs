@@ -11,7 +11,9 @@ mod codec;
 mod collection;
 mod date;
 mod error;
+mod hutool_codec;
 mod id;
+mod radix_codec;
 mod string;
 
 pub use advanced_codec::{
@@ -29,7 +31,20 @@ pub use codec::{
 pub use collection::{distinct, group_by, partition};
 pub use date::DateUtil;
 pub use error::{CoreError, Result};
+pub use hutool_codec::{
+    Base16Codec, Decoder, Encoder, PercentCodec, base64_decode_range_tolerant, base64_decode_text,
+    base64_decode_to_file, base64_decode_to_writer, base64_decode_tolerant, base64_encode_config,
+    base64_encode_file, base64_encode_reader, base64_encode_text, base64_encode_without_padding,
+    encoding_for_label, is_base64, is_base64_code,
+};
 pub use id::IdUtil;
+pub use radix_codec::{
+    Base32Decoder, Base32Encoder, Base58Decoder, Base58Encoder, Base62Decoder, Base62Encoder,
+    base32_decode_text, base32_decode_to_file, base32_decode_to_writer, base32_encode_file,
+    base32_encode_reader, base32_encode_text, base62_decode_text, base62_decode_text_gbk,
+    base62_decode_to_file, base62_decode_to_writer, base62_encode_file, base62_encode_reader,
+    base62_encode_text, bcd_encode_ascii_prefix,
+};
 pub use string::{
     StrExt, format_template, is_blank, lower_first, remove_all, remove_chars, split, upper_first,
 };

@@ -15,78 +15,84 @@ FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
 
 def family(row: dict[str, str]) -> str | None:
     name = row["qualified_name"]
-    signature = row["signature"]
+
+    if name == f"{ROOT}Base16Codec" or name.startswith(f"{ROOT}Base16Codec::"):
+        return "base16"
+
+    for base64_type in ("Base64", "Base64Decoder", "Base64Encoder"):
+        prefix = f"{ROOT}{base64_type}"
+        if name == prefix or name.startswith(f"{prefix}::"):
+            return "base64"
+
+    if name == f"{ROOT}PercentCodec" or name.startswith(f"{ROOT}PercentCodec::"):
+        return "percent"
+
+    if name in {f"{ROOT}Encoder", f"{ROOT}Decoder"}:
+        return "traits"
 
     for complete in ("Rot", "Caesar", "Morse", "PunyCode", "Hashids"):
         prefix = f"{ROOT}{complete}"
         if name == prefix or name.startswith(f"{prefix}::"):
             return complete.lower()
 
-    if name == f"{ROOT}BCD" or (
-        name.startswith(f"{ROOT}BCD::") and "ascLength" not in signature
-    ):
+    if name == f"{ROOT}BCD" or name.startswith(f"{ROOT}BCD::"):
         return "bcd"
 
-    if name == f"{ROOT}Base32" or (
-        name.startswith(f"{ROOT}Base32::") and "Charset" not in signature
-    ):
+    if name == f"{ROOT}Base32" or name.startswith(f"{ROOT}Base32::"):
         return "base32"
-    if name == f"{ROOT}Base32Codec" or name in {
-        f"{ROOT}Base32Codec::encode",
-        f"{ROOT}Base32Codec::decode",
-    }:
+    if name == f"{ROOT}Base32Codec" or name.startswith(f"{ROOT}Base32Codec::"):
         return "base32"
 
     if name == f"{ROOT}Base58" or name.startswith(f"{ROOT}Base58::"):
         return "base58"
-    if name == f"{ROOT}Base58Codec" or name in {
-        f"{ROOT}Base58Codec::encode",
-        f"{ROOT}Base58Codec::decode",
-    }:
+    if name == f"{ROOT}Base58Codec" or name.startswith(f"{ROOT}Base58Codec::"):
         return "base58"
 
-    excluded_base62 = ("Charset", "InputStream", "File", "OutputStream")
-    if name == f"{ROOT}Base62" or (
-        name.startswith(f"{ROOT}Base62::")
-        and name != f"{ROOT}Base62::decodeStrGbk"
-        and not any(excluded in signature for excluded in excluded_base62)
-    ):
+    if name == f"{ROOT}Base62" or name.startswith(f"{ROOT}Base62::"):
         return "base62"
-    if name == f"{ROOT}Base62Codec" or name in {
-        f"{ROOT}Base62Codec::encode",
-        f"{ROOT}Base62Codec::decode",
-    }:
+    if name == f"{ROOT}Base62Codec" or name.startswith(f"{ROOT}Base62Codec::"):
         return "base62"
     return None
 
 
 def rust_symbol(codec_family: str) -> str:
     return {
-        "base32": "hitool_core::{base32_encode,base32_decode,base32_hex_encode,base32_hex_decode}",
-        "base58": "hitool_core::{base58_encode,base58_decode,base58_encode_checked,base58_decode_checked}",
-        "base62": "hitool_core::{base62_encode,base62_decode,base62_inverted_encode,base62_inverted_decode}",
+        "base16": "hitool_core::Base16Codec",
+        "base32": "hitool_core::{Base32Encoder,Base32Decoder,base32_encode_text,base32_decode_text,base32_encode_file,base32_decode_to_file}",
+        "base58": "hitool_core::{Base58Encoder,Base58Decoder,base58_encode_checked,base58_decode_checked}",
+        "base62": "hitool_core::{Base62Encoder,Base62Decoder,base62_encode_text,base62_decode_text,base62_encode_file,base62_decode_to_file}",
         "rot": "hitool_core::{rot_encode,rot_decode}",
         "caesar": "hitool_core::{caesar_encode,caesar_decode}",
-        "bcd": "hitool_core::{bcd_encode,bcd_decode}",
+        "bcd": "hitool_core::{bcd_encode,bcd_decode,bcd_encode_ascii_prefix}",
         "morse": "hitool_core::MorseCodec",
         "punycode": "hitool_core::{punycode_encode_prefixed,punycode_decode,idna_encode_domain,idna_decode_domain}",
         "hashids": "hitool_core::HashIds",
+        "base64": "hitool_core::{base64_encode_config,base64_decode_tolerant,base64_encode_text,base64_decode_text}",
+        "percent": "hitool_core::PercentCodec",
+        "traits": "hitool_core::{Encoder,Decoder}",
     }[codec_family]
 
 
 def evidence(codec_family: str) -> str:
     test = {
-        "base32": "base32_standard_and_hex_match_rfc_vectors",
-        "base58": "base58_and_check_preserve_leading_zeroes",
-        "base62": "base62_both_alphabets_round_trip_binary",
+        "base16": "base16_matches_hutool_whitespace_odd_length_and_unicode_rules",
+        "base32": "custom_radix_alphabets_round_trip_and_validate",
+        "base58": "custom_radix_alphabets_round_trip_and_validate",
+        "base62": "text_stream_file_and_bcd_overloads_are_bounded_and_reversible",
         "rot": "classical_codecs_are_reversible",
         "caesar": "classical_codecs_are_reversible",
-        "bcd": "classical_codecs_are_reversible",
+        "bcd": "text_stream_file_and_bcd_overloads_are_bounded_and_reversible",
         "morse": "morse_handles_dictionary_custom_markers_and_unicode_fallback",
         "punycode": "punycode_and_idna_round_trip",
         "hashids": "hashids_support_numbers_hex_and_custom_alphabet",
+        "base64": "base64_supports_hutool_variants_and_tolerant_decoding",
+        "percent": "configurable_percent_codec_matches_hutool_safe_sets_and_plus_mode",
+        "traits": "base16_matches_hutool_whitespace_odd_length_and_unicode_rules",
     }[codec_family]
-    return f"crates/hitool-core/src/advanced_codec.rs::{test}"
+    source = "radix_codec.rs" if codec_family in {"base32", "base58", "base62", "bcd"} else "advanced_codec.rs"
+    if codec_family in {"base16", "base64", "percent", "traits"}:
+        source = "hutool_codec.rs"
+    return f"crates/hitool-core/src/{source}::{test}"
 
 
 def main() -> None:
@@ -110,8 +116,8 @@ def main() -> None:
             "notes": "Hutool overloads are consolidated into typed Rust APIs; official Hutool vectors are asserted.",
         }
 
-    if selected != 73:
-        raise SystemExit(f"expected 73 reviewed codec APIs, selected {selected}")
+    if selected != 175:
+        raise SystemExit(f"expected 175 reviewed codec APIs, selected {selected}")
 
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)

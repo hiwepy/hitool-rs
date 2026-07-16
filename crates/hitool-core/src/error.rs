@@ -23,6 +23,10 @@ pub enum CoreError {
     #[error("codec error: {0}")]
     Codec(String),
 
+    /// A codec-backed reader, writer, or file operation failed.
+    #[error("I/O error: {0}")]
+    Io(#[from] std::io::Error),
+
     /// A date or date-time string did not match the requested format.
     #[error("invalid date or date-time: {0}")]
     DateParse(#[from] chrono::ParseError),

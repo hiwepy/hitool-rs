@@ -974,11 +974,13 @@ dependencies = [
  "base64",
  "chrono",
  "data-encoding",
+ "encoding_rs",
  "hex",
  "idna",
  "percent-encoding",
  "proptest",
  "sha2",
+ "tempfile",
  "thiserror",
  "uuid",
 ]

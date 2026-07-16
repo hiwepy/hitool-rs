@@ -598,7 +598,7 @@ fn base62_encode_with_alphabet(input: &[u8], alphabet: &[u8]) -> String {
     translate_digits(&convert_base(input, 256, 62), alphabet)
 }
 
-fn decode_radix(input: &str, alphabet: &[u8], radix: u32) -> Result<Vec<u8>> {
+pub(crate) fn decode_radix(input: &str, alphabet: &[u8], radix: u32) -> Result<Vec<u8>> {
     let digits = input
         .bytes()
         .enumerate()
@@ -613,7 +613,7 @@ fn decode_radix(input: &str, alphabet: &[u8], radix: u32) -> Result<Vec<u8>> {
     Ok(convert_base(&digits, radix, 256))
 }
 
-fn convert_base(message: &[u8], source_base: u32, target_base: u32) -> Vec<u8> {
+pub(crate) fn convert_base(message: &[u8], source_base: u32, target_base: u32) -> Vec<u8> {
     if message.is_empty() {
         return Vec::new();
     }
@@ -644,7 +644,7 @@ fn convert_base(message: &[u8], source_base: u32, target_base: u32) -> Vec<u8> {
     reversed
 }
 
-fn translate_digits(digits: &[u8], alphabet: &[u8]) -> String {
+pub(crate) fn translate_digits(digits: &[u8], alphabet: &[u8]) -> String {
     digits
         .iter()
         .map(|digit| char::from(alphabet[usize::from(*digit)]))
