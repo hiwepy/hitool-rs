@@ -12,6 +12,26 @@ INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
 FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
 FAMILIES = {
+    "Partition": (
+        "hitool_core::Partition",
+        "partition_exposes_borrowed_random_access_chunks",
+    ),
+    "RandomAccessPartition": (
+        "hitool_core::RandomAccessPartition",
+        "partition_exposes_borrowed_random_access_chunks",
+    ),
+    "AvgPartition": (
+        "hitool_core::AvgPartition",
+        "average_partition_distributes_remainder_and_empty_tails",
+    ),
+    "RandomAccessAvgPartition": (
+        "hitool_core::RandomAccessAvgPartition",
+        "average_partition_distributes_remainder_and_empty_tails",
+    ),
+    "PartitionIter": (
+        "hitool_core::PartitionIter",
+        "partition_iter_preserves_order_tail_and_lookahead",
+    ),
     "RingIndexUtil": (
         "hitool_core::{ring_next_index,ring_next_u64,ring_next_for_len}",
         "ring_indices_match_hutool_progression_and_validate_bounds",
@@ -59,8 +79,8 @@ def main() -> None:
             "notes": "Java collection inheritance is consolidated into an owned Rust API with matching behavioral invariants.",
         }
 
-    if selected != 41:
-        raise SystemExit(f"expected 41 reviewed collection APIs, selected {selected}")
+    if selected != 58:
+        raise SystemExit(f"expected 58 reviewed collection APIs, selected {selected}")
 
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)
