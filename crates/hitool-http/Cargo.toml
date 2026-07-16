@@ -1,0 +1,27 @@
+[package]
+name = "hitool-http"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+description = "Secure, bounded HTTP client utilities for HiTool."
+
+[lints]
+workspace = true
+
+[features]
+default = []
+blocking = ["reqwest/blocking"]
+
+[dependencies]
+rand.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+url.workspace = true

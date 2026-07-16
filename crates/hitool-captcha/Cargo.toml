@@ -1,0 +1,25 @@
+[package]
+name = "hitool-captcha"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+description = "Captcha generation and verification utilities for HiTool."
+
+[lints]
+workspace = true
+
+[features]
+default = []
+raster = ["dep:font8x8", "dep:image"]
+audio = []
+
+[dependencies]
+font8x8 = { workspace = true, optional = true }
+image = { workspace = true, optional = true }
+rand.workspace = true
+thiserror.workspace = true

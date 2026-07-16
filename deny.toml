@@ -1,0 +1,28 @@
+[advisories]
+yanked = "deny"
+ignore = [
+    { id = "RUSTSEC-2023-0071", reason = "Only reachable through the explicit SQLx MySQL feature; HiTool performs no RSA private-key operation and the feature is excluded from full/default. Remove once upstream has a fix." },
+]
+
+[licenses]
+confidence-threshold = 0.9
+allow = [
+    "0BSD",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "CC0-1.0",
+    "CDLA-Permissive-2.0",
+    "ISC",
+    "MIT",
+    "MPL-2.0",
+    "Unicode-3.0",
+    "Zlib",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

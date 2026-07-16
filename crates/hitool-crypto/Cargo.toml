@@ -1,0 +1,28 @@
+[package]
+name = "hitool-crypto"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+description = "High-level, secure-by-default cryptographic utilities for HiTool."
+
+[lints]
+workspace = true
+
+[features]
+default = []
+legacy = []
+
+[dependencies]
+aes-gcm.workspace = true
+argon2.workspace = true
+hex.workspace = true
+hmac.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+secrecy.workspace = true
+zeroize.workspace = true

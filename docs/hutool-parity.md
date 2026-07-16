@@ -1,0 +1,37 @@
+# Hutool parity ledger
+
+HiTool aligns with Hutool's capability model, not Java's reflection/runtime
+model. Status values are `native`, `idiomatic`, `compatible`,
+`unsafe-to-copy`, and `planned`.
+
+| Hutool module | HiTool crate | Status | Current mapping |
+|---|---|---|---|
+| `hutool-all` | `hitool` | idiomatic | Cargo feature-gated facade |
+| `hutool-bom` | workspace | native | lockstep versions and workspace dependencies |
+| `hutool-core` | `hitool-core` | idiomatic | strings, collections, codecs, dates, IDs |
+| `hutool-json` | `hitool-json` | idiomatic | Serde typed and dynamic JSON |
+| `hutool-http` | `hitool-http` | idiomatic | Reqwest/Rustls client with limits, URL policy, streaming and explicit idempotent retry |
+| `hutool-crypto` | `hitool-crypto` | idiomatic | RustCrypto AEAD/HMAC/SHA-256/Argon2id |
+| `hutool-jwt` | `hitool-jwt` | idiomatic | algorithm-pinned, scoped JWT validation |
+| `hutool-cache` | `hitool-cache` | idiomatic | bounded concurrent Moka cache |
+| `hutool-bloomFilter` | `hitool-bloom-filter` | idiomatic | typed probabilistic membership |
+| `hutool-dfa` | `hitool-dfa` | idiomatic | Aho-Corasick leftmost-longest matching |
+| `hutool-setting` | `hitool-setting` | idiomatic | layered files and environment |
+| `hutool-cron` | `hitool-cron` | idiomatic | cron occurrences and externally hosted Tokio jobs with cancellation, timeout, tracing, non-overlap and bounded retries |
+| `hutool-log` | `hitool-log` | idiomatic | tracing subscriber and redaction wrapper |
+| `hutool-system` | `hitool-system` | idiomatic | portable point-in-time host snapshot |
+| `hutool-aop` | `hitool-aop` | idiomatic | explicit interceptor chain instead of runtime proxying |
+| `hutool-script` | `hitool-script` | idiomatic | bounded Rhai engine; no JSR-223 globals |
+| `hutool-socket` | `hitool-socket` | idiomatic | Tokio TCP/UDP and bounded frames |
+| `hutool-extra` | `hitool-extra` | idiomatic | QR SVG, safe ZIP, bounded image transforms, injectable Rustls SMTP/MIME mail |
+| `hutool-poi` | `hitool-poi` | idiomatic | bounded XLSX read/write, CSV read/write, and minimal Word 2007+ DOCX generation |
+| `hutool-captcha` | `hitool-captcha` | idiomatic | generator/challenge verification, randomized SVG/PNG, and injectable speech-to-WAV audio rendering |
+| `hutool-db` | `hitool-db` | idiomatic | SQLx pools, explicit transactions and pagination, not a custom ORM; PostgreSQL/MySQL/SQLite integration-tested |
+| `hutool-ai` | `hitool-ai` | idiomatic | provider-neutral chat plus bounded OpenAI-compatible JSON and SSE clients |
+| `StrUtil`/`JSONUtil` | `hitool-compat-hutool` | compatible | focused migration facade |
+| Bean reflection copy | none | unsafe-to-copy | use Serde, `From`/`TryFrom`, or derive macros |
+| global HTTP/config/DB singletons | none | unsafe-to-copy | clients and pools are explicitly injected |
+
+The ledger records capability direction, not a claim of method-for-method API
+completion. New compatibility APIs must delegate to the idiomatic crate and
+must not introduce a second implementation.

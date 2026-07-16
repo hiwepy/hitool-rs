@@ -1,0 +1,20 @@
+# Hutool parity evidence
+
+The source baseline is Hutool `v5.8.46`, commit
+`a0bd223dc0d036f55cfe4d8e2f5737ddc31f2b12`.
+
+`hutool-v5.8.46-api.csv` is a generated inventory of public production types
+and methods. Each record needs one row in `decisions.csv` before parity can be
+claimed. A decision counts only when it names an implemented/native/idiomatic
+HiTool symbol and concrete test evidence.
+
+Regenerate and verify with:
+
+```shell
+./scripts/generate-hutool-inventory.sh ../hutool
+./scripts/verify-parity.py
+./scripts/verify-parity.py --require-complete
+```
+
+The strict command intentionally fails while any API is unaccounted for.
+

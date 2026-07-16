@@ -1,0 +1,372 @@
+//! CAPTCHA code generation and verification primitives.
+
+#![forbid(unsafe_code)]
+
+use rand::Rng;
+use std::fmt::Write as _;
+use std::time::{Duration, Instant};
+use thiserror::Error;
+
+#[cfg(feature = "audio")]
+mod audio;
+#[cfg(feature = "raster")]
+mod raster;
+
+#[cfg(feature = "audio")]
+pub use audio::{AudioRenderer, AudioSpec, AudioSynthesizer};
+#[cfg(feature = "raster")]
+pub use raster::PngRenderer;
+
+const DEFAULT_ALPHABET: &[u8] = b"23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+/// A strategy for generating and comparing CAPTCHA codes.
+pub trait CodeGenerator: Send + Sync {
+    /// Generates a new challenge code.
+    fn generate(&self) -> String;
+
+    /// Compares a generated code with user input.
+    fn verify(&self, generated: &str, input: &str) -> bool;
+}
+
+/// Media produced by a CAPTCHA renderer.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RenderedCaptcha {
+    mime_type: &'static str,
+    bytes: Vec<u8>,
+}
+
+impl RenderedCaptcha {
+    #[cfg(any(feature = "audio", feature = "raster"))]
+    fn new(mime_type: &'static str, bytes: Vec<u8>) -> Self {
+        Self { mime_type, bytes }
+    }
+
+    /// Returns the Internet media type of the payload.
+    #[must_use]
+    pub const fn mime_type(&self) -> &'static str {
+        self.mime_type
+    }
+
+    /// Returns the encoded media payload.
+    #[must_use]
+    pub fn bytes(&self) -> &[u8] {
+        &self.bytes
+    }
+
+    /// Consumes the artifact and returns its media payload.
+    #[must_use]
+    pub fn into_bytes(self) -> Vec<u8> {
+        self.bytes
+    }
+}
+
+/// Converts a generated code into a client-facing challenge.
+pub trait CaptchaRenderer: Send + Sync {
+    /// Renders a code.
+    fn render(&self, code: &str) -> Result<RenderedCaptcha, CaptchaError>;
+}
+
+/// Dependency-free SVG renderer with randomized glyph placement and noise.
+///
+/// SVG challenges are convenient for web applications, but callers facing a
+/// high-abuse environment should combine them with rate limits and a stronger
+/// proof-of-human mechanism. The plaintext code must never be logged or sent
+/// separately from the rendered artifact.
+#[derive(Debug, Clone)]
+pub struct SvgRenderer {
+    width: u16,
+    height: u16,
+    noise_lines: u8,
+}
+
+impl SvgRenderer {
+    /// Creates an SVG renderer.
+    pub fn new(width: u16, height: u16) -> Result<Self, CaptchaError> {
+        if width < 80 || height < 30 {
+            return Err(CaptchaError::InvalidDimensions);
+        }
+        Ok(Self {
+            width,
+            height,
+            noise_lines: 6,
+        })
+    }
+
+    /// Sets the number of randomized interference lines.
+    #[must_use]
+    pub const fn with_noise_lines(mut self, noise_lines: u8) -> Self {
+        self.noise_lines = noise_lines;
+        self
+    }
+}
+
+impl Default for SvgRenderer {
+    fn default() -> Self {
+        Self {
+            width: 160,
+            height: 54,
+            noise_lines: 6,
+        }
+    }
+}
+
+impl CaptchaRenderer for SvgRenderer {
+    fn render(&self, code: &str) -> Result<RenderedCaptcha, CaptchaError> {
+        if code.is_empty() || code.chars().count() > 32 {
+            return Err(CaptchaError::InvalidRenderCode);
+        }
+
+        let mut rng = rand::rng();
+        let mut svg = format!(
+            r##"<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}" viewBox="0 0 {} {}" role="img" aria-label="CAPTCHA"><rect width="100%" height="100%" rx="6" fill="#f4f6f8"/>"##,
+            self.width, self.height, self.width, self.height
+        );
+        for _ in 0..self.noise_lines {
+            let (x1, x2) = (
+                rng.random_range(0..self.width),
+                rng.random_range(0..self.width),
+            );
+            let (y1, y2) = (
+                rng.random_range(0..self.height),
+                rng.random_range(0..self.height),
+            );
+            let hue = rng.random_range(0..360);
+            write!(
+                svg,
+                r#"<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="hsl({hue} 55% 45%)" stroke-width="1.5" opacity=".55"/>"#
+            )
+            .expect("writing to a String cannot fail");
+        }
+
+        let glyph_count =
+            u16::try_from(code.chars().count()).map_err(|_| CaptchaError::InvalidRenderCode)?;
+        let glyphs = f32::from(glyph_count);
+        let step = f32::from(self.width) / (glyphs + 1.0);
+        let baseline = f32::from(self.height) * 0.7;
+        let font_size = (f32::from(self.height) * 0.56).clamp(18.0, 42.0);
+        for (index, glyph) in code.chars().enumerate() {
+            let index =
+                u16::try_from(index).expect("render code length is bounded to 32 characters");
+            let x = step * (f32::from(index) + 1.0) + rng.random_range(-2.5..2.5);
+            let y = baseline + rng.random_range(-4.0..4.0);
+            let rotation = rng.random_range(-18..=18);
+            let hue = rng.random_range(0..360);
+            let glyph = escape_xml_char(glyph);
+            write!(
+                svg,
+                r#"<text x="{x:.1}" y="{y:.1}" text-anchor="middle" transform="rotate({rotation} {x:.1} {y:.1})" font-family="ui-monospace,monospace" font-size="{font_size:.1}" font-weight="700" fill="hsl({hue} 65% 28%)">{glyph}</text>"#
+            )
+            .expect("writing to a String cannot fail");
+        }
+        svg.push_str("</svg>");
+        Ok(RenderedCaptcha {
+            mime_type: "image/svg+xml",
+            bytes: svg.into_bytes(),
+        })
+    }
+}
+
+fn escape_xml_char(value: char) -> String {
+    match value {
+        '&' => "&amp;".to_owned(),
+        '<' => "&lt;".to_owned(),
+        '>' => "&gt;".to_owned(),
+        '\"' => "&quot;".to_owned(),
+        '\'' => "&apos;".to_owned(),
+        value => value.to_string(),
+    }
+}
+
+/// Generates unambiguous uppercase ASCII codes.
+#[derive(Debug, Clone)]
+pub struct AlphanumericGenerator {
+    length: usize,
+    alphabet: Vec<u8>,
+}
+
+impl AlphanumericGenerator {
+    /// Creates a generator with an alphabet that excludes ambiguous glyphs.
+    ///
+    /// # Panics
+    ///
+    /// Panics when `length` is zero.
+    #[must_use]
+    pub fn new(length: usize) -> Self {
+        assert!(length > 0, "CAPTCHA length must be greater than zero");
+        Self {
+            length,
+            alphabet: DEFAULT_ALPHABET.to_vec(),
+        }
+    }
+
+    /// Creates a generator with an explicit non-empty ASCII alphabet.
+    pub fn with_alphabet(
+        length: usize,
+        alphabet: impl Into<Vec<u8>>,
+    ) -> Result<Self, CaptchaError> {
+        let alphabet = alphabet.into();
+        if length == 0 {
+            return Err(CaptchaError::InvalidLength);
+        }
+        if alphabet.is_empty() || !alphabet.is_ascii() {
+            return Err(CaptchaError::InvalidAlphabet);
+        }
+        Ok(Self { length, alphabet })
+    }
+}
+
+impl Default for AlphanumericGenerator {
+    fn default() -> Self {
+        Self::new(5)
+    }
+}
+
+impl CodeGenerator for AlphanumericGenerator {
+    fn generate(&self) -> String {
+        let mut rng = rand::rng();
+        (0..self.length)
+            .map(|_| {
+                let index = rng.random_range(0..self.alphabet.len());
+                char::from(self.alphabet[index])
+            })
+            .collect()
+    }
+
+    fn verify(&self, generated: &str, input: &str) -> bool {
+        constant_time_ascii_case_eq(generated.as_bytes(), input.trim().as_bytes())
+    }
+}
+
+/// CAPTCHA creation and verification errors.
+#[derive(Debug, Error, Clone, PartialEq, Eq)]
+pub enum CaptchaError {
+    /// Code length must be positive.
+    #[error("CAPTCHA length must be greater than zero")]
+    InvalidLength,
+    /// Alphabet must contain at least one ASCII byte.
+    #[error("CAPTCHA alphabet must be non-empty ASCII")]
+    InvalidAlphabet,
+    /// Render dimensions are too small to produce a usable challenge.
+    #[error("CAPTCHA dimensions must be at least 80x30")]
+    InvalidDimensions,
+    /// Render input must contain between one and 32 Unicode scalar values.
+    #[error("CAPTCHA render code must contain between 1 and 32 characters")]
+    InvalidRenderCode,
+    /// Raster image encoding failed.
+    #[cfg(feature = "raster")]
+    #[error("CAPTCHA image encoding failed: {0}")]
+    Image(String),
+    /// Raster or audio output exceeded defensive resource limits.
+    #[error("CAPTCHA media limit exceeded: {0}")]
+    MediaLimit(&'static str),
+    /// An injected speech synthesizer rejected the challenge.
+    #[cfg(feature = "audio")]
+    #[error("CAPTCHA speech synthesis failed: {0}")]
+    SpeechSynthesis(String),
+    /// The challenge has expired.
+    #[error("CAPTCHA challenge has expired")]
+    Expired,
+    /// User input does not match the challenge.
+    #[error("CAPTCHA code does not match")]
+    Mismatch,
+}
+
+#[cfg(feature = "raster")]
+impl From<image::ImageError> for CaptchaError {
+    fn from(error: image::ImageError) -> Self {
+        Self::Image(error.to_string())
+    }
+}
+
+/// A generated code paired with an expiration deadline.
+pub struct CaptchaChallenge {
+    code: String,
+    expires_at: Instant,
+}
+
+impl CaptchaChallenge {
+    /// Generates a challenge with a fixed validity duration.
+    #[must_use]
+    pub fn generate(generator: &dyn CodeGenerator, valid_for: Duration) -> Self {
+        Self {
+            code: generator.generate(),
+            expires_at: Instant::now() + valid_for,
+        }
+    }
+
+    /// Returns the code for an image/audio renderer.
+    #[must_use]
+    pub fn code(&self) -> &str {
+        &self.code
+    }
+
+    /// Verifies user input and expiration.
+    pub fn verify(&self, generator: &dyn CodeGenerator, input: &str) -> Result<(), CaptchaError> {
+        if Instant::now() >= self.expires_at {
+            return Err(CaptchaError::Expired);
+        }
+        if !generator.verify(&self.code, input) {
+            return Err(CaptchaError::Mismatch);
+        }
+        Ok(())
+    }
+}
+
+fn constant_time_ascii_case_eq(left: &[u8], right: &[u8]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+    left.iter()
+        .zip(right)
+        .fold(0_u8, |difference, (left, right)| {
+            difference | left.to_ascii_uppercase() ^ right.to_ascii_uppercase()
+        })
+        == 0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generates_requested_length_and_verifies_case_insensitively() {
+        let generator = AlphanumericGenerator::new(6);
+        let code = generator.generate();
+        assert_eq!(code.len(), 6);
+        assert!(generator.verify(&code, &code.to_ascii_lowercase()));
+        assert!(!generator.verify(&code, "wrong"));
+    }
+
+    #[test]
+    fn challenge_enforces_deadline() {
+        let generator = AlphanumericGenerator::default();
+        let challenge = CaptchaChallenge::generate(&generator, Duration::ZERO);
+        assert_eq!(
+            challenge.verify(&generator, challenge.code()),
+            Err(CaptchaError::Expired)
+        );
+    }
+
+    #[test]
+    fn svg_renderer_escapes_code_and_returns_media_metadata() {
+        let artifact = SvgRenderer::default().render("A<&").unwrap();
+        let svg = std::str::from_utf8(artifact.bytes()).unwrap();
+        assert_eq!(artifact.mime_type(), "image/svg+xml");
+        assert!(svg.starts_with("<svg"));
+        assert!(svg.contains("&lt;"));
+        assert!(svg.contains("&amp;"));
+        assert!(!svg.contains("><</text>"));
+    }
+
+    #[test]
+    fn svg_renderer_rejects_unusable_inputs() {
+        assert!(matches!(
+            SvgRenderer::new(79, 30),
+            Err(CaptchaError::InvalidDimensions)
+        ));
+        assert_eq!(
+            SvgRenderer::default().render(""),
+            Err(CaptchaError::InvalidRenderCode)
+        );
+    }
+}
