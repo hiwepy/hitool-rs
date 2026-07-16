@@ -16,6 +16,7 @@ mod date;
 mod error;
 mod hutool_codec;
 mod id;
+mod iter_util;
 mod list_util;
 mod radix_codec;
 mod string;
@@ -53,6 +54,7 @@ pub use hutool_codec::{
     encoding_for_label, is_base64, is_base64_code,
 };
 pub use id::IdUtil;
+pub use iter_util::IterUtil;
 pub use list_util::ListUtil;
 pub use radix_codec::{
     Base32Decoder, Base32Encoder, Base58Decoder, Base58Encoder, Base62Decoder, Base62Encoder,

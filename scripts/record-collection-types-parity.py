@@ -12,6 +12,10 @@ INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
 FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
 FAMILIES = {
+    "IterUtil": (
+        "hitool_core::IterUtil",
+        "iter_util_matches_hutool_consumption_mapping_and_formatting",
+    ),
     "ListUtil": (
         "hitool_core::ListUtil",
         "list_util_matches_hutool_creation_paging_mutation_and_search",
@@ -119,8 +123,8 @@ def main() -> None:
             "notes": "Java collection inheritance is consolidated into an owned Rust API with matching behavioral invariants.",
         }
 
-    if selected != 144:
-        raise SystemExit(f"expected 144 reviewed collection APIs, selected {selected}")
+    if selected != 203:
+        raise SystemExit(f"expected 203 reviewed collection APIs, selected {selected}")
 
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)
