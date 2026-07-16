@@ -17,6 +17,7 @@ mod collection_partition;
 mod collection_types;
 mod date;
 mod error;
+mod getter;
 mod hutool_codec;
 mod id;
 mod iter_util;
@@ -56,6 +57,11 @@ pub use collection_types::{
 };
 pub use date::DateUtil;
 pub use error::{CoreError, Result};
+pub use getter::{
+    ArrayTypeGetter, BasicTypeGetter, GroupedTypeGetter, ListTypeGetter, OptArrayTypeGetter,
+    OptBasicTypeGetter, OptNullBasicTypeFromObjectGetter, OptNullBasicTypeFromStringGetter,
+    OptNullBasicTypeGetter, StringMapGetter,
+};
 pub use hutool_codec::{
     Base16Codec, Decoder, Encoder, PercentCodec, base64_decode_range_tolerant, base64_decode_text,
     base64_decode_to_file, base64_decode_to_writer, base64_decode_tolerant, base64_encode_config,

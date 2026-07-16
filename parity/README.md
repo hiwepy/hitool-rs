@@ -13,6 +13,8 @@ Regenerate and verify with:
 ```shell
 ./scripts/generate-hutool-inventory.sh ../hutool
 ./scripts/record-codec-parity.py
+./scripts/record-collection-types-parity.py
+./scripts/record-getter-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```
