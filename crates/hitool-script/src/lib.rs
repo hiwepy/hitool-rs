@@ -2,14 +2,33 @@
 
 #![forbid(unsafe_code)]
 
+mod compat;
+
+pub use compat::{
+    Bindings, CompiledScript, FullSupportScriptEngine, JavaScriptEngine, ScriptContext,
+    ScriptEngineFactory, ScriptInterface, ScriptLanguage, ScriptRuntimeException, ScriptScope,
+    ScriptUtil,
+};
 use rhai::Engine;
-pub use rhai::{Dynamic, EvalAltResult, Scope};
+pub use rhai::{AST, CallFnOptions, Dynamic, EvalAltResult, ParseError, Scope};
 use std::{any::Any, any::type_name};
 use thiserror::Error;
 
 /// Script evaluation failures.
 #[derive(Debug, Error)]
 pub enum ScriptError {
+    /// The requested optional language engine is not installed.
+    #[error("script language `{0}` is not supported")]
+    UnsupportedLanguage(String),
+    /// The Rhai parser rejected the script.
+    #[error(transparent)]
+    Compilation(#[from] ParseError),
+    /// Script input could not be read.
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    /// Invocation needs a previously compiled or evaluated script.
+    #[error("{0}")]
+    Invocation(String),
     /// The Rhai engine rejected or terminated the script.
     #[error(transparent)]
     Evaluation(#[from] Box<EvalAltResult>),
@@ -76,12 +95,58 @@ impl ScriptEngine {
         &mut self.inner
     }
 
+    /// Returns the underlying constrained engine.
+    #[must_use]
+    pub fn engine(&self) -> &Engine {
+        &self.inner
+    }
+
+    /// Compiles script text into a reusable AST.
+    pub fn compile(&self, script: &str) -> Result<AST, ScriptError> {
+        Ok(self.inner.compile(script)?)
+    }
+
+    /// Evaluates an AST with the supplied scope.
+    pub fn eval_ast_with_scope(
+        &self,
+        scope: &mut Scope<'_>,
+        ast: &AST,
+    ) -> Result<Dynamic, ScriptError> {
+        Ok(self.inner.eval_ast_with_scope(scope, ast)?)
+    }
+
+    /// Calls a script-defined function with dynamic arguments.
+    pub fn call_fn(
+        &self,
+        scope: &mut Scope<'_>,
+        ast: &AST,
+        name: &str,
+        args: Vec<Dynamic>,
+    ) -> Result<Dynamic, ScriptError> {
+        Ok(self.inner.call_fn(scope, ast, name, args)?)
+    }
+
+    /// Calls a script method with a bound `this` value.
+    pub fn call_method(
+        &self,
+        scope: &mut Scope<'_>,
+        ast: &AST,
+        this: &mut Dynamic,
+        name: &str,
+        args: Vec<Dynamic>,
+    ) -> Result<Dynamic, ScriptError> {
+        let options = CallFnOptions::new().bind_this_ptr(this);
+        Ok(self
+            .inner
+            .call_fn_with_options(options, scope, ast, name, args)?)
+    }
+
     /// Evaluates a script into a typed result.
     pub fn eval<T: Any>(&self, script: &str) -> Result<T, ScriptError> {
         self.inner
             .eval::<Dynamic>(script)?
             .try_cast::<T>()
-            .ok_or_else(|| ScriptError::TypeMismatch(type_name::<T>()))
+            .ok_or(ScriptError::TypeMismatch(type_name::<T>()))
     }
 
     /// Evaluates a script using the supplied variable scope.
@@ -93,7 +158,7 @@ impl ScriptEngine {
         self.inner
             .eval_with_scope::<Dynamic>(scope, script)?
             .try_cast::<T>()
-            .ok_or_else(|| ScriptError::TypeMismatch(type_name::<T>()))
+            .ok_or(ScriptError::TypeMismatch(type_name::<T>()))
     }
 }
 
@@ -109,9 +174,20 @@ mod tests {
 
     #[test]
     fn evaluates_typed_expressions_and_rejects_eval() {
-        let engine = ScriptEngine::default();
+        let mut engine = ScriptEngine::default();
+        engine
+            .engine_mut()
+            .register_fn("double", |value: i64| value * 2);
+        assert_eq!(engine.engine().eval::<i64>("double(21)").unwrap(), 42);
         assert_eq!(engine.eval::<i64>("40 + 2").unwrap(), 42);
+        assert!(engine.eval::<i64>("let = ;").is_err());
+        assert_eq!(
+            engine.eval::<Dynamic>("40 + 2").unwrap().as_int().unwrap(),
+            42
+        );
         assert!(engine.eval::<Dynamic>(r#"eval("40 + 2")"#).is_err());
+        assert!(engine.eval::<String>("40 + 2").is_err());
+        assert!(engine.eval::<String>("let = ;").is_err());
     }
 
     #[test]
@@ -124,6 +200,21 @@ mod tests {
                 .eval_with_scope::<i64>(&mut scope, "base + 2")
                 .unwrap(),
             42
+        );
+        assert!(
+            engine
+                .eval_with_scope::<String>(&mut scope, "base + 2")
+                .is_err()
+        );
+        assert!(
+            engine
+                .eval_with_scope::<String>(&mut scope, "let = ;")
+                .is_err()
+        );
+        assert!(
+            engine
+                .eval_with_scope::<i64>(&mut scope, "let = ;")
+                .is_err()
         );
     }
 }
