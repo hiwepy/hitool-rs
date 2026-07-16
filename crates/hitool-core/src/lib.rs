@@ -16,6 +16,7 @@ mod collection_adapters;
 mod collection_iter;
 mod collection_partition;
 mod collection_types;
+mod compiler;
 mod date;
 mod error;
 mod getter;
@@ -56,6 +57,10 @@ pub use collection_partition::{
 pub use collection_types::{
     BoundedPriorityQueue, ConcurrentHashSet, UniqueKeySet, ring_next_for_len, ring_next_index,
     ring_next_u64,
+};
+pub use compiler::{
+    ClassFileManager, ClassFileObject, CompileOutput, CompilerException, DEFAULT_MAX_SOURCE_BYTES,
+    RustSourceCompiler, SourceFileObject, SourceFileObjectUtil, diagnostic_messages,
 };
 pub use date::DateUtil;
 pub use error::{CoreError, Result};
