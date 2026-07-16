@@ -2,7 +2,7 @@
 
 use std::{io, io::BufRead, marker::PhantomData};
 
-use crate::{ArrayIter, IterUtil};
+use crate::{ArrayIter, CollUtil};
 
 /// An iterator whose next value is supplied by a stateful computation.
 pub struct ComputeIter<T, F>
@@ -204,7 +204,7 @@ impl SpliteratorUtil {
 }
 
 /// Legacy alias retained for Hutool's `CollectionUtil extends CollUtil` surface.
-pub type CollectionUtil = IterUtil;
+pub type CollectionUtil = CollUtil;
 
 #[cfg(test)]
 mod tests {
@@ -282,7 +282,7 @@ mod tests {
             SpliteratorUtil::trans(1..=3, |value| value.to_string()).collect::<Vec<_>>(),
             ["1", "2", "3"]
         );
-        assert!(CollectionUtil::is_empty::<i32>(&[]));
+        assert!(CollectionUtil::is_empty(Some(&[] as &[i32])));
         assert!(format!("{SpliteratorUtil:?}").contains("SpliteratorUtil"));
     }
 }

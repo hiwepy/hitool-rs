@@ -9,6 +9,7 @@
 mod advanced_codec;
 mod codec;
 mod coll_stream_util;
+mod coll_util;
 mod collection;
 mod collection_adapters;
 mod collection_iter;
@@ -36,6 +37,7 @@ pub use codec::{
     percent_decode, percent_encode_component,
 };
 pub use coll_stream_util::CollStreamUtil;
+pub use coll_util::{BlockingQueue, CollUtil, CollectionKind, CreatedCollection};
 pub use collection::{distinct, group_by, partition};
 pub use collection_adapters::{
     CollectionUtil, ComputeIter, LineIter, NodeListIter, SpliteratorUtil, TransCollection,
