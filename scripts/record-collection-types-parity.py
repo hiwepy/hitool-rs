@@ -12,6 +12,34 @@ INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
 FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
 FAMILIES = {
+    "ComputeIter": (
+        "hitool_core::ComputeIter",
+        "compute_iter_caches_finishes_and_resets_state",
+    ),
+    "LineIter": (
+        "hitool_core::LineIter",
+        "line_iter_filters_closes_and_propagates_utf8_errors",
+    ),
+    "NodeListIter": (
+        "hitool_core::NodeListIter",
+        "node_transforming_and_spliterator_views_preserve_source_semantics",
+    ),
+    "TransCollection": (
+        "hitool_core::TransCollection",
+        "node_transforming_and_spliterator_views_preserve_source_semantics",
+    ),
+    "TransSpliterator": (
+        "hitool_core::TransSpliterator",
+        "node_transforming_and_spliterator_views_preserve_source_semantics",
+    ),
+    "SpliteratorUtil": (
+        "hitool_core::SpliteratorUtil",
+        "node_transforming_and_spliterator_views_preserve_source_semantics",
+    ),
+    "CollectionUtil": (
+        "hitool_core::CollectionUtil",
+        "node_transforming_and_spliterator_views_preserve_source_semantics",
+    ),
     "IterUtil": (
         "hitool_core::IterUtil",
         "iter_util_matches_hutool_consumption_mapping_and_formatting",
@@ -123,8 +151,8 @@ def main() -> None:
             "notes": "Java collection inheritance is consolidated into an owned Rust API with matching behavioral invariants.",
         }
 
-    if selected != 203:
-        raise SystemExit(f"expected 203 reviewed collection APIs, selected {selected}")
+    if selected != 237:
+        raise SystemExit(f"expected 237 reviewed collection APIs, selected {selected}")
 
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)
