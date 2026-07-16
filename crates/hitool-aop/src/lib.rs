@@ -1,12 +1,24 @@
-//! Trait-based interception aligned with Hutool's AOP capability.
+//! Typed interception aligned with Hutool's AOP capability.
 //!
-//! Rust does not need Java-style runtime proxying for ordinary composition.
-//! This crate therefore models an explicit, allocation-free invocation path
-//! while allowing interceptor instances to be shared through `Arc`.
+//! Rust has no JVM-style runtime class proxy. `HiTool` therefore preserves
+//! Hutool's callback and suppression semantics through explicit, type-safe
+//! proxy wrappers, while retaining a composable interceptor chain.
 
 #![forbid(unsafe_code)]
 
+mod invocation;
+
+pub mod aspects;
+pub mod interceptor;
+pub mod proxy;
+
+pub use invocation::{HandlerProxy, InvocationHandler, Method};
+pub use proxy::{Proxy, ProxyBackend, ProxyFactory, ProxyUtil};
+
 use std::{fmt, marker::PhantomData, sync::Arc};
+
+#[cfg(test)]
+mod aop_tests;
 
 /// A synchronous around-interceptor.
 pub trait Interceptor<C, R, E>: Send + Sync {

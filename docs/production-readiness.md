@@ -14,7 +14,7 @@ method-for-method Hutool compatibility.
 | No reverse/cyclic component dependency | complete | facade-only aggregation; components never depend on `hitool` |
 | Idiomatic and compatibility APIs separated | complete | `hitool-compat-hutool` delegates to core/JSON implementations |
 | No hidden global client, pool, config, or runtime | complete | stateful resources are constructed and injected explicitly |
-| Complete Hutool functional parity | in progress | pinned v5.8.46 inventory contains 13,871 public production API records; 730 records have implementation and executable evidence: all 175 `core.codec`, 422 `core.collection`, 9 `core.getter`, 10 `core.clone`, 33 `core.compiler`, 36 `core.stream`, and 45 `core.compress` records |
+| Complete Hutool functional parity | in progress | pinned v5.8.46 inventory contains 13,871 public production API records; 767 records have implementation and executable evidence: all 175 `core.codec`, 422 `core.collection`, 9 `core.getter`, 10 `core.clone`, 33 `core.compiler`, 36 `core.stream`, 45 `core.compress`, and 37 `hutool-aop` records |
 
 ## Runtime boundaries
 
@@ -39,7 +39,7 @@ method-for-method Hutool compatibility.
 | Per-feature compilation | complete | `cargo hack --each-feature --locked` |
 | Stable, MSRV, Nightly, GNU/MUSL, macOS, Windows | complete | CI matrix; MSRV is Rust 1.85 |
 | Property, compile-fail, fuzz and integration testing | complete for current parsers | codec properties; compile-fail docs; structured parser fuzz targets; real HTTP/database tests |
-| 100% test coverage | in progress | current all-feature baseline: lines 90.78%, regions 91.33%, functions 89.57%; new collection, getter, clone, compiler, stream, and compression implementations are 100% across all three metrics and CI requires 100% workspace-wide |
+| 100% test coverage | in progress | current all-feature baseline: lines 91.23%, regions 91.67%, functions 90.32%; new collection, getter, clone, compiler, stream, compression, and AOP implementations are 100% across regions, functions, lines, and generic instantiations, while CI requires 100% workspace-wide |
 | SemVer regression check | ready after first release | tag workflow runs `cargo-semver-checks`; no published baseline exists yet |
 | Performance baseline | deferred with evidence required | no hotspot is claimed in `0.1`; add Criterion baselines only after representative profiles identify one |
 
