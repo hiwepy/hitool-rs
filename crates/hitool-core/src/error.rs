@@ -19,6 +19,10 @@ pub enum CoreError {
     #[error("decoded text is not valid UTF-8: {0}")]
     Utf8(#[from] std::str::Utf8Error),
 
+    /// A non-Base64/hex codec rejected malformed input or configuration.
+    #[error("codec error: {0}")]
+    Codec(String),
+
     /// A date or date-time string did not match the requested format.
     #[error("invalid date or date-time: {0}")]
     DateParse(#[from] chrono::ParseError),

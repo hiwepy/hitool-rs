@@ -14,7 +14,7 @@ method-for-method Hutool compatibility.
 | No reverse/cyclic component dependency | complete | facade-only aggregation; components never depend on `hitool` |
 | Idiomatic and compatibility APIs separated | complete | `hitool-compat-hutool` delegates to core/JSON implementations |
 | No hidden global client, pool, config, or runtime | complete | stateful resources are constructed and injected explicitly |
-| Complete Hutool functional parity | in progress | pinned v5.8.46 inventory contains 13,871 public production API records; every record requires implementation and test evidence |
+| Complete Hutool functional parity | in progress | pinned v5.8.46 inventory contains 13,871 public production API records; 73 reviewed codec records currently have implementation and test evidence |
 
 ## Runtime boundaries
 
@@ -39,7 +39,7 @@ method-for-method Hutool compatibility.
 | Per-feature compilation | complete | `cargo hack --each-feature --locked` |
 | Stable, MSRV, Nightly, GNU/MUSL, macOS, Windows | complete | CI matrix; MSRV is Rust 1.85 |
 | Property, compile-fail, fuzz and integration testing | complete for current parsers | codec properties; compile-fail docs; structured parser fuzz targets; real HTTP/database tests |
-| 100% test coverage | in progress | current all-feature baseline: lines 77.99%, regions 78.41%, functions 76.70%; CI requires 100% for all three |
+| 100% test coverage | in progress | current all-feature baseline: lines 81.68%, regions 82.30%, functions 79.29%; CI requires 100% for all three |
 | SemVer regression check | ready after first release | tag workflow runs `cargo-semver-checks`; no published baseline exists yet |
 | Performance baseline | deferred with evidence required | no hotspot is claimed in `0.1`; add Criterion baselines only after representative profiles identify one |
 

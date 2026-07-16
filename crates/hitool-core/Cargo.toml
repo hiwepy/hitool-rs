@@ -16,8 +16,11 @@ workspace = true
 [dependencies]
 base64.workspace = true
 chrono.workspace = true
+data-encoding.workspace = true
 hex.workspace = true
+idna.workspace = true
 percent-encoding.workspace = true
+sha2.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
 

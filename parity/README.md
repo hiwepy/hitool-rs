@@ -12,9 +12,9 @@ Regenerate and verify with:
 
 ```shell
 ./scripts/generate-hutool-inventory.sh ../hutool
+./scripts/record-codec-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```
 
 The strict command intentionally fails while any API is unaccounted for.
-

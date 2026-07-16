@@ -6,6 +6,7 @@
 
 #![forbid(unsafe_code)]
 
+mod advanced_codec;
 mod codec;
 mod collection;
 mod date;
@@ -13,6 +14,14 @@ mod error;
 mod id;
 mod string;
 
+pub use advanced_codec::{
+    HashIds, MorseCodec, base32_decode, base32_encode, base32_hex_decode, base32_hex_encode,
+    base58_decode, base58_decode_checked, base58_decode_checked_auto, base58_encode,
+    base58_encode_checked, base62_decode, base62_encode, base62_inverted_decode,
+    base62_inverted_encode, bcd_decode, bcd_encode, caesar_decode, caesar_encode,
+    idna_decode_domain, idna_encode_domain, punycode_decode, punycode_encode,
+    punycode_encode_prefixed, rot_decode, rot_encode,
+};
 pub use codec::{
     base64_decode, base64_encode, base64_url_decode, base64_url_encode, hex_decode, hex_encode,
     percent_decode, percent_encode_component,

@@ -497,6 +497,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "data-encoding"
+version = "2.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4ae5f15dda3c708c0ade84bfee31ccab44a3da4f88015ed22f63732abe300c8"
+
+[[package]]
 name = "der"
 version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -967,9 +973,12 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "chrono",
+ "data-encoding",
  "hex",
+ "idna",
  "percent-encoding",
  "proptest",
+ "sha2",
  "thiserror",
  "uuid",
 ]
