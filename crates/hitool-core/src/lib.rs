@@ -17,6 +17,7 @@ mod collection_iter;
 mod collection_partition;
 mod collection_types;
 mod compiler;
+mod compress;
 mod date;
 mod error;
 mod getter;
@@ -62,6 +63,10 @@ pub use collection_types::{
 pub use compiler::{
     ClassFileManager, ClassFileObject, CompileOutput, CompilerException, DEFAULT_MAX_SOURCE_BYTES,
     RustSourceCompiler, SourceFileObject, SourceFileObjectUtil, diagnostic_messages,
+};
+pub use compress::{
+    DEFAULT_MAX_SIZE_DIFF, Deflate, Gzip, ZipCopyVisitor, ZipEntry, ZipLimits, ZipReader,
+    ZipWriter, memory_zip_writer,
 };
 pub use date::DateUtil;
 pub use error::{CoreError, Result};

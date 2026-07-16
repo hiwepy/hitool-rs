@@ -27,6 +27,14 @@ pub enum CoreError {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
+    /// Compression or archive processing failed.
+    #[error("compression error: {0}")]
+    Compress(String),
+
+    /// A ZIP container was malformed or could not be processed.
+    #[error("ZIP error: {0}")]
+    Zip(#[from] zip::result::ZipError),
+
     /// A date or date-time string did not match the requested format.
     #[error("invalid date or date-time: {0}")]
     DateParse(#[from] chrono::ParseError),

@@ -1107,6 +1107,7 @@ dependencies = [
  "chrono",
  "data-encoding",
  "encoding_rs",
+ "flate2",
  "hex",
  "idna",
  "indexmap",
@@ -1117,6 +1118,7 @@ dependencies = [
  "tempfile",
  "thiserror",
  "uuid",
+ "zip",
 ]
 
 [[package]]

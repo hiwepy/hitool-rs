@@ -18,6 +18,7 @@ Regenerate and verify with:
 ./scripts/record-clone-parity.py
 ./scripts/record-compiler-parity.py
 ./scripts/record-stream-parity.py
+./scripts/record-compress-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```
