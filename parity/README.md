@@ -21,6 +21,7 @@ Regenerate and verify with:
 ./scripts/record-compress-parity.py
 ./scripts/record-aop-parity.py
 ./scripts/record-dfa-parity.py
+./scripts/record-bloom-filter-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```

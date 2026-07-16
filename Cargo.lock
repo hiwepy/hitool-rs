@@ -1072,6 +1072,8 @@ name = "hitool-bloom-filter"
 version = "0.1.0"
 dependencies = [
  "bloomfilter",
+ "encoding_rs",
+ "tempfile",
  "thiserror",
 ]
 

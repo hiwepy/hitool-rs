@@ -1,36 +1,88 @@
-//! Probabilistic membership testing aligned with Hutool's bloom-filter module.
-//!
-//! This crate delegates hashing and bit storage to the audited `bloomfilter`
-//! crate and adds a small, typed `HiTool` facade.
+//! Production bloom filters and Hutool-compatible bitmap/hash strategies.
 
 #![forbid(unsafe_code)]
 
-use bloomfilter::Bloom;
-use std::hash::Hash;
-use thiserror::Error;
+mod bitmap;
+pub mod hashes;
+mod hutool;
 
-/// Errors returned while constructing a bloom filter.
-#[derive(Debug, Error, Clone, PartialEq)]
+use bloomfilter::Bloom;
+use std::{hash::Hash, io};
+
+pub use bitmap::{BitMap, IntMap, LongMap, MachineWord};
+pub use hutool::{
+    BitMapBloomFilter, BitSetBloomFilter, BloomFilterUtil, DefaultFilter, ELFFilter, FNVFilter,
+    FuncFilter, HfFilter, HfIpFilter, JSFilter, PJWFilter, RSFilter, SDBMFilter, StringBloomFilter,
+    TianlFilter,
+};
+
+/// Errors returned by filter construction, indexing, and file initialization.
+#[derive(Debug, thiserror::Error)]
 pub enum BloomFilterError {
-    /// The expected item count must be greater than zero.
-    #[error("expected_items must be greater than zero")]
+    /// A capacity or expected item count was zero.
+    #[error("capacity must be greater than zero")]
     EmptyCapacity,
-    /// The false-positive rate must be strictly between zero and one.
+    /// A probability was outside the open interval `(0, 1)`.
     #[error("false_positive_rate must be between 0 and 1")]
     InvalidFalsePositiveRate,
-    /// The underlying filter rejected the computed layout.
-    #[error("failed to construct bloom filter: {0}")]
-    Engine(&'static str),
+    /// Hutool's `BitSet` implementation supports one through eight hash functions.
+    #[error("hash function count must be between 1 and 8")]
+    InvalidHashFunctionCount,
+    /// The requested bit index is outside the configured bitmap.
+    #[error("bit index {index} is outside capacity {capacity}")]
+    IndexOutOfBounds {
+        /// Rejected bit index.
+        index: u64,
+        /// Configured number of addressable bits.
+        capacity: u64,
+    },
+    /// An arithmetic operation exceeded the platform's addressable capacity.
+    #[error("filter capacity is too large")]
+    CapacityOverflow,
+    /// File initialization failed.
+    #[error(transparent)]
+    Io(#[from] io::Error),
+    /// Input bytes were not valid in the requested character encoding.
+    #[error("input is not valid {0}")]
+    InvalidEncoding(&'static str),
 }
 
-/// A bloom filter sized from an expected cardinality and false-positive rate.
+impl PartialEq for BloomFilterError {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::EmptyCapacity, Self::EmptyCapacity)
+            | (Self::InvalidFalsePositiveRate, Self::InvalidFalsePositiveRate)
+            | (Self::InvalidHashFunctionCount, Self::InvalidHashFunctionCount)
+            | (Self::CapacityOverflow, Self::CapacityOverflow) => true,
+            (Self::InvalidEncoding(left), Self::InvalidEncoding(right)) => left == right,
+            (
+                Self::IndexOutOfBounds {
+                    index: left_index,
+                    capacity: left_capacity,
+                },
+                Self::IndexOutOfBounds {
+                    index: right_index,
+                    capacity: right_capacity,
+                },
+            ) => left_index == right_index && left_capacity == right_capacity,
+            (Self::Io(left), Self::Io(right)) => left.kind() == right.kind(),
+            _ => false,
+        }
+    }
+}
+
+/// A high-throughput generic filter backed by the mature `bloomfilter` crate.
 #[derive(Debug)]
 pub struct BloomFilter<T: ?Sized> {
     inner: Bloom<T>,
 }
 
 impl<T: Hash + ?Sized> BloomFilter<T> {
-    /// Creates a filter for the expected item count and false-positive rate.
+    /// Sizes a filter from expected cardinality and false-positive probability.
+    ///
+    /// # Panics
+    ///
+    /// Panics only if the mature engine rejects inputs validated by this facade.
     pub fn new(expected_items: usize, false_positive_rate: f64) -> Result<Self, BloomFilterError> {
         if expected_items == 0 {
             return Err(BloomFilterError::EmptyCapacity);
@@ -39,8 +91,8 @@ impl<T: Hash + ?Sized> BloomFilter<T> {
             return Err(BloomFilterError::InvalidFalsePositiveRate);
         }
         Ok(Self {
-            inner: Bloom::new_for_fp_rate(expected_items, false_positive_rate)
-                .map_err(BloomFilterError::Engine)?,
+            inner: Bloom::new_for_fp_rate_with_seed(expected_items, false_positive_rate, &[0; 32])
+                .expect("validated bloom layout"),
         })
     }
 
@@ -49,14 +101,13 @@ impl<T: Hash + ?Sized> BloomFilter<T> {
         self.inner.check_and_set(value)
     }
 
-    /// Returns `false` when the value is definitely absent and `true` when it
-    /// is probably present.
+    /// Returns false only when the value is definitely absent.
     #[must_use]
     pub fn contains(&self, value: &T) -> bool {
         self.inner.check(value)
     }
 
-    /// Returns the number of bits allocated by the underlying filter.
+    /// Returns the allocated bit count.
     #[must_use]
     pub fn bit_count(&self) -> u64 {
         self.inner.len()
@@ -64,22 +115,4 @@ impl<T: Hash + ?Sized> BloomFilter<T> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn validates_configuration_and_tracks_membership() {
-        assert_eq!(
-            BloomFilter::<str>::new(0, 0.01).unwrap_err(),
-            BloomFilterError::EmptyCapacity
-        );
-        assert!(BloomFilter::<str>::new(10, 1.0).is_err());
-
-        let mut filter = BloomFilter::<str>::new(100, 0.001).unwrap();
-        assert!(!filter.contains("hutool"));
-        assert!(!filter.insert("hutool"));
-        assert!(filter.contains("hutool"));
-        assert!(filter.insert("hutool"));
-        assert!(filter.bit_count() > 0);
-    }
-}
+mod tests;
