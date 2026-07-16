@@ -9,6 +9,7 @@
 mod advanced_codec;
 mod codec;
 mod collection;
+mod collection_types;
 mod date;
 mod error;
 mod hutool_codec;
@@ -29,6 +30,10 @@ pub use codec::{
     percent_decode, percent_encode_component,
 };
 pub use collection::{distinct, group_by, partition};
+pub use collection_types::{
+    BoundedPriorityQueue, ConcurrentHashSet, UniqueKeySet, ring_next_for_len, ring_next_index,
+    ring_next_u64,
+};
 pub use date::DateUtil;
 pub use error::{CoreError, Result};
 pub use hutool_codec::{

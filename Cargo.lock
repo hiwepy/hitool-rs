@@ -1109,6 +1109,8 @@ dependencies = [
  "encoding_rs",
  "hex",
  "idna",
+ "indexmap",
+ "parking_lot",
  "percent-encoding",
  "proptest",
  "sha2",
