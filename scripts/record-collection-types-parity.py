@@ -12,6 +12,10 @@ INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
 FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
 FAMILIES = {
+    "CollStreamUtil": (
+        "hitool_core::CollStreamUtil",
+        "coll_stream_util_matches_hutool_grouping_mapping_and_merge",
+    ),
     "ComputeIter": (
         "hitool_core::ComputeIter",
         "compute_iter_caches_finishes_and_resets_state",
@@ -122,6 +126,33 @@ FAMILIES = {
     ),
 }
 
+SOURCE_FILES = {
+    "CollStreamUtil": "coll_stream_util.rs",
+    "IterUtil": "iter_util.rs",
+    "ListUtil": "list_util.rs",
+    "ArrayIter": "collection_iter.rs",
+    "CopiedIter": "collection_iter.rs",
+    "FilterIter": "collection_iter.rs",
+    "TransIter": "collection_iter.rs",
+    "IterChain": "collection_iter.rs",
+    "IterableIter": "collection_iter.rs",
+    "ResettableIter": "collection_iter.rs",
+    "EnumerationIter": "collection_iter.rs",
+    "IteratorEnumeration": "collection_iter.rs",
+    "Partition": "collection_partition.rs",
+    "RandomAccessPartition": "collection_partition.rs",
+    "AvgPartition": "collection_partition.rs",
+    "RandomAccessAvgPartition": "collection_partition.rs",
+    "PartitionIter": "collection_partition.rs",
+    "ComputeIter": "collection_adapters.rs",
+    "LineIter": "collection_adapters.rs",
+    "NodeListIter": "collection_adapters.rs",
+    "TransCollection": "collection_adapters.rs",
+    "TransSpliterator": "collection_adapters.rs",
+    "SpliteratorUtil": "collection_adapters.rs",
+    "CollectionUtil": "collection_adapters.rs",
+}
+
 
 def family(qualified_name: str) -> str | None:
     if not qualified_name.startswith(ROOT):
@@ -143,16 +174,17 @@ def main() -> None:
             continue
         selected += 1
         symbol, test = FAMILIES[collection_family]
+        source_file = SOURCE_FILES.get(collection_family, "collection_types.rs")
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
             "hitool_symbol": symbol,
-            "test_evidence": f"crates/hitool-core/src/collection_types.rs::{test}",
+            "test_evidence": f"crates/hitool-core/src/{source_file}::{test}",
             "notes": "Java collection inheritance is consolidated into an owned Rust API with matching behavioral invariants.",
         }
 
-    if selected != 237:
-        raise SystemExit(f"expected 237 reviewed collection APIs, selected {selected}")
+    if selected != 257:
+        raise SystemExit(f"expected 257 reviewed collection APIs, selected {selected}")
 
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)

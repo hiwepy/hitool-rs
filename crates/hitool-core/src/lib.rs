@@ -8,6 +8,7 @@
 
 mod advanced_codec;
 mod codec;
+mod coll_stream_util;
 mod collection;
 mod collection_adapters;
 mod collection_iter;
@@ -34,6 +35,7 @@ pub use codec::{
     base64_decode, base64_encode, base64_url_decode, base64_url_encode, hex_decode, hex_encode,
     percent_decode, percent_encode_component,
 };
+pub use coll_stream_util::CollStreamUtil;
 pub use collection::{distinct, group_by, partition};
 pub use collection_adapters::{
     CollectionUtil, ComputeIter, LineIter, NodeListIter, SpliteratorUtil, TransCollection,
