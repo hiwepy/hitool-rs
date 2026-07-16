@@ -15,6 +15,7 @@ Regenerate and verify with:
 ./scripts/record-codec-parity.py
 ./scripts/record-collection-types-parity.py
 ./scripts/record-getter-parity.py
+./scripts/record-clone-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```

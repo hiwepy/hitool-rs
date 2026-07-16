@@ -7,6 +7,7 @@
 #![forbid(unsafe_code)]
 
 mod advanced_codec;
+mod clone_support;
 mod codec;
 mod coll_stream_util;
 mod coll_util;
@@ -33,6 +34,7 @@ pub use advanced_codec::{
     idna_decode_domain, idna_encode_domain, punycode_decode, punycode_encode,
     punycode_encode_prefixed, rot_decode, rot_encode,
 };
+pub use clone_support::{CloneRuntimeException, CloneSupport, Cloneable, DefaultCloneable};
 pub use codec::{
     base64_decode, base64_encode, base64_url_decode, base64_url_encode, hex_decode, hex_encode,
     percent_decode, percent_encode_component,
