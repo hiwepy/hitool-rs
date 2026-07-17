@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Record reviewed BooleanUtil, classic HashUtil, and HexUtil APIs."""
+"""Record reviewed BooleanUtil, ByteUtil, classic HashUtil, and HexUtil APIs."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 BOOLEAN_ROOT = "cn.hutool.core.util::BooleanUtil"
+BYTE_ROOT = "cn.hutool.core.util::ByteUtil"
 HASH_ROOT = "cn.hutool.core.util::HashUtil"
 HEX_ROOT = "cn.hutool.core.util::HexUtil"
 MODERN_HASH_METHODS = {"murmur32", "murmur64", "murmur128", "cityHash32", "cityHash64", "cityHash128", "metroHash64", "metroHash128"}
@@ -29,6 +30,16 @@ def boolean_evidence(name: str) -> str:
     if name in {"and", "andOfWrap", "or", "orOfWrap", "xor", "xorOfWrap", "exactlyOneTrue"}:
         return "aggregations_match_hutool_empty_short_circuit_none_and_parity_rules"
     return "optional_negation_type_checks_and_all_conversions_are_explicit"
+
+
+def byte_evidence(name: str) -> str:
+    if name == "numberToBytes":
+        return "number_to_bytes_trait_covers_every_java_wrapper_shape"
+    if name == "bytesToNumber":
+        return "bytes_to_number_trait_covers_primitives_atomics_adders_and_big_numbers"
+    if "Float" in name or "Double" in name:
+        return "floating_conversions_preserve_values_endianness_and_java_nan_canonicalization"
+    return "primitive_integer_conversions_cover_defaults_endianness_offsets_and_bounds"
 
 
 def hash_evidence(name: str) -> str:
@@ -65,6 +76,10 @@ def main() -> None:
             symbol = "hitool_core::BooleanUtil"
             test = boolean_evidence(name)
             notes = "Rust bool, Option<bool>, TypeId, and iterator operations preserve Hutool conversion, vocabulary, selection, aggregation, and empty-input behavior."
+        elif qualified_name.startswith(BYTE_ROOT):
+            symbol = "hitool_core::ByteUtil"
+            test = byte_evidence(name)
+            notes = "Rust endian primitives implement checked offset conversion; generic traits replace Java Class dispatch while preserving primitive, atomic, adder, BigInteger, BigDecimal, and Java-canonical NaN behavior."
         elif qualified_name.startswith(HASH_ROOT) and name not in MODERN_HASH_METHODS:
             symbol = "hitool_core::HashUtil"
             test = hash_evidence(name)
@@ -79,6 +94,7 @@ def main() -> None:
         selected += 1
         source = {
             "hitool_core::BooleanUtil": "boolean_util.rs",
+            "hitool_core::ByteUtil": "byte_util.rs",
             "hitool_core::HashUtil": "hash_util.rs",
             "hitool_core::HexUtil": "hex_util.rs",
         }[symbol]
@@ -90,14 +106,14 @@ def main() -> None:
             "notes": notes,
         }
 
-    if selected != 91:
-        raise SystemExit(f"expected 91 reviewed core util APIs, selected {selected}")
+    if selected != 120:
+        raise SystemExit(f"expected 120 reviewed core util APIs, selected {selected}")
 
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)
         writer.writeheader()
         writer.writerows(indexed.values())
-    print(f"recorded {selected} reviewed BooleanUtil/classic HashUtil/HexUtil APIs")
+    print(f"recorded {selected} reviewed BooleanUtil/ByteUtil/classic HashUtil/HexUtil APIs")
 
 
 if __name__ == "__main__":

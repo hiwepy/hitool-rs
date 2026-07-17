@@ -8,7 +8,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 |---|---|---|---|
 | `hutool-all` | `hitool` | idiomatic | Cargo feature-gated facade plus deterministic compile-time capability registry |
 | `hutool-bom` | workspace | native | lockstep versions and workspace dependencies |
-| `hutool-core` | `hitool-core` | idiomatic | strings, collections, codecs, dates, IDs, closure/Serde-backed builders, ownership-aware mutable wrappers, Hutool boolean vocabulary/aggregations, Java UTF-16 classic hashes, and a `hex`/`num-bigint`-backed `HexUtil` facade |
+| `hutool-core` | `hitool-core` | idiomatic | strings, collections, codecs, dates, IDs, closure/Serde-backed builders, ownership-aware mutable wrappers, Hutool boolean vocabulary/aggregations, checked endian-aware `ByteUtil`, Java UTF-16 classic hashes, and a `hex`/`num-bigint`-backed `HexUtil` facade |
 | `hutool-json` | `hitool-json` | complete | Serde typed/dynamic JSON plus Hutool-aligned configured objects/arrays, bounded tokenizer/parser, XML conversion, stateful writer and owned serializer registry |
 | `hutool-http` | `hitool-http` | idiomatic | Reqwest/Rustls client with limits, URL policy, streaming and explicit idempotent retry; Hutool-aligned methods, headers, content types, status codes, shared metadata and a bounded `HttpResponse` facade for status/header/body inspection and output; `HttpConfig` drives real async/blocking proxy, TLS, cache and interceptor behavior; User-Agent parsing backed by Woothee |
 | `hutool-crypto` | `hitool-crypto` | idiomatic | RustCrypto AEAD/HMAC/SHA-256/Argon2id |

@@ -9,6 +9,7 @@
 mod advanced_codec;
 mod boolean_util;
 mod builder;
+mod byte_util;
 mod clone_support;
 mod codec;
 mod coll_stream_util;
@@ -45,6 +46,9 @@ pub use advanced_codec::{
 pub use boolean_util::{BooleanError, BooleanUtil};
 pub use builder::{
     Builder, BuilderError, CompareToBuilder, EqualsBuilder, GenericBuilder, HashCodeBuilder, IdKey,
+};
+pub use byte_util::{
+    ByteOrder, ByteUtil, ByteUtilError, BytesToNumber, DoubleAdder, LongAdder, NumberToBytes,
 };
 pub use clone_support::{CloneRuntimeException, CloneSupport, Cloneable, DefaultCloneable};
 pub use codec::{
@@ -114,8 +118,8 @@ pub use string::{
 /// Common imports for applications using `hitool-core`.
 pub mod prelude {
     pub use crate::{
-        BooleanUtil, DateUtil, HashUtil, HexUtil, IdUtil, Mutable, MutableBool, MutableByte,
-        MutableDouble, MutableFloat, MutableInt, MutableLong, MutableObj, MutablePair,
-        MutableShort, RgbColor, StrExt,
+        BooleanUtil, ByteOrder, ByteUtil, DateUtil, HashUtil, HexUtil, IdUtil, Mutable,
+        MutableBool, MutableByte, MutableDouble, MutableFloat, MutableInt, MutableLong, MutableObj,
+        MutablePair, MutableShort, RgbColor, StrExt,
     };
 }
