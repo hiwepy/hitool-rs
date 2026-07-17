@@ -33,6 +33,7 @@ mod hash_util;
 mod hex_util;
 mod hutool_codec;
 mod id;
+mod idcard_util;
 mod iter_util;
 mod list_util;
 mod mutable;
@@ -111,6 +112,7 @@ pub use hutool_codec::{
     encoding_for_label, is_base64, is_base64_code,
 };
 pub use id::IdUtil;
+pub use idcard_util::{Card10Info, Idcard, IdcardError, IdcardUtil};
 pub use iter_util::IterUtil;
 pub use list_util::ListUtil;
 pub use mutable::{
@@ -138,8 +140,8 @@ pub mod prelude {
     pub use crate::{
         BooleanUtil, ByteOrder, ByteUtil, CharUtil, Charset, CharsetUtil, Coordinate,
         CoordinateUtil, CreditCodeUtil, DateUtil, DesensitizedType, DesensitizedUtil, HashUtil,
-        HexUtil, IdUtil, Mutable, MutableBool, MutableByte, MutableDouble, MutableFloat,
-        MutableInt, MutableLong, MutableObj, MutablePair, MutableShort, PageUtil, PhoneUtil,
-        RadixUtil, RgbColor, StrExt, VersionUtil,
+        HexUtil, IdUtil, Idcard, IdcardUtil, Mutable, MutableBool, MutableByte, MutableDouble,
+        MutableFloat, MutableInt, MutableLong, MutableObj, MutablePair, MutableShort, PageUtil,
+        PhoneUtil, RadixUtil, RgbColor, StrExt, VersionUtil,
     };
 }

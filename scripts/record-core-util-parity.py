@@ -16,6 +16,7 @@ CREDIT_CODE_ROOT = "cn.hutool.core.util::CreditCodeUtil"
 DESENSITIZED_ROOT = "cn.hutool.core.util::DesensitizedUtil"
 HASH_ROOT = "cn.hutool.core.util::HashUtil"
 HEX_ROOT = "cn.hutool.core.util::HexUtil"
+IDCARD_ROOT = "cn.hutool.core.util::IdcardUtil"
 PAGE_ROOT = "cn.hutool.core.util::PageUtil"
 PHONE_ROOT = "cn.hutool.core.util::PhoneUtil"
 RADIX_ROOT = "cn.hutool.core.util::RadixUtil"
@@ -111,6 +112,18 @@ def hex_evidence(name: str) -> str:
     return "byte_and_text_facades_delegate_to_base16_and_character_engines"
 
 
+def idcard_evidence(qualified_name: str, name: str) -> str:
+    if qualified_name.startswith(f"{IDCARD_ROOT}::Idcard::") or qualified_name == f"{IDCARD_ROOT}::Idcard":
+        return "owned_idcard_info_exposes_every_value_and_display"
+    if name in {"isValidCard", "isValidCard18", "isValidCard15", "convert15To18", "convert18To15"}:
+        return "mainland_conversion_validation_and_checksums_match_hutool"
+    if name in {"isValidCard10", "isValidTWCard", "isValidHKCard"}:
+        return "regional_card_rules_cover_taiwan_macao_and_hong_kong"
+    if name in {"getBirthByIdCard", "getBirth", "getBirthDate", "getAgeByIdCard"}:
+        return "birthday_and_age_are_checked"
+    return "components_codes_and_masking_are_checked"
+
+
 def page_evidence(name: str) -> str:
     if name == "rainbow":
         return "rainbow_covers_short_leading_centered_trailing_even_and_odd_windows"
@@ -175,6 +188,10 @@ def main() -> None:
             symbol = "hitool_core::HexUtil"
             test = hex_evidence(name)
             notes = "The mature hex and num-bigint crates plus Rust UTF-16 and encoding primitives provide the engine; the facade preserves Hutool prefixes, Java numeric bit patterns, colors, pair formatting, and typed errors."
+        elif qualified_name.startswith(IDCARD_ROOT):
+            symbol = "hitool_core::{IdcardUtil,Idcard,Card10Info}"
+            test = idcard_evidence(qualified_name, name)
+            notes = "Chrono supplies strict Gregorian dates while checked Rust checksum, region, age, conversion, masking, and owned-value logic preserves Hutool mainland, Taiwan, Macao, Hong Kong, and foreign-resident card semantics with structured errors."
         elif qualified_name.startswith(PAGE_ROOT):
             symbol = "hitool_core::PageUtil"
             test = page_evidence(name)
@@ -205,6 +222,7 @@ def main() -> None:
             "hitool_core::DesensitizedUtil": "desensitized_util.rs",
             "hitool_core::HashUtil": "hash_util.rs",
             "hitool_core::HexUtil": "hex_util.rs",
+            "hitool_core::{IdcardUtil,Idcard,Card10Info}": "idcard_util.rs",
             "hitool_core::PageUtil": "page_util.rs",
             "hitool_core::PhoneUtil": "phone_util.rs",
             "hitool_core::RadixUtil": "radix_util.rs",
@@ -218,8 +236,8 @@ def main() -> None:
             "notes": notes,
         }
 
-    if selected != 241:
-        raise SystemExit(f"expected 241 reviewed core util APIs, selected {selected}")
+    if selected != 275:
+        raise SystemExit(f"expected 275 reviewed core util APIs, selected {selected}")
 
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)
