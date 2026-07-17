@@ -7,6 +7,9 @@ pub use reqwest::{Method, StatusCode, Url, header};
 use serde::de::DeserializeOwned;
 use std::{fmt, net::IpAddr, sync::Arc, time::Duration};
 use thiserror::Error;
+
+mod metadata;
+pub use metadata::{ContentType, GlobalHeaders, Header, HttpStatus, Status};
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 
 /// User-Agent parsing compatible with Hutool's `useragent` package.

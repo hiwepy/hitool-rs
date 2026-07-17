@@ -33,6 +33,7 @@ Regenerate and verify with:
 ./scripts/record-setting-parity.py
 ./scripts/record-ai-parity.py
 ./scripts/record-http-useragent-parity.py
+./scripts/record-http-metadata-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```
