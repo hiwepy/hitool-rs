@@ -14,7 +14,7 @@ method-for-method Hutool compatibility.
 | No reverse/cyclic component dependency | complete | facade-only aggregation; components never depend on `hitool` |
 | Idiomatic and compatibility APIs separated | complete | `hitool-compat-hutool` delegates to core/JSON implementations |
 | No hidden global client, pool, config, or runtime | complete | stateful resources are constructed and injected explicitly |
-| Complete Hutool functional parity | in progress | pinned v5.8.46 inventory contains 13,871 public production API records; 1,587 records have implementation and executable evidence: all 3 `hutool-all`, 175 `core.codec`, 422 `core.collection`, 9 `core.getter`, 10 `core.clone`, 33 `core.compiler`, 36 `core.stream`, 45 `core.compress`, 37 `hutool-aop`, 43 `hutool-dfa`, 72 `hutool-bloomFilter`, 79 `hutool-script`, 87 `hutool-captcha`, 102 `hutool-socket`, 121 `hutool-jwt`, 124 `hutool-cache`, and all 189 `hutool-system` records |
+| Complete Hutool functional parity | in progress | pinned v5.8.46 inventory contains 13,871 public production API records; 1,795 records have implementation and executable evidence: all 3 `hutool-all`, 175 `core.codec`, 422 `core.collection`, 9 `core.getter`, 10 `core.clone`, 33 `core.compiler`, 36 `core.stream`, 45 `core.compress`, 37 `hutool-aop`, 43 `hutool-dfa`, 72 `hutool-bloomFilter`, 79 `hutool-script`, 87 `hutool-captcha`, 102 `hutool-socket`, 121 `hutool-jwt`, 124 `hutool-cache`, all 189 `hutool-system`, and all 208 `hutool-cron` records |
 
 ## Runtime boundaries
 
@@ -39,7 +39,7 @@ method-for-method Hutool compatibility.
 | Per-feature compilation | complete | `cargo hack --each-feature --locked` |
 | Stable, MSRV, Nightly, GNU/MUSL, macOS, Windows | complete | CI matrix; MSRV is Rust 1.85 |
 | Property, compile-fail, fuzz and integration testing | complete for current parsers | codec properties; compile-fail docs; structured parser fuzz targets; real HTTP/database tests |
-| 100% test coverage | in progress | current all-feature baseline: lines 95.43% (15,168/15,894), regions 95.63% (24,876/26,014), functions 95.05% (2,110/2,220); the facade registry is exactly 100% (119 regions, 8 functions, 60 lines), JWT is exactly 100% (2,029 regions, 143 functions, 1,148 lines), cache is exactly 100% (1,881 regions, 180 functions, 1,140 lines), and system is exactly 100% (1,018 regions, 109 functions, 694 lines), while CI requires 100% workspace-wide |
+| 100% test coverage | in progress | current all-feature baseline: lines 96.67% (17,575/18,181), regions 96.64% (28,507/29,498), functions 96.08% (2,428/2,527); the facade registry is exactly 100% (119 regions, 8 functions, 60 lines), JWT is exactly 100% (2,029 regions, 143 functions, 1,148 lines), cache is exactly 100% (1,881 regions, 180 functions, 1,140 lines), system is exactly 100% (1,018 regions, 109 functions, 694 lines), and cron is exactly 100% (3,818 regions, 338 functions, 2,547 lines), while CI requires 100% workspace-wide |
 | SemVer regression check | ready after first release | tag workflow runs `cargo-semver-checks`; no published baseline exists yet |
 | Performance baseline | deferred with evidence required | no hotspot is claimed in `0.1`; add Criterion baselines only after representative profiles identify one |
 

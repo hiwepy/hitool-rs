@@ -17,7 +17,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 | `hutool-bloomFilter` | `hitool-bloom-filter` | idiomatic | typed probabilistic membership |
 | `hutool-dfa` | `hitool-dfa` | idiomatic | Aho-Corasick leftmost-longest matching |
 | `hutool-setting` | `hitool-setting` | idiomatic | layered files and environment |
-| `hutool-cron` | `hitool-cron` | idiomatic | cron occurrences and externally hosted Tokio jobs with cancellation, timeout, tracing, non-overlap and bounded retries |
+| `hutool-cron` | `hitool-cron` | complete | Hutool-aligned 5/6/7-part patterns, parsers and matchers; task tables, listeners and executors; explicitly owned Tokio schedulers; timing wheel/system timer; cancellation, timeout, tracing, non-overlap and bounded retries |
 | `hutool-log` | `hitool-log` | idiomatic | tracing subscriber and redaction wrapper |
 | `hutool-system` | `hitool-system` | idiomatic | sysinfo-backed CPU/process/memory/disk/network/sensor snapshots plus OS, host, user, runtime and explicit optional Java/JVM properties |
 | `hutool-aop` | `hitool-aop` | idiomatic | explicit interceptor chain instead of runtime proxying |
