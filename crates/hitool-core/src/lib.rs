@@ -26,6 +26,7 @@ mod hutool_codec;
 mod id;
 mod iter_util;
 mod list_util;
+mod mutable;
 mod radix_codec;
 mod stream;
 mod string;
@@ -88,6 +89,10 @@ pub use hutool_codec::{
 pub use id::IdUtil;
 pub use iter_util::IterUtil;
 pub use list_util::ListUtil;
+pub use mutable::{
+    Mutable, MutableBool, MutableByte, MutableDouble, MutableFloat, MutableInt, MutableLong,
+    MutableObj, MutablePair, MutableShort,
+};
 pub use radix_codec::{
     Base32Decoder, Base32Encoder, Base58Decoder, Base58Encoder, Base62Decoder, Base62Encoder,
     base32_decode_text, base32_decode_to_file, base32_decode_to_writer, base32_encode_file,
@@ -102,5 +107,8 @@ pub use string::{
 
 /// Common imports for applications using `hitool-core`.
 pub mod prelude {
-    pub use crate::{DateUtil, IdUtil, StrExt};
+    pub use crate::{
+        DateUtil, IdUtil, Mutable, MutableBool, MutableByte, MutableDouble, MutableFloat,
+        MutableInt, MutableLong, MutableObj, MutablePair, MutableShort, StrExt,
+    };
 }
