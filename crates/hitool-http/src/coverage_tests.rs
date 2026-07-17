@@ -43,6 +43,53 @@ async fn async_server(responses: Vec<Vec<u8>>) -> (String, tokio::task::JoinHand
     (format!("http://{address}"), task)
 }
 
+async fn async_capture_server(
+    response: Vec<u8>,
+) -> (
+    String,
+    tokio::sync::oneshot::Receiver<String>,
+    tokio::task::JoinHandle<()>,
+) {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let (sender, receiver) = tokio::sync::oneshot::channel();
+    let task = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = vec![0_u8; 8_192];
+        let read = socket.read(&mut request).await.unwrap();
+        sender
+            .send(String::from_utf8_lossy(&request[..read]).into_owned())
+            .unwrap();
+        socket.write_all(&response).await.unwrap();
+    });
+    (format!("http://{address}"), receiver, task)
+}
+
+#[cfg(feature = "cookies")]
+async fn async_cookie_redirect_server() -> (String, tokio::task::JoinHandle<String>) {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let task = tokio::spawn(async move {
+        let (mut first, _) = listener.accept().await.unwrap();
+        let mut request = [0_u8; 8_192];
+        let _ = first.read(&mut request).await.unwrap();
+        first
+            .write_all(
+                b"HTTP/1.1 302 Found\r\nLocation: /next\r\nSet-Cookie: session=hitool; Path=/\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+            )
+            .await
+            .unwrap();
+        let (mut second, _) = listener.accept().await.unwrap();
+        let read = second.read(&mut request).await.unwrap();
+        second
+            .write_all(&response("200 OK", "redirected", ""))
+            .await
+            .unwrap();
+        String::from_utf8_lossy(&request[..read]).into_owned()
+    });
+    (format!("http://{address}"), task)
+}
+
 #[cfg(feature = "blocking")]
 fn blocking_server(response: Vec<u8>) -> (String, std::thread::JoinHandle<()>) {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
@@ -54,6 +101,29 @@ fn blocking_server(response: Vec<u8>) -> (String, std::thread::JoinHandle<()>) {
         socket.write_all(&response).unwrap();
     });
     (format!("http://{address}"), task)
+}
+
+#[cfg(feature = "blocking")]
+fn blocking_capture_server(
+    response: Vec<u8>,
+) -> (
+    String,
+    std::sync::mpsc::Receiver<String>,
+    std::thread::JoinHandle<()>,
+) {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let task = std::thread::spawn(move || {
+        let (mut socket, _) = listener.accept().unwrap();
+        let mut request = [0_u8; 8_192];
+        let read = socket.read(&mut request).unwrap();
+        sender
+            .send(String::from_utf8_lossy(&request[..read]).into_owned())
+            .unwrap();
+        socket.write_all(&response).unwrap();
+    });
+    (format!("http://{address}"), receiver, task)
 }
 
 #[test]
@@ -133,13 +203,12 @@ fn retry_policy_validation_delay_and_helpers_are_complete() {
 
 #[test]
 fn builders_debug_proxy_and_configuration_paths_are_complete() {
-    let config = HttpConfig {
-        connect_timeout: Duration::from_millis(25),
-        timeout: Duration::from_secs(1),
-        max_response_bytes: 42,
-        user_agent: "HiTool-Test".into(),
-        redirect_limit: 0,
-    };
+    let mut config = HttpConfig::default();
+    config.connect_timeout = Duration::from_millis(25);
+    config.timeout = Duration::from_secs(1);
+    config.max_response_bytes = 42;
+    config.user_agent = "HiTool-Test".into();
+    config.redirect_limit = 0;
     let direct = HttpClient::new(&config).unwrap();
     assert!(format!("{direct:?}").contains("max_response_bytes: 42"));
     let built = HttpClientBuilder::from_config(config)
@@ -220,6 +289,151 @@ async fn buffered_text_json_send_and_policy_paths_are_complete() {
             .send(client.request(Method::GET, "::bad-url::"))
             .await,
         Err(HttpError::Request(_))
+    ));
+}
+
+#[tokio::test]
+async fn runtime_config_changes_real_requests_responses_and_errors() {
+    let (url, captured, server) =
+        async_capture_server(response("200 OK", "configured", "X-Origin: server\r\n")).await;
+    let changed_url = Url::parse(&format!("{url}/changed")).unwrap();
+    let mut config = HttpConfig::default();
+    config.disable_cache();
+    config
+        .add_request_interceptor(move |context| {
+            context
+                .set_method(Method::POST)
+                .set_url(changed_url.clone());
+            context.headers_mut().insert(
+                "x-hitool-request",
+                header::HeaderValue::from_static("intercepted"),
+            );
+            Ok(())
+        })
+        .add_response_interceptor(|context| {
+            assert_eq!(context.status(), StatusCode::OK);
+            assert_eq!(context.headers()["x-origin"], "server");
+            context.headers_mut().insert(
+                "x-hitool-response",
+                header::HeaderValue::from_static("intercepted"),
+            );
+            Ok(())
+        });
+    let client = HttpClient::new(&config).unwrap();
+    let actual_response = client
+        .send(client.request(Method::GET, format!("{url}/original")))
+        .await
+        .unwrap();
+    assert_eq!(
+        actual_response.headers()["x-hitool-response"],
+        "intercepted"
+    );
+    let request = captured.await.unwrap().to_ascii_lowercase();
+    assert!(request.starts_with("post /changed http/1.1"));
+    assert!(request.contains("x-hitool-request: intercepted"));
+    assert!(request.contains("cache-control: no-cache, no-store"));
+    assert!(request.contains("pragma: no-cache"));
+    server.await.unwrap();
+
+    let mut rejecting_request = HttpConfig::default();
+    rejecting_request.add_request_interceptor(|_| Err(HttpInterceptorError::new("request denied")));
+    let client = HttpClient::new(&rejecting_request).unwrap();
+    assert!(matches!(
+        client
+            .send(client.request(Method::GET, "https://example.com"))
+            .await,
+        Err(HttpError::Interceptor(error)) if error.message() == "request denied"
+    ));
+
+    let (url, server) = async_server(vec![response("200 OK", "denied", "")]).await;
+    let mut rejecting_response = HttpConfig::default();
+    rejecting_response
+        .add_response_interceptor(|_| Err(HttpInterceptorError::new("response denied")));
+    let client = HttpClient::new(&rejecting_response).unwrap();
+    assert!(matches!(
+        client.send(client.request(Method::GET, url)).await,
+        Err(HttpError::Interceptor(error)) if error.message() == "response denied"
+    ));
+    server.await.unwrap();
+}
+
+#[tokio::test]
+async fn configured_proxy_is_the_real_transport_destination() {
+    let (proxy_url, captured, server) =
+        async_capture_server(response("200 OK", "proxied", "")).await;
+    let client = HttpClient::builder()
+        .proxy(&proxy_url)
+        .unwrap()
+        .build()
+        .unwrap();
+    assert_eq!(
+        client
+            .get_text("http://example.com/through-proxy")
+            .await
+            .unwrap(),
+        "proxied"
+    );
+    let request = captured.await.unwrap();
+    assert!(request.starts_with("GET http://example.com/through-proxy HTTP/1.1"));
+    server.await.unwrap();
+}
+
+#[cfg(feature = "cookies")]
+#[tokio::test]
+async fn cookie_feature_persists_set_cookie_across_real_redirects() {
+    let (url, server) = async_cookie_redirect_server().await;
+    let mut config = HttpConfig::default();
+    config.set_follow_redirects_cookie(true);
+    let client = HttpClient::new(&config).unwrap();
+    assert_eq!(client.get_text(&url).await.unwrap(), "redirected");
+    let redirected_request = server.await.unwrap().to_ascii_lowercase();
+    assert!(redirected_request.starts_with("get /next http/1.1"));
+    assert!(redirected_request.contains("cookie: session=hitool"));
+}
+
+#[tokio::test]
+async fn retry_path_propagates_response_interceptor_errors_for_every_status_family() {
+    let mut rejecting_request = HttpConfig::default();
+    rejecting_request
+        .add_request_interceptor(|_| Err(HttpInterceptorError::new("retry request denied")));
+    let client = HttpClient::new(&rejecting_request).unwrap();
+    assert!(matches!(
+        client
+            .send_idempotent(
+                client.request(Method::GET, "https://example.com"),
+                RetryPolicy::new(1).unwrap(),
+            )
+            .await,
+        Err(HttpError::Interceptor(error)) if error.message() == "retry request denied"
+    ));
+
+    for status in ["200 OK", "500 Internal Server Error"] {
+        let (url, server) = async_server(vec![response(status, "intercepted", "")]).await;
+        let mut config = HttpConfig::default();
+        config
+            .add_response_interceptor(|_| Err(HttpInterceptorError::new("retry response denied")));
+        let client = HttpClient::new(&config).unwrap();
+        assert!(matches!(
+            client
+                .send_idempotent(
+                    client.request(Method::GET, url),
+                    RetryPolicy::new(1).unwrap(),
+                )
+                .await,
+            Err(HttpError::Interceptor(error)) if error.message() == "retry response denied"
+        ));
+        server.await.unwrap();
+    }
+}
+
+#[cfg(not(feature = "cookies"))]
+#[test]
+fn cookie_persistence_requires_the_explicit_cargo_feature() {
+    let mut config = HttpConfig::default();
+    config.set_follow_redirects_cookie(true);
+    assert!(matches!(
+        HttpClient::new(&config),
+        Err(HttpError::Config(HttpConfigError::CookiesFeatureDisabled))
     ));
 }
 
@@ -579,6 +793,63 @@ impl std::io::Write for BlockingSink {
             Ok(())
         }
     }
+}
+
+#[cfg(feature = "blocking")]
+#[test]
+fn blocking_runtime_config_changes_real_requests_responses_and_errors() {
+    use super::blocking;
+
+    let (url, captured, server) =
+        blocking_capture_server(response("200 OK", "configured", "X-Origin: server\r\n"));
+    let changed_url = Url::parse(&format!("{url}/changed")).unwrap();
+    let mut config = HttpConfig::default();
+    config.disable_cache();
+    config
+        .add_request_interceptor(move |context| {
+            context.set_method(Method::PUT).set_url(changed_url.clone());
+            context.headers_mut().insert(
+                "x-hitool-request",
+                header::HeaderValue::from_static("blocking"),
+            );
+            Ok(())
+        })
+        .add_response_interceptor(|context| {
+            assert_eq!(context.status(), StatusCode::OK);
+            context.headers_mut().insert(
+                "x-hitool-response",
+                header::HeaderValue::from_static("blocking"),
+            );
+            Ok(())
+        });
+    let client = blocking::HttpClient::new(&config).unwrap();
+    let requests = reqwest::blocking::Client::new();
+    let actual_response = client.send(requests.get(&url)).unwrap();
+    assert_eq!(actual_response.headers()["x-hitool-response"], "blocking");
+    let request = captured.recv().unwrap().to_ascii_lowercase();
+    assert!(request.starts_with("put /changed http/1.1"));
+    assert!(request.contains("x-hitool-request: blocking"));
+    assert!(request.contains("cache-control: no-cache, no-store"));
+    server.join().unwrap();
+
+    let mut rejecting_request = HttpConfig::default();
+    rejecting_request.add_request_interceptor(|_| Err(HttpInterceptorError::new("request denied")));
+    let client = blocking::HttpClient::new(&rejecting_request).unwrap();
+    assert!(matches!(
+        client.send(requests.get("https://example.com")),
+        Err(HttpError::Interceptor(error)) if error.message() == "request denied"
+    ));
+
+    let (url, server) = blocking_server(response("200 OK", "denied", ""));
+    let mut rejecting_response = HttpConfig::default();
+    rejecting_response
+        .add_response_interceptor(|_| Err(HttpInterceptorError::new("response denied")));
+    let client = blocking::HttpClient::new(&rejecting_response).unwrap();
+    assert!(matches!(
+        client.send(requests.get(url)),
+        Err(HttpError::Interceptor(error)) if error.message() == "response denied"
+    ));
+    server.join().unwrap();
 }
 
 #[cfg(feature = "blocking")]

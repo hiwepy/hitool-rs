@@ -14,8 +14,9 @@ description = "Secure, bounded HTTP client utilities for HiTool."
 workspace = true
 
 [features]
-default = ["useragent"]
+default = ["cookies", "useragent"]
 blocking = ["reqwest/blocking"]
+cookies = ["reqwest/cookies"]
 useragent = ["dep:regex", "dep:woothee"]
 
 [dependencies]
@@ -32,3 +33,4 @@ woothee = { workspace = true, optional = true }
 
 [dev-dependencies]
 async-stream.workspace = true
+rcgen.workspace = true

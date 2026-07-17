@@ -10,6 +10,11 @@ use thiserror::Error;
 
 mod base;
 pub use base::{HTTP_1_0, HTTP_1_1, HttpBase, HttpBaseError};
+mod config;
+pub use config::{
+    HostnameVerification, HttpConfig, HttpConfigError, HttpInterceptorError, HttpRequestContext,
+    HttpResponseContext, RequestInterceptor, ResponseInterceptor, TlsProtocol,
+};
 mod metadata;
 pub use metadata::{ContentType, GlobalHeaders, Header, HttpStatus, Status};
 use tokio::io::{AsyncWrite, AsyncWriteExt};
@@ -17,33 +22,6 @@ use tokio::io::{AsyncWrite, AsyncWriteExt};
 /// User-Agent parsing compatible with Hutool's `useragent` package.
 #[cfg(feature = "useragent")]
 pub mod useragent;
-
-/// HTTP client construction limits.
-#[derive(Debug, Clone)]
-pub struct HttpConfig {
-    /// TCP/TLS connection establishment timeout.
-    pub connect_timeout: Duration,
-    /// Entire request timeout.
-    pub timeout: Duration,
-    /// Maximum response body accepted by convenience methods.
-    pub max_response_bytes: usize,
-    /// User-Agent header value.
-    pub user_agent: String,
-    /// Maximum redirects followed by the client.
-    pub redirect_limit: usize,
-}
-
-impl Default for HttpConfig {
-    fn default() -> Self {
-        Self {
-            connect_timeout: Duration::from_secs(10),
-            timeout: Duration::from_secs(30),
-            max_response_bytes: 8 * 1024 * 1024,
-            user_agent: concat!("hitool-http/", env!("CARGO_PKG_VERSION")).to_owned(),
-            redirect_limit: 5,
-        }
-    }
-}
 
 /// Validates a destination URL before network I/O.
 pub trait UrlPolicy: Send + Sync {
@@ -146,6 +124,12 @@ pub enum HttpError {
     /// Retry configuration is invalid.
     #[error(transparent)]
     RetryPolicy(#[from] RetryPolicyError),
+    /// HTTP client configuration is invalid or unavailable in this build.
+    #[error(transparent)]
+    Config(#[from] HttpConfigError),
+    /// A request or response interceptor rejected the operation.
+    #[error(transparent)]
+    Interceptor(#[from] HttpInterceptorError),
     /// Automatic retries are restricted to HTTP idempotent methods.
     #[error("automatic retry is not allowed for HTTP method {0}")]
     NonIdempotentRetry(Method),
@@ -237,6 +221,7 @@ pub struct HttpClient {
     inner: reqwest::Client,
     max_response_bytes: usize,
     url_policy: Arc<dyn UrlPolicy>,
+    config: Arc<HttpConfig>,
 }
 
 impl fmt::Debug for HttpClient {
@@ -245,6 +230,7 @@ impl fmt::Debug for HttpClient {
             .debug_struct("HttpClient")
             .field("max_response_bytes", &self.max_response_bytes)
             .field("url_policy", &"dyn UrlPolicy")
+            .field("config", &self.config)
             .finish_non_exhaustive()
     }
 }
@@ -297,9 +283,12 @@ impl HttpClient {
         &self,
         request: reqwest::RequestBuilder,
     ) -> Result<reqwest::Response, HttpError> {
-        let request = request.build()?;
+        let mut request = request.build()?;
+        apply_async_request_interceptors(&self.config, &mut request)?;
         self.url_policy.validate(request.url())?;
-        Ok(self.inner.execute(request).await?.error_for_status()?)
+        let mut response = self.inner.execute(request).await?;
+        apply_response_interceptors(&self.config, response.status(), response.headers_mut())?;
+        Ok(response.error_for_status()?)
     }
 
     /// Sends an idempotent request with an explicit retry policy.
@@ -313,7 +302,8 @@ impl HttpClient {
         request: reqwest::RequestBuilder,
         policy: RetryPolicy,
     ) -> Result<reqwest::Response, HttpError> {
-        let template = request.build()?;
+        let mut template = request.build()?;
+        apply_async_request_interceptors(&self.config, &mut template)?;
         if !is_idempotent(template.method()) {
             return Err(HttpError::NonIdempotentRetry(template.method().clone()));
         }
@@ -325,13 +315,23 @@ impl HttpClient {
                 return Err(HttpError::UncloneableRetryRequest);
             };
             match self.inner.execute(current).await {
-                Ok(response)
+                Ok(mut response)
                     if !response.status().is_client_error()
                         && !response.status().is_server_error() =>
                 {
+                    apply_response_interceptors(
+                        &self.config,
+                        response.status(),
+                        response.headers_mut(),
+                    )?;
                     return Ok(response);
                 }
-                Ok(response) => {
+                Ok(mut response) => {
+                    apply_response_interceptors(
+                        &self.config,
+                        response.status(),
+                        response.headers_mut(),
+                    )?;
                     let retry_after = retry_after(&response);
                     let retryable = is_retryable_status(response.status());
                     let error = response
@@ -428,11 +428,145 @@ fn retry_after(response: &reqwest::Response) -> Option<Duration> {
         .map(Duration::from_secs)
 }
 
+fn apply_async_request_interceptors(
+    config: &HttpConfig,
+    request: &mut reqwest::Request,
+) -> Result<(), HttpError> {
+    let mut context = HttpRequestContext::new(
+        request.method().clone(),
+        request.url().clone(),
+        request.headers().clone(),
+    );
+    config.intercept_request(&mut context)?;
+    let (method, url, headers) = context.into_parts();
+    *request.method_mut() = method;
+    *request.url_mut() = url;
+    *request.headers_mut() = headers;
+    Ok(())
+}
+
+#[cfg(feature = "blocking")]
+fn apply_blocking_request_interceptors(
+    config: &HttpConfig,
+    request: &mut reqwest::blocking::Request,
+) -> Result<(), HttpError> {
+    let mut context = HttpRequestContext::new(
+        request.method().clone(),
+        request.url().clone(),
+        request.headers().clone(),
+    );
+    config.intercept_request(&mut context)?;
+    let (method, url, headers) = context.into_parts();
+    *request.method_mut() = method;
+    *request.url_mut() = url;
+    *request.headers_mut() = headers;
+    Ok(())
+}
+
+fn apply_response_interceptors(
+    config: &HttpConfig,
+    status: StatusCode,
+    headers: &mut header::HeaderMap,
+) -> Result<(), HttpError> {
+    let mut context = HttpResponseContext::new(status, headers.clone());
+    config.intercept_response(&mut context)?;
+    *headers = context.into_headers();
+    Ok(())
+}
+
+fn configure_async_builder(
+    mut builder: reqwest::ClientBuilder,
+    config: &HttpConfig,
+) -> Result<reqwest::ClientBuilder, HttpError> {
+    if config.disable_cache {
+        let mut headers = header::HeaderMap::new();
+        headers.insert(
+            header::CACHE_CONTROL,
+            header::HeaderValue::from_static("no-cache, no-store"),
+        );
+        headers.insert(header::PRAGMA, header::HeaderValue::from_static("no-cache"));
+        builder = builder.default_headers(headers);
+    }
+    if let Some(proxy_url) = &config.proxy_url {
+        builder = builder.proxy(
+            reqwest::Proxy::all(proxy_url)
+                .map_err(|_| HttpConfigError::InvalidProxy(proxy_url.clone()))?,
+        );
+    }
+    builder = builder.danger_accept_invalid_hostnames(matches!(
+        config.hostname_verification,
+        HostnameVerification::DangerousAcceptInvalid
+    ));
+    if let Some(identity) = &config.tls_identity {
+        builder = builder.identity(identity.clone());
+    }
+    for certificate in &config.root_certificates {
+        builder = builder.add_root_certificate(certificate.clone());
+    }
+    if let Some(protocol) = config.tls_protocol {
+        let version = protocol.reqwest();
+        builder = builder.min_tls_version(version).max_tls_version(version);
+    }
+    #[cfg(feature = "cookies")]
+    {
+        builder = builder.cookie_store(config.follow_redirects_cookie);
+    }
+    #[cfg(not(feature = "cookies"))]
+    if config.follow_redirects_cookie {
+        return Err(HttpConfigError::CookiesFeatureDisabled.into());
+    }
+    Ok(builder)
+}
+
+#[cfg(feature = "blocking")]
+fn configure_blocking_builder(
+    mut builder: reqwest::blocking::ClientBuilder,
+    config: &HttpConfig,
+) -> Result<reqwest::blocking::ClientBuilder, HttpError> {
+    if config.disable_cache {
+        let mut headers = header::HeaderMap::new();
+        headers.insert(
+            header::CACHE_CONTROL,
+            header::HeaderValue::from_static("no-cache, no-store"),
+        );
+        headers.insert(header::PRAGMA, header::HeaderValue::from_static("no-cache"));
+        builder = builder.default_headers(headers);
+    }
+    if let Some(proxy_url) = &config.proxy_url {
+        builder = builder.proxy(
+            reqwest::Proxy::all(proxy_url)
+                .map_err(|_| HttpConfigError::InvalidProxy(proxy_url.clone()))?,
+        );
+    }
+    builder = builder.danger_accept_invalid_hostnames(matches!(
+        config.hostname_verification,
+        HostnameVerification::DangerousAcceptInvalid
+    ));
+    if let Some(identity) = &config.tls_identity {
+        builder = builder.identity(identity.clone());
+    }
+    for certificate in &config.root_certificates {
+        builder = builder.add_root_certificate(certificate.clone());
+    }
+    if let Some(protocol) = config.tls_protocol {
+        let version = protocol.reqwest();
+        builder = builder.min_tls_version(version).max_tls_version(version);
+    }
+    #[cfg(feature = "cookies")]
+    {
+        builder = builder.cookie_store(config.follow_redirects_cookie);
+    }
+    #[cfg(not(feature = "cookies"))]
+    if config.follow_redirects_cookie {
+        return Err(HttpConfigError::CookiesFeatureDisabled.into());
+    }
+    Ok(builder)
+}
+
 /// Builder for [`HttpClient`].
 pub struct HttpClientBuilder {
     config: HttpConfig,
     url_policy: Arc<dyn UrlPolicy>,
-    proxy: Option<reqwest::Proxy>,
 }
 
 impl Default for HttpClientBuilder {
@@ -440,7 +574,6 @@ impl Default for HttpClientBuilder {
         Self {
             config: HttpConfig::default(),
             url_policy: Arc::new(AllowAllUrls),
-            proxy: None,
         }
     }
 }
@@ -492,7 +625,7 @@ impl HttpClientBuilder {
 
     /// Routes requests through an HTTP, HTTPS, or SOCKS proxy.
     pub fn proxy(mut self, proxy_url: impl AsRef<str>) -> Result<Self, HttpError> {
-        self.proxy = Some(reqwest::Proxy::all(proxy_url.as_ref())?);
+        self.config.set_proxy(proxy_url.as_ref().to_owned())?;
         Ok(self)
     }
 
@@ -512,14 +645,14 @@ impl HttpClientBuilder {
                 self.config.redirect_limit,
             ))
             .user_agent(&self.config.user_agent);
-        if let Some(proxy) = self.proxy {
-            builder = builder.proxy(proxy);
-        }
+        builder = configure_async_builder(builder, &self.config)?;
         let inner = builder.build()?;
+        let max_response_bytes = self.config.max_response_bytes;
         Ok(HttpClient {
             inner,
-            max_response_bytes: self.config.max_response_bytes,
+            max_response_bytes,
             url_policy: self.url_policy,
+            config: Arc::new(self.config),
         })
     }
 }
@@ -527,7 +660,10 @@ impl HttpClientBuilder {
 /// Blocking HTTP support, available through the `blocking` feature.
 #[cfg(feature = "blocking")]
 pub mod blocking {
-    use super::{AllowAllUrls, HttpConfig, HttpError, UrlPolicy};
+    use super::{
+        AllowAllUrls, HttpConfig, HttpError, UrlPolicy, apply_blocking_request_interceptors,
+        apply_response_interceptors, configure_blocking_builder,
+    };
     use serde::de::DeserializeOwned;
     use std::{fmt, io::Write, sync::Arc};
 
@@ -537,6 +673,7 @@ pub mod blocking {
         inner: reqwest::blocking::Client,
         max_response_bytes: usize,
         url_policy: Arc<dyn UrlPolicy>,
+        config: Arc<HttpConfig>,
     }
 
     impl fmt::Debug for HttpClient {
@@ -545,6 +682,7 @@ pub mod blocking {
                 .debug_struct("blocking::HttpClient")
                 .field("max_response_bytes", &self.max_response_bytes)
                 .field("url_policy", &"dyn UrlPolicy")
+                .field("config", &self.config)
                 .finish_non_exhaustive()
         }
     }
@@ -564,16 +702,17 @@ pub mod blocking {
         }
 
         fn build(config: &HttpConfig, url_policy: Arc<dyn UrlPolicy>) -> Result<Self, HttpError> {
-            let inner = reqwest::blocking::Client::builder()
+            let builder = reqwest::blocking::Client::builder()
                 .connect_timeout(config.connect_timeout)
                 .timeout(config.timeout)
                 .redirect(reqwest::redirect::Policy::limited(config.redirect_limit))
-                .user_agent(&config.user_agent)
-                .build()?;
+                .user_agent(&config.user_agent);
+            let inner = configure_blocking_builder(builder, config)?.build()?;
             Ok(Self {
                 inner,
                 max_response_bytes: config.max_response_bytes,
                 url_policy,
+                config: Arc::new(config.clone()),
             })
         }
 
@@ -582,9 +721,12 @@ pub mod blocking {
             &self,
             request: reqwest::blocking::RequestBuilder,
         ) -> Result<reqwest::blocking::Response, HttpError> {
-            let request = request.build()?;
+            let mut request = request.build()?;
+            apply_blocking_request_interceptors(&self.config, &mut request)?;
             self.url_policy.validate(request.url())?;
-            Ok(self.inner.execute(request)?.error_for_status()?)
+            let mut response = self.inner.execute(request)?;
+            apply_response_interceptors(&self.config, response.status(), response.headers_mut())?;
+            Ok(response.error_for_status()?)
         }
 
         /// Sends a GET request and reads a bounded UTF-8 body.
