@@ -7,6 +7,7 @@
 #![forbid(unsafe_code)]
 
 mod advanced_codec;
+mod boolean_util;
 mod builder;
 mod clone_support;
 mod codec;
@@ -22,6 +23,7 @@ mod compress;
 mod date;
 mod error;
 mod getter;
+mod hash_util;
 mod hutool_codec;
 mod id;
 mod iter_util;
@@ -39,6 +41,7 @@ pub use advanced_codec::{
     idna_decode_domain, idna_encode_domain, punycode_decode, punycode_encode,
     punycode_encode_prefixed, rot_decode, rot_encode,
 };
+pub use boolean_util::{BooleanError, BooleanUtil};
 pub use builder::{
     Builder, BuilderError, CompareToBuilder, EqualsBuilder, GenericBuilder, HashCodeBuilder, IdKey,
 };
@@ -80,6 +83,7 @@ pub use getter::{
     OptBasicTypeGetter, OptNullBasicTypeFromObjectGetter, OptNullBasicTypeFromStringGetter,
     OptNullBasicTypeGetter, StringMapGetter,
 };
+pub use hash_util::{HashError, HashUtil};
 pub use hutool_codec::{
     Base16Codec, Decoder, Encoder, PercentCodec, base64_decode_range_tolerant, base64_decode_text,
     base64_decode_to_file, base64_decode_to_writer, base64_decode_tolerant, base64_encode_config,
@@ -108,7 +112,7 @@ pub use string::{
 /// Common imports for applications using `hitool-core`.
 pub mod prelude {
     pub use crate::{
-        DateUtil, IdUtil, Mutable, MutableBool, MutableByte, MutableDouble, MutableFloat,
-        MutableInt, MutableLong, MutableObj, MutablePair, MutableShort, StrExt,
+        BooleanUtil, DateUtil, HashUtil, IdUtil, Mutable, MutableBool, MutableByte, MutableDouble,
+        MutableFloat, MutableInt, MutableLong, MutableObj, MutablePair, MutableShort, StrExt,
     };
 }
