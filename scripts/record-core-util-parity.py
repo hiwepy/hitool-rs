@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Record reviewed BooleanUtil, ByteUtil, classic HashUtil, and HexUtil APIs."""
+"""Record reviewed Hutool core utility families with executable evidence."""
 
 from __future__ import annotations
 
@@ -9,8 +9,12 @@ from pathlib import Path
 
 BOOLEAN_ROOT = "cn.hutool.core.util::BooleanUtil"
 BYTE_ROOT = "cn.hutool.core.util::ByteUtil"
+CHARSET_ROOT = "cn.hutool.core.util::CharsetUtil"
+CREDIT_CODE_ROOT = "cn.hutool.core.util::CreditCodeUtil"
 HASH_ROOT = "cn.hutool.core.util::HashUtil"
 HEX_ROOT = "cn.hutool.core.util::HexUtil"
+PAGE_ROOT = "cn.hutool.core.util::PageUtil"
+RADIX_ROOT = "cn.hutool.core.util::RadixUtil"
 MODERN_HASH_METHODS = {"murmur32", "murmur64", "murmur128", "cityHash32", "cityHash64", "cityHash128", "metroHash64", "metroHash128"}
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
@@ -42,6 +46,24 @@ def byte_evidence(name: str) -> str:
     return "primitive_integer_conversions_cover_defaults_endianness_offsets_and_bounds"
 
 
+def charset_evidence(name: str, signature: str) -> str:
+    if name == "convert" and "File" in signature:
+        return "files_and_candidate_detection_are_bounded_and_report_io_failures"
+    if name == "defaultCharset" and "InputStream" in signature:
+        return "files_and_candidate_detection_are_bounded_and_report_io_failures"
+    if name == "convert":
+        return "string_conversion_uses_exact_single_byte_utf16_and_encoding_rs_engines"
+    return "resolution_parsing_names_and_special_java_charsets_are_explicit"
+
+
+def credit_code_evidence(name: str) -> str:
+    if name == "isCreditCodeSimple":
+        return "simple_validation_enforces_every_structural_section"
+    if name == "randomCreditCode":
+        return "generated_codes_are_reproducible_with_an_injected_rng_and_always_valid"
+    return "weighted_validation_matches_hutool_vectors_and_rejects_bad_check_digits"
+
+
 def hash_evidence(name: str) -> str:
     if name in {"additiveHash", "rotatingHash", "universal", "zobrist"}:
         return "modular_and_table_hashes_validate_inputs_and_cover_every_bit_branch"
@@ -62,6 +84,12 @@ def hex_evidence(name: str) -> str:
     return "byte_and_text_facades_delegate_to_base16_and_character_engines"
 
 
+def page_evidence(name: str) -> str:
+    if name == "rainbow":
+        return "rainbow_covers_short_leading_centered_trailing_even_and_odd_windows"
+    return "numbering_offsets_segments_and_totals_match_hutool_semantics"
+
+
 def main() -> None:
     with INVENTORY.open(encoding="utf-8", newline="") as stream:
         inventory = list(csv.DictReader(stream))
@@ -80,6 +108,14 @@ def main() -> None:
             symbol = "hitool_core::ByteUtil"
             test = byte_evidence(name)
             notes = "Rust endian primitives implement checked offset conversion; generic traits replace Java Class dispatch while preserving primitive, atomic, adder, BigInteger, BigDecimal, and Java-canonical NaN behavior."
+        elif qualified_name.startswith(CHARSET_ROOT):
+            symbol = "hitool_core::CharsetUtil"
+            test = charset_evidence(name, row["signature"])
+            notes = "encoding_rs supplies mature WHATWG codecs while the thin facade preserves exact ISO-8859-1, ASCII, BOM-aware UTF-16, string repair, bounded file conversion, and candidate detection semantics."
+        elif qualified_name.startswith(CREDIT_CODE_ROOT):
+            symbol = "hitool_core::CreditCodeUtil"
+            test = credit_code_evidence(name)
+            notes = "A direct GB 32100-2015 weighted checksum implementation validates every section and rand-backed generation always appends a verified parity character."
         elif qualified_name.startswith(HASH_ROOT) and name not in MODERN_HASH_METHODS:
             symbol = "hitool_core::HashUtil"
             test = hash_evidence(name)
@@ -88,6 +124,14 @@ def main() -> None:
             symbol = "hitool_core::HexUtil"
             test = hex_evidence(name)
             notes = "The mature hex and num-bigint crates plus Rust UTF-16 and encoding primitives provide the engine; the facade preserves Hutool prefixes, Java numeric bit patterns, colors, pair formatting, and typed errors."
+        elif qualified_name.startswith(PAGE_ROOT):
+            symbol = "hitool_core::PageUtil"
+            test = page_evidence(name)
+            notes = "Explicit owned page-number configuration, Rust Range segments, Java-compatible wrapping offsets, checked total-page narrowing, and the complete rainbow algorithm implement Hutool behavior without hidden global state."
+        elif qualified_name.startswith(RADIX_ROOT):
+            symbol = "hitool_core::RadixUtil"
+            test = "integer_overloads_round_trip_zero_positive_negative_and_unicode_alphabets"
+            notes = "A bounded unique Unicode alphabet, checked arithmetic, and exact unsigned-i32 and narrowing semantics provide reversible custom-radix conversion with structured errors."
         else:
             continue
 
@@ -95,8 +139,12 @@ def main() -> None:
         source = {
             "hitool_core::BooleanUtil": "boolean_util.rs",
             "hitool_core::ByteUtil": "byte_util.rs",
+            "hitool_core::CharsetUtil": "charset_util.rs",
+            "hitool_core::CreditCodeUtil": "credit_code_util.rs",
             "hitool_core::HashUtil": "hash_util.rs",
             "hitool_core::HexUtil": "hex_util.rs",
+            "hitool_core::PageUtil": "page_util.rs",
+            "hitool_core::RadixUtil": "radix_util.rs",
         }[symbol]
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
@@ -106,14 +154,14 @@ def main() -> None:
             "notes": notes,
         }
 
-    if selected != 120:
-        raise SystemExit(f"expected 120 reviewed core util APIs, selected {selected}")
+    if selected != 154:
+        raise SystemExit(f"expected 154 reviewed core util APIs, selected {selected}")
 
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)
         writer.writeheader()
         writer.writerows(indexed.values())
-    print(f"recorded {selected} reviewed BooleanUtil/ByteUtil/classic HashUtil/HexUtil APIs")
+    print(f"recorded {selected} reviewed core util APIs")
 
 
 if __name__ == "__main__":

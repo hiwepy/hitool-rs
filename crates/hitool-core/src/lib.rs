@@ -10,6 +10,7 @@ mod advanced_codec;
 mod boolean_util;
 mod builder;
 mod byte_util;
+mod charset_util;
 mod clone_support;
 mod codec;
 mod coll_stream_util;
@@ -21,6 +22,7 @@ mod collection_partition;
 mod collection_types;
 mod compiler;
 mod compress;
+mod credit_code_util;
 mod date;
 mod error;
 mod getter;
@@ -31,7 +33,9 @@ mod id;
 mod iter_util;
 mod list_util;
 mod mutable;
+mod page_util;
 mod radix_codec;
+mod radix_util;
 mod stream;
 mod string;
 
@@ -50,6 +54,7 @@ pub use builder::{
 pub use byte_util::{
     ByteOrder, ByteUtil, ByteUtilError, BytesToNumber, DoubleAdder, LongAdder, NumberToBytes,
 };
+pub use charset_util::{Charset, CharsetError, CharsetUtil};
 pub use clone_support::{CloneRuntimeException, CloneSupport, Cloneable, DefaultCloneable};
 pub use codec::{
     base64_decode, base64_encode, base64_url_decode, base64_url_encode, hex_decode, hex_encode,
@@ -81,6 +86,7 @@ pub use compress::{
     DEFAULT_MAX_SIZE_DIFF, Deflate, Gzip, ZipCopyVisitor, ZipEntry, ZipLimits, ZipReader,
     ZipWriter, memory_zip_writer,
 };
+pub use credit_code_util::CreditCodeUtil;
 pub use date::DateUtil;
 pub use error::{CoreError, Result};
 pub use getter::{
@@ -103,6 +109,7 @@ pub use mutable::{
     Mutable, MutableBool, MutableByte, MutableDouble, MutableFloat, MutableInt, MutableLong,
     MutableObj, MutablePair, MutableShort,
 };
+pub use page_util::{PageError, PageUtil};
 pub use radix_codec::{
     Base32Decoder, Base32Encoder, Base58Decoder, Base58Encoder, Base62Decoder, Base62Encoder,
     base32_decode_text, base32_decode_to_file, base32_decode_to_writer, base32_encode_file,
@@ -110,6 +117,7 @@ pub use radix_codec::{
     base62_decode_to_file, base62_decode_to_writer, base62_encode_file, base62_encode_reader,
     base62_encode_text, bcd_encode_ascii_prefix,
 };
+pub use radix_util::{RadixError, RadixUtil};
 pub use stream::{CollectorCharacteristic, CollectorUtil, SimpleCollector, StreamUtil};
 pub use string::{
     StrExt, format_template, is_blank, lower_first, remove_all, remove_chars, split, upper_first,
@@ -118,8 +126,9 @@ pub use string::{
 /// Common imports for applications using `hitool-core`.
 pub mod prelude {
     pub use crate::{
-        BooleanUtil, ByteOrder, ByteUtil, DateUtil, HashUtil, HexUtil, IdUtil, Mutable,
-        MutableBool, MutableByte, MutableDouble, MutableFloat, MutableInt, MutableLong, MutableObj,
-        MutablePair, MutableShort, RgbColor, StrExt,
+        BooleanUtil, ByteOrder, ByteUtil, Charset, CharsetUtil, CreditCodeUtil, DateUtil, HashUtil,
+        HexUtil, IdUtil, Mutable, MutableBool, MutableByte, MutableDouble, MutableFloat,
+        MutableInt, MutableLong, MutableObj, MutablePair, MutableShort, PageUtil, RadixUtil,
+        RgbColor, StrExt,
     };
 }

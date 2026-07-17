@@ -1236,6 +1236,7 @@ dependencies = [
  "parking_lot",
  "percent-encoding",
  "proptest",
+ "rand 0.9.5",
  "rust_decimal",
  "serde",
  "serde_json",
