@@ -22,7 +22,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 | `hutool-system` | `hitool-system` | idiomatic | portable point-in-time host snapshot |
 | `hutool-aop` | `hitool-aop` | idiomatic | explicit interceptor chain instead of runtime proxying |
 | `hutool-script` | `hitool-script` | idiomatic | bounded Rhai engine; no JSR-223 globals |
-| `hutool-socket` | `hitool-socket` | idiomatic | Tokio TCP/UDP and bounded frames |
+| `hutool-socket` | `hitool-socket` | idiomatic | Tokio TCP/UDP, bounded AIO/NIO sessions, protocol traits, timeouts, and managed shutdown |
 | `hutool-extra` | `hitool-extra` | idiomatic | QR SVG, safe ZIP, bounded image transforms, injectable Rustls SMTP/MIME mail |
 | `hutool-poi` | `hitool-poi` | idiomatic | bounded XLSX read/write, CSV read/write, and minimal Word 2007+ DOCX generation |
 | `hutool-captcha` | `hitool-captcha` | idiomatic | generator/challenge verification, randomized SVG/PNG, and injectable speech-to-WAV audio rendering |
