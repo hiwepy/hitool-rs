@@ -24,6 +24,7 @@ mod date;
 mod error;
 mod getter;
 mod hash_util;
+mod hex_util;
 mod hutool_codec;
 mod id;
 mod iter_util;
@@ -84,6 +85,7 @@ pub use getter::{
     OptNullBasicTypeGetter, StringMapGetter,
 };
 pub use hash_util::{HashError, HashUtil};
+pub use hex_util::{HexUtil, HexUtilError, RgbColor};
 pub use hutool_codec::{
     Base16Codec, Decoder, Encoder, PercentCodec, base64_decode_range_tolerant, base64_decode_text,
     base64_decode_to_file, base64_decode_to_writer, base64_decode_tolerant, base64_encode_config,
@@ -112,7 +114,8 @@ pub use string::{
 /// Common imports for applications using `hitool-core`.
 pub mod prelude {
     pub use crate::{
-        BooleanUtil, DateUtil, HashUtil, IdUtil, Mutable, MutableBool, MutableByte, MutableDouble,
-        MutableFloat, MutableInt, MutableLong, MutableObj, MutablePair, MutableShort, StrExt,
+        BooleanUtil, DateUtil, HashUtil, HexUtil, IdUtil, Mutable, MutableBool, MutableByte,
+        MutableDouble, MutableFloat, MutableInt, MutableLong, MutableObj, MutablePair,
+        MutableShort, RgbColor, StrExt,
     };
 }

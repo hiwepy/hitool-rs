@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Record reviewed BooleanUtil and classic HashUtil APIs with executable evidence."""
+"""Record reviewed BooleanUtil, classic HashUtil, and HexUtil APIs."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from pathlib import Path
 
 BOOLEAN_ROOT = "cn.hutool.core.util::BooleanUtil"
 HASH_ROOT = "cn.hutool.core.util::HashUtil"
+HEX_ROOT = "cn.hutool.core.util::HexUtil"
 MODERN_HASH_METHODS = {"murmur32", "murmur64", "murmur128", "cityHash32", "cityHash64", "cityHash128", "metroHash64", "metroHash128"}
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
@@ -38,6 +39,18 @@ def hash_evidence(name: str) -> str:
     return "classic_hashes_match_java_utf16_wrapping_and_signed_byte_rules"
 
 
+def hex_evidence(name: str) -> str:
+    if name in {"isHexNumber", "toBigInteger"}:
+        return "recognition_preserves_hutool_prefix_sign_and_big_integer_rules"
+    if name in {"encodeColor", "decodeColor"}:
+        return "color_facade_matches_java_decode_and_padded_encoding"
+    if name in {"appendHex", "format"}:
+        return "append_and_pair_formatting_cover_empty_odd_and_prefix_forms"
+    if name.startswith("toHex") or name.startswith("hexTo") or name == "toUnicodeHex":
+        return "numeric_conversions_preserve_java_bit_patterns_and_prefix_fallthrough"
+    return "byte_and_text_facades_delegate_to_base16_and_character_engines"
+
+
 def main() -> None:
     with INVENTORY.open(encoding="utf-8", newline="") as stream:
         inventory = list(csv.DictReader(stream))
@@ -56,11 +69,19 @@ def main() -> None:
             symbol = "hitool_core::HashUtil"
             test = hash_evidence(name)
             notes = "Explicit wrapping arithmetic and Java UTF-16 units preserve Hutool's classic hash formulas; identity hashing is lifetime-bound and table algorithms return validated errors. Murmur, City, and Metro methods remain uncounted pending a version-compatible engine."
+        elif qualified_name.startswith(HEX_ROOT):
+            symbol = "hitool_core::HexUtil"
+            test = hex_evidence(name)
+            notes = "The mature hex and num-bigint crates plus Rust UTF-16 and encoding primitives provide the engine; the facade preserves Hutool prefixes, Java numeric bit patterns, colors, pair formatting, and typed errors."
         else:
             continue
 
         selected += 1
-        source = "boolean_util.rs" if symbol.endswith("BooleanUtil") else "hash_util.rs"
+        source = {
+            "hitool_core::BooleanUtil": "boolean_util.rs",
+            "hitool_core::HashUtil": "hash_util.rs",
+            "hitool_core::HexUtil": "hex_util.rs",
+        }[symbol]
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
@@ -69,14 +90,14 @@ def main() -> None:
             "notes": notes,
         }
 
-    if selected != 59:
-        raise SystemExit(f"expected 59 reviewed core util APIs, selected {selected}")
+    if selected != 91:
+        raise SystemExit(f"expected 91 reviewed core util APIs, selected {selected}")
 
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)
         writer.writeheader()
         writer.writerows(indexed.values())
-    print(f"recorded {selected} reviewed BooleanUtil/classic HashUtil APIs")
+    print(f"recorded {selected} reviewed BooleanUtil/classic HashUtil/HexUtil APIs")
 
 
 if __name__ == "__main__":

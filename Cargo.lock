@@ -1232,6 +1232,7 @@ dependencies = [
  "hex",
  "idna",
  "indexmap",
+ "num-bigint",
  "parking_lot",
  "percent-encoding",
  "proptest",
