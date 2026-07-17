@@ -31,6 +31,7 @@ Regenerate and verify with:
 ./scripts/record-system-parity.py
 ./scripts/record-cron-parity.py
 ./scripts/record-setting-parity.py
+./scripts/record-ai-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```

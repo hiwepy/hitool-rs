@@ -1152,10 +1152,12 @@ dependencies = [
  "async-trait",
  "futures-core",
  "hitool-http",
+ "reqwest",
  "secrecy",
  "serde",
  "serde_json",
  "thiserror",
+ "tokio",
  "url",
 ]
 

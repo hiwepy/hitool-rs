@@ -423,6 +423,7 @@ fn retry_after(response: &reqwest::Response) -> Option<Duration> {
 pub struct HttpClientBuilder {
     config: HttpConfig,
     url_policy: Arc<dyn UrlPolicy>,
+    proxy: Option<reqwest::Proxy>,
 }
 
 impl Default for HttpClientBuilder {
@@ -430,6 +431,7 @@ impl Default for HttpClientBuilder {
         Self {
             config: HttpConfig::default(),
             url_policy: Arc::new(AllowAllUrls),
+            proxy: None,
         }
     }
 }
@@ -479,6 +481,12 @@ impl HttpClientBuilder {
         self
     }
 
+    /// Routes requests through an HTTP, HTTPS, or SOCKS proxy.
+    pub fn proxy(mut self, proxy_url: impl AsRef<str>) -> Result<Self, HttpError> {
+        self.proxy = Some(reqwest::Proxy::all(proxy_url.as_ref())?);
+        Ok(self)
+    }
+
     /// Installs an application-specific URL/SSRF policy.
     #[must_use]
     pub fn url_policy<P: UrlPolicy + 'static>(mut self, policy: P) -> Self {
@@ -488,14 +496,17 @@ impl HttpClientBuilder {
 
     /// Builds a pooled Rustls client.
     pub fn build(self) -> Result<HttpClient, HttpError> {
-        let inner = reqwest::Client::builder()
+        let mut builder = reqwest::Client::builder()
             .connect_timeout(self.config.connect_timeout)
             .timeout(self.config.timeout)
             .redirect(reqwest::redirect::Policy::limited(
                 self.config.redirect_limit,
             ))
-            .user_agent(&self.config.user_agent)
-            .build()?;
+            .user_agent(&self.config.user_agent);
+        if let Some(proxy) = self.proxy {
+            builder = builder.proxy(proxy);
+        }
+        let inner = builder.build()?;
         Ok(HttpClient {
             inner,
             max_response_bytes: self.config.max_response_bytes,

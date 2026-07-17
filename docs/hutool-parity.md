@@ -27,7 +27,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 | `hutool-poi` | `hitool-poi` | idiomatic | bounded XLSX read/write, CSV read/write, and minimal Word 2007+ DOCX generation |
 | `hutool-captcha` | `hitool-captcha` | idiomatic | generator/challenge verification, randomized SVG/PNG, and injectable speech-to-WAV audio rendering |
 | `hutool-db` | `hitool-db` | idiomatic | SQLx pools, explicit transactions and pagination, not a custom ORM; PostgreSQL/MySQL/SQLite integration-tested |
-| `hutool-ai` | `hitool-ai` | idiomatic | provider-neutral chat plus bounded OpenAI-compatible JSON and SSE clients |
+| `hutool-ai` | `hitool-ai` | complete | provider-neutral core plus Hutool-aligned configs, models, factory and exhaustive operations for seven providers; bounded JSON/media, proxy, redacted secrets and SSE |
 | `StrUtil`/`JSONUtil` | `hitool-compat-hutool` | compatible | focused migration facade |
 | Bean reflection copy | none | unsafe-to-copy | use Serde, `From`/`TryFrom`, or derive macros |
 | global HTTP/config/DB singletons | none | unsafe-to-copy | clients and pools are explicitly injected |
