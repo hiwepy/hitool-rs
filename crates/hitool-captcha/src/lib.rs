@@ -10,10 +10,17 @@ use thiserror::Error;
 #[cfg(feature = "audio")]
 mod audio;
 #[cfg(feature = "raster")]
+mod compat;
+#[cfg(feature = "raster")]
 mod raster;
 
 #[cfg(feature = "audio")]
 pub use audio::{AudioRenderer, AudioSpec, AudioSynthesizer};
+#[cfg(feature = "raster")]
+pub use compat::{
+    AbstractCaptcha, AbstractGenerator, CaptchaColor, CaptchaFont, CaptchaStroke, CaptchaUtil,
+    CircleCaptcha, GifCaptcha, ICaptcha, LineCaptcha, MathGenerator, RandomGenerator, ShearCaptcha,
+};
 #[cfg(feature = "raster")]
 pub use raster::PngRenderer;
 
@@ -138,8 +145,8 @@ impl CaptchaRenderer for SvgRenderer {
             .expect("writing to a String cannot fail");
         }
 
-        let glyph_count =
-            u16::try_from(code.chars().count()).map_err(|_| CaptchaError::InvalidRenderCode)?;
+        #[allow(clippy::cast_possible_truncation)]
+        let glyph_count = code.chars().count() as u16;
         let glyphs = f32::from(glyph_count);
         let step = f32::from(self.width) / (glyphs + 1.0);
         let baseline = f32::from(self.height) * 0.7;
@@ -269,6 +276,10 @@ pub enum CaptchaError {
     /// User input does not match the challenge.
     #[error("CAPTCHA code does not match")]
     Mismatch,
+    /// Filesystem or stream output failed.
+    #[cfg(feature = "raster")]
+    #[error("CAPTCHA I/O failed: {0}")]
+    Io(String),
 }
 
 #[cfg(feature = "raster")]
@@ -335,6 +346,20 @@ mod tests {
         assert_eq!(code.len(), 6);
         assert!(generator.verify(&code, &code.to_ascii_lowercase()));
         assert!(!generator.verify(&code, "wrong"));
+        assert_eq!(
+            AlphanumericGenerator::with_alphabet(0, b"A".to_vec()).unwrap_err(),
+            CaptchaError::InvalidLength
+        );
+        assert_eq!(
+            AlphanumericGenerator::with_alphabet(2, Vec::new()).unwrap_err(),
+            CaptchaError::InvalidAlphabet
+        );
+        assert_eq!(
+            AlphanumericGenerator::with_alphabet(2, vec![0xff]).unwrap_err(),
+            CaptchaError::InvalidAlphabet
+        );
+        let fixed = AlphanumericGenerator::with_alphabet(2, b"Z".to_vec()).unwrap();
+        assert_eq!(fixed.generate(), "ZZ");
     }
 
     #[test]
@@ -348,6 +373,17 @@ mod tests {
     }
 
     #[test]
+    fn challenge_covers_success_and_mismatch() {
+        let generator = AlphanumericGenerator::with_alphabet(2, b"Z".to_vec()).unwrap();
+        let challenge = CaptchaChallenge::generate(&generator, Duration::from_secs(60));
+        assert_eq!(challenge.verify(&generator, "zz"), Ok(()));
+        assert_eq!(
+            challenge.verify(&generator, "no"),
+            Err(CaptchaError::Mismatch)
+        );
+    }
+
+    #[test]
     fn svg_renderer_escapes_code_and_returns_media_metadata() {
         let artifact = SvgRenderer::default().render("A<&").unwrap();
         let svg = std::str::from_utf8(artifact.bytes()).unwrap();
@@ -356,17 +392,40 @@ mod tests {
         assert!(svg.contains("&lt;"));
         assert!(svg.contains("&amp;"));
         assert!(!svg.contains("><</text>"));
+        let escaped = SvgRenderer::new(100, 30)
+            .unwrap()
+            .with_noise_lines(0)
+            .render(">\"'")
+            .unwrap();
+        let escaped = std::str::from_utf8(escaped.bytes()).unwrap();
+        assert!(escaped.contains("&gt;"));
+        assert!(escaped.contains("&quot;"));
+        assert!(escaped.contains("&apos;"));
     }
 
     #[test]
     fn svg_renderer_rejects_unusable_inputs() {
-        assert!(matches!(
-            SvgRenderer::new(79, 30),
-            Err(CaptchaError::InvalidDimensions)
-        ));
+        assert_eq!(
+            SvgRenderer::new(79, 30).unwrap_err(),
+            CaptchaError::InvalidDimensions
+        );
         assert_eq!(
             SvgRenderer::default().render(""),
             Err(CaptchaError::InvalidRenderCode)
         );
+        assert_eq!(
+            SvgRenderer::default().render(&"A".repeat(33)),
+            Err(CaptchaError::InvalidRenderCode)
+        );
+        let bytes = SvgRenderer::default().render("A").unwrap().into_bytes();
+        assert!(bytes.starts_with(b"<svg"));
+
+        #[cfg(feature = "raster")]
+        {
+            let image_error = image::load_from_memory(b"not-an-image")
+                .map_err(CaptchaError::from)
+                .unwrap_err();
+            assert!(image_error.to_string().contains("image encoding failed"));
+        }
     }
 }

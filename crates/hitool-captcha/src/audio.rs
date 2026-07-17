@@ -32,12 +32,11 @@ impl<S> AudioRenderer<S> {
         sample_rate: u32,
         max_duration_seconds: u16,
     ) -> Result<Self, CaptchaError> {
-        if !(8_000..=48_000).contains(&sample_rate) || max_duration_seconds == 0 {
+        if !(8_000..=48_000).contains(&sample_rate) || !(1..=600).contains(&max_duration_seconds) {
             return Err(CaptchaError::MediaLimit("audio format"));
         }
-        let max_samples =
-            usize::try_from(u64::from(sample_rate).saturating_mul(u64::from(max_duration_seconds)))
-                .map_err(|_| CaptchaError::MediaLimit("audio sample count"))?;
+        #[allow(clippy::cast_possible_truncation)]
+        let max_samples = sample_rate as usize * usize::from(max_duration_seconds);
         Ok(Self {
             synthesizer,
             spec: AudioSpec {
@@ -81,17 +80,15 @@ impl<S: AudioSynthesizer> CaptchaRenderer for AudioRenderer<S> {
         }
         Ok(RenderedCaptcha::new(
             "audio/wav",
-            encode_wav(&samples, self.spec.sample_rate)?,
+            encode_wav(&samples, self.spec.sample_rate),
         ))
     }
 }
 
-fn encode_wav(samples: &[i16], sample_rate: u32) -> Result<Vec<u8>, CaptchaError> {
-    let data_size = u32::try_from(samples.len().saturating_mul(2))
-        .map_err(|_| CaptchaError::MediaLimit("WAV byte count"))?;
-    let riff_size = 36_u32
-        .checked_add(data_size)
-        .ok_or(CaptchaError::MediaLimit("WAV byte count"))?;
+fn encode_wav(samples: &[i16], sample_rate: u32) -> Vec<u8> {
+    #[allow(clippy::cast_possible_truncation)]
+    let data_size = samples.len().saturating_mul(2) as u32;
+    let riff_size = 36_u32 + data_size;
     let mut bytes = Vec::with_capacity(usize::try_from(riff_size).unwrap_or(0).saturating_add(8));
     bytes.extend_from_slice(b"RIFF");
     bytes.extend_from_slice(&riff_size.to_le_bytes());
@@ -108,7 +105,7 @@ fn encode_wav(samples: &[i16], sample_rate: u32) -> Result<Vec<u8>, CaptchaError
     for sample in samples {
         bytes.extend_from_slice(&sample.to_le_bytes());
     }
-    Ok(bytes)
+    bytes
 }
 
 #[cfg(test)]
@@ -116,17 +113,25 @@ mod tests {
     use super::*;
 
     #[derive(Debug, Clone, Copy)]
-    struct FakeSpeech;
+    enum TestSpeech {
+        Normal,
+        Failing,
+        Excessive,
+    }
 
-    impl AudioSynthesizer for FakeSpeech {
-        fn synthesize(&self, code: &str, _spec: AudioSpec) -> Result<Vec<i16>, CaptchaError> {
-            Ok(vec![1_000; code.len() * 100])
+    impl AudioSynthesizer for TestSpeech {
+        fn synthesize(&self, code: &str, spec: AudioSpec) -> Result<Vec<i16>, CaptchaError> {
+            match self {
+                Self::Normal => Ok(vec![1_000; code.len() * 100]),
+                Self::Failing => Err(CaptchaError::SpeechSynthesis("offline".to_owned())),
+                Self::Excessive => Ok(vec![0; spec.max_samples + 1]),
+            }
         }
     }
 
     #[test]
     fn renders_bounded_pcm_wav() {
-        let renderer = AudioRenderer::new(FakeSpeech, 16_000, 2)
+        let renderer = AudioRenderer::new(TestSpeech::Normal, 16_000, 2)
             .unwrap()
             .with_noise_amplitude(0);
         let artifact = renderer.render("A2B9").unwrap();
@@ -134,5 +139,36 @@ mod tests {
         assert_eq!(&artifact.bytes()[..4], b"RIFF");
         assert_eq!(&artifact.bytes()[8..12], b"WAVE");
         assert_eq!(artifact.bytes().len(), 44 + 4 * 100 * 2);
+    }
+
+    #[test]
+    fn validates_audio_limits_and_error_boundaries() {
+        for (rate, duration) in [(7_999, 1), (8_000, 0), (8_000, 601)] {
+            assert_eq!(
+                AudioRenderer::new(TestSpeech::Normal, rate, duration).unwrap_err(),
+                CaptchaError::MediaLimit("audio format")
+            );
+        }
+        let noisy = AudioRenderer::new(TestSpeech::Normal, 8_000, 1)
+            .unwrap()
+            .with_noise_amplitude(i16::MIN);
+        assert!(noisy.render("A").unwrap().bytes().starts_with(b"RIFF"));
+        assert_eq!(noisy.render(""), Err(CaptchaError::InvalidRenderCode));
+        assert_eq!(
+            noisy.render(&"A".repeat(33)),
+            Err(CaptchaError::InvalidRenderCode)
+        );
+        assert_eq!(
+            AudioRenderer::new(TestSpeech::Failing, 8_000, 1)
+                .unwrap()
+                .render("A"),
+            Err(CaptchaError::SpeechSynthesis("offline".to_owned()))
+        );
+        assert_eq!(
+            AudioRenderer::new(TestSpeech::Excessive, 8_000, 1)
+                .unwrap()
+                .render("A"),
+            Err(CaptchaError::MediaLimit("audio sample count"))
+        );
     }
 }

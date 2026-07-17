@@ -1088,6 +1088,7 @@ dependencies = [
 name = "hitool-captcha"
 version = "0.1.0"
 dependencies = [
+ "base64",
  "font8x8",
  "image",
  "rand 0.9.5",

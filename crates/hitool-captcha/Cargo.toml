@@ -15,10 +15,11 @@ workspace = true
 
 [features]
 default = []
-raster = ["dep:font8x8", "dep:image"]
+raster = ["dep:base64", "dep:font8x8", "dep:image"]
 audio = []
 
 [dependencies]
+base64 = { workspace = true, optional = true }
 font8x8 = { workspace = true, optional = true }
 image = { workspace = true, optional = true }
 rand.workspace = true

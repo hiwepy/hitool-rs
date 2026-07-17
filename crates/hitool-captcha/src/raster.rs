@@ -12,7 +12,6 @@ pub struct PngRenderer {
     width: u16,
     height: u16,
     noise_lines: u8,
-    max_pixels: u32,
 }
 
 impl PngRenderer {
@@ -26,7 +25,6 @@ impl PngRenderer {
             width,
             height,
             noise_lines: 8,
-            max_pixels: 4_000_000,
         })
     }
 
@@ -44,7 +42,6 @@ impl Default for PngRenderer {
             width: 180,
             height: 60,
             noise_lines: 8,
-            max_pixels: 4_000_000,
         }
     }
 }
@@ -54,10 +51,6 @@ impl CaptchaRenderer for PngRenderer {
         let glyph_count = code.chars().count();
         if glyph_count == 0 || glyph_count > 32 {
             return Err(CaptchaError::InvalidRenderCode);
-        }
-        let pixels = u32::from(self.width).saturating_mul(u32::from(self.height));
-        if pixels > self.max_pixels {
-            return Err(CaptchaError::MediaLimit("raster pixel count"));
         }
         let mut image = RgbaImage::from_pixel(
             u32::from(self.width),
@@ -78,26 +71,23 @@ impl CaptchaRenderer for PngRenderer {
             draw_line(&mut image, start, end, color);
         }
 
-        let glyph_count =
-            u32::try_from(glyph_count).map_err(|_| CaptchaError::InvalidRenderCode)?;
+        #[allow(clippy::cast_possible_truncation)]
+        let glyph_count = glyph_count as u32;
         let slot = u32::from(self.width) / (glyph_count + 1);
         let scale = (u32::from(self.height) / 11).clamp(2, 7);
         for (index, character) in code.chars().enumerate() {
             let bitmap = BASIC_FONTS
                 .get(character)
                 .or_else(|| BASIC_FONTS.get('?'))
-                .ok_or(CaptchaError::InvalidRenderCode)?;
-            let index = u32::try_from(index).map_err(|_| CaptchaError::InvalidRenderCode)?;
+                .unwrap_or([0; 8]);
+            #[allow(clippy::cast_possible_truncation)]
+            let index = index as u32;
             let glyph_width = 8 * scale;
             let base_x = slot
                 .saturating_mul(index + 1)
                 .saturating_sub(glyph_width / 2);
             let max_y = u32::from(self.height).saturating_sub(8 * scale);
-            let y = if max_y == 0 {
-                0
-            } else {
-                rng.random_range(0..=max_y)
-            };
+            let y = rng.random_range(0..=max_y);
             draw_glyph(
                 &mut image,
                 bitmap,
@@ -109,7 +99,9 @@ impl CaptchaRenderer for PngRenderer {
         }
 
         let mut bytes = Vec::new();
-        DynamicImage::ImageRgba8(image).write_to(&mut Cursor::new(&mut bytes), ImageFormat::Png)?;
+        DynamicImage::ImageRgba8(image)
+            .write_to(&mut Cursor::new(&mut bytes), ImageFormat::Png)
+            .expect("encoding an in-memory RGBA image as PNG is infallible");
         Ok(RenderedCaptcha::new("image/png", bytes))
     }
 }
@@ -183,5 +175,37 @@ mod tests {
         assert!(artifact.bytes().starts_with(b"\x89PNG\r\n\x1a\n"));
         let decoded = image::load_from_memory(artifact.bytes()).unwrap();
         assert_eq!((decoded.width(), decoded.height()), (180, 60));
+    }
+
+    #[test]
+    fn validates_dimensions_code_and_renderer_options() {
+        assert_eq!(
+            PngRenderer::new(79, 30).unwrap_err(),
+            CaptchaError::InvalidDimensions
+        );
+        assert_eq!(
+            PngRenderer::new(u16::MAX, u16::MAX).unwrap_err(),
+            CaptchaError::InvalidDimensions
+        );
+        let renderer = PngRenderer::new(80, 30).unwrap().with_noise_lines(0);
+        assert_eq!(renderer.render(""), Err(CaptchaError::InvalidRenderCode));
+        assert_eq!(
+            renderer.render(&"A".repeat(33)),
+            Err(CaptchaError::InvalidRenderCode)
+        );
+        assert!(
+            renderer
+                .render("🙂")
+                .unwrap()
+                .bytes()
+                .starts_with(b"\x89PNG")
+        );
+
+        let mut image = RgbaImage::new(2, 2);
+        draw_line(&mut image, (-2, -2), (1, 1), Rgba([1, 2, 3, 4]));
+        draw_line(&mut image, (3, 3), (4, 4), Rgba([1, 2, 3, 4]));
+        draw_line(&mut image, (0, 0), (0, 1), Rgba([1, 2, 3, 4]));
+        draw_glyph(&mut image, [u8::MAX; 8], 3, 3, 1, Rgba([1, 2, 3, 4]));
+        assert_eq!(*image.get_pixel(1, 1), Rgba([1, 2, 3, 4]));
     }
 }
