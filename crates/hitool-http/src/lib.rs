@@ -507,14 +507,6 @@ fn configure_async_builder(
         let version = protocol.reqwest();
         builder = builder.min_tls_version(version).max_tls_version(version);
     }
-    #[cfg(feature = "cookies")]
-    {
-        builder = builder.cookie_store(config.follow_redirects_cookie);
-    }
-    #[cfg(not(feature = "cookies"))]
-    if config.follow_redirects_cookie {
-        return Err(HttpConfigError::CookiesFeatureDisabled.into());
-    }
     Ok(builder)
 }
 
@@ -551,14 +543,6 @@ fn configure_blocking_builder(
     if let Some(protocol) = config.tls_protocol {
         let version = protocol.reqwest();
         builder = builder.min_tls_version(version).max_tls_version(version);
-    }
-    #[cfg(feature = "cookies")]
-    {
-        builder = builder.cookie_store(config.follow_redirects_cookie);
-    }
-    #[cfg(not(feature = "cookies"))]
-    if config.follow_redirects_cookie {
-        return Err(HttpConfigError::CookiesFeatureDisabled.into());
     }
     Ok(builder)
 }

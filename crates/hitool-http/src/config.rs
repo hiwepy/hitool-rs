@@ -7,7 +7,7 @@ use thiserror::Error;
 /// Explicit hostname-verification policy for TLS connections.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum HostnameVerification {
-    /// Verify certificate hostnames using Rustls and WebPKI.
+    /// Verify certificate hostnames using Rustls and `WebPKI`.
     #[default]
     Strict,
     /// Accept invalid certificate hostnames. This is dangerous outside tests.
@@ -47,9 +47,6 @@ pub enum HttpConfigError {
     /// Rustls intentionally does not support the requested protocol.
     #[error("unsupported or insecure TLS protocol: {0}")]
     UnsupportedTlsProtocol(String),
-    /// Cookie persistence was requested without compiling the cookie engine.
-    #[error("redirect cookie persistence requires the `cookies` Cargo feature")]
-    CookiesFeatureDisabled,
 }
 
 /// Error returned by a configured request or response interceptor.
@@ -190,20 +187,6 @@ pub struct HttpConfig {
     pub redirect_limit: usize,
     /// Whether request-cache headers are disabled explicitly.
     pub disable_cache: bool,
-    /// Streaming upload block size; `None` lets Reqwest choose.
-    pub block_size: Option<usize>,
-    /// Whether compatibility response readers may tolerate premature EOF.
-    pub ignore_eof_error: bool,
-    /// Whether compatibility request builders normalize pre-encoded URLs.
-    pub decode_url: bool,
-    /// Whether interceptors should also run for compatibility redirects.
-    pub interceptor_on_redirect: bool,
-    /// Whether the owned Reqwest client persists redirect cookies.
-    pub follow_redirects_cookie: bool,
-    /// Whether compatibility requests synthesize form content type when absent.
-    pub use_default_content_type_if_null: bool,
-    /// Whether compatibility readers ignore a declared Content-Length.
-    pub ignore_content_length: bool,
     pub(crate) proxy_url: Option<String>,
     pub(crate) hostname_verification: HostnameVerification,
     pub(crate) tls_identity: Option<reqwest::Identity>,
@@ -223,16 +206,6 @@ impl fmt::Debug for HttpConfig {
             .field("user_agent", &self.user_agent)
             .field("redirect_limit", &self.redirect_limit)
             .field("disable_cache", &self.disable_cache)
-            .field("block_size", &self.block_size)
-            .field("ignore_eof_error", &self.ignore_eof_error)
-            .field("decode_url", &self.decode_url)
-            .field("interceptor_on_redirect", &self.interceptor_on_redirect)
-            .field("follow_redirects_cookie", &self.follow_redirects_cookie)
-            .field(
-                "use_default_content_type_if_null",
-                &self.use_default_content_type_if_null,
-            )
-            .field("ignore_content_length", &self.ignore_content_length)
             .field("proxy_url", &self.proxy_url.as_ref().map(|_| "<redacted>"))
             .field("hostname_verification", &self.hostname_verification)
             .field(
@@ -256,13 +229,6 @@ impl Default for HttpConfig {
             user_agent: concat!("hitool-http/", env!("CARGO_PKG_VERSION")).to_owned(),
             redirect_limit: 5,
             disable_cache: false,
-            block_size: None,
-            ignore_eof_error: false,
-            decode_url: false,
-            interceptor_on_redirect: false,
-            follow_redirects_cookie: false,
-            use_default_content_type_if_null: true,
-            ignore_content_length: false,
             proxy_url: None,
             hostname_verification: HostnameVerification::Strict,
             tls_identity: None,
@@ -315,7 +281,7 @@ impl HttpConfig {
 
     /// Sets the redirect limit, clamping negative values to zero.
     pub fn set_max_redirect_count(&mut self, count: i32) -> &mut Self {
-        self.redirect_limit = usize::try_from(count.max(0)).expect("non-negative i32 fits usize");
+        self.redirect_limit = usize::try_from(count).unwrap_or_default();
         self
     }
 
@@ -368,24 +334,6 @@ impl HttpConfig {
         Ok(self)
     }
 
-    /// Sets a streaming block size; non-positive values disable the override.
-    pub fn set_block_size(&mut self, block_size: i32) -> &mut Self {
-        self.block_size = usize::try_from(block_size).ok().filter(|size| *size > 0);
-        self
-    }
-
-    /// Sets premature-EOF compatibility handling.
-    pub const fn set_ignore_eof_error(&mut self, ignore: bool) -> &mut Self {
-        self.ignore_eof_error = ignore;
-        self
-    }
-
-    /// Sets mixed encoded/unencoded URL normalization.
-    pub const fn set_decode_url(&mut self, decode: bool) -> &mut Self {
-        self.decode_url = decode;
-        self
-    }
-
     /// Adds an owned request interceptor.
     pub fn add_request_interceptor<F>(&mut self, interceptor: F) -> &mut Self
     where
@@ -401,30 +349,6 @@ impl HttpConfig {
         F: Fn(&mut HttpResponseContext) -> Result<(), HttpInterceptorError> + Send + Sync + 'static,
     {
         self.response_interceptors.push(Arc::new(interceptor));
-        self
-    }
-
-    /// Sets whether compatibility redirects invoke interceptors again.
-    pub const fn set_interceptor_on_redirect(&mut self, enabled: bool) -> &mut Self {
-        self.interceptor_on_redirect = enabled;
-        self
-    }
-
-    /// Sets whether the owned client persists redirect cookies.
-    pub const fn set_follow_redirects_cookie(&mut self, enabled: bool) -> &mut Self {
-        self.follow_redirects_cookie = enabled;
-        self
-    }
-
-    /// Sets whether missing request content types default to form encoding.
-    pub const fn set_use_default_content_type_if_null(&mut self, enabled: bool) -> &mut Self {
-        self.use_default_content_type_if_null = enabled;
-        self
-    }
-
-    /// Sets whether compatibility readers disregard Content-Length.
-    pub const fn set_ignore_content_length(&mut self, ignore: bool) -> &mut Self {
-        self.ignore_content_length = ignore;
         self
     }
 
@@ -458,8 +382,55 @@ fn duration(milliseconds: i64) -> Result<Duration, HttpConfigError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rcgen::generate_simple_self_signed;
     use reqwest::header::{HeaderValue, USER_AGENT};
+
+    const TEST_CERTIFICATE: &[u8] = b"-----BEGIN CERTIFICATE-----\n\
+MIIDCTCCAfGgAwIBAgIUVL3XcVRe1qTTuQ5VKN2jnI5G5AAwDQYJKoZIhvcNAQEL\n\
+BQAwFDESMBAGA1UEAwwJbG9jYWxob3N0MB4XDTI2MDcxNzA2NTMwM1oXDTM2MDcx\n\
+NDA2NTMwM1owFDESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEF\n\
+AAOCAQ8AMIIBCgKCAQEA5BN66ifqaDqwJ/ZDD4bi0fbu5blFq6xbKCw3O5nxd6cF\n\
+2HYyeQ7TOt+yKBg1T1d91T8509MVjT519rFawRGEecusa2T/KWfpwKoMgJcWN4gT\n\
+XY1c2+90jrGc1uVn1KVdCTEBYRI/BCTrUknioHVaQ2vH3C9EqUGi4U/PwFC63Kpe\n\
+pMXsfUAk5FhQjUe4OUQGx04vO9E6/kS9E9hiXew7yLhKYznynluRHYdnNWrto7/r\n\
+hRJP8JLzIJp15tWrqr4e+dXPtyQ8Ucn4R0VmDQ65U4S7VaVr8IbTkhmG0xQ/V4u0\n\
+ZW25pLw548oqv+9Q0cyJAd7kqLheFJ6ayEglBYe0WQIDAQABo1MwUTAdBgNVHQ4E\n\
+FgQU0Sv6ijkw7zBg2ASZ+0qUI9WntxQwHwYDVR0jBBgwFoAU0Sv6ijkw7zBg2ASZ\n\
++0qUI9WntxQwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAY81o\n\
+qCkhlXS9whVwOH1tXHfVLw+mwT4NQJXg9T5bm+Q0OQiBBp4FsXzqMJnhVjF9Etgi\n\
+Pp9nGE9XYvKDNQ2SKt/fQBQlc0ghc5qWheCK8KOyhHFOgPxBnefMv4UlqZQ0elJr\n\
+ffUilomB/oHkljHcps0z0ggvi4gBtCbMMSp/xwvNLOyPiPdsnM8Q6EIljQ7LijmZ\n\
+o9YN624IFsKOEol0P5jKu66FR842YXvAloOZPvYs/LIqO664jIvqkRX2Mn2HtHQv\n\
+NQNPDRHIDYoci/wZs6s6RY0BmTXpJDfXh7YmE1ZKcxZz6gg3VzuOTnFTunedyaoX\n\
+4cZ8TirVcUUaDfHSIA==\n\
+-----END CERTIFICATE-----\n";
+    const TEST_PRIVATE_KEY: &[u8] = b"-----BEGIN PRIVATE KEY-----\n\
+MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDkE3rqJ+poOrAn\n\
+9kMPhuLR9u7luUWrrFsoLDc7mfF3pwXYdjJ5DtM637IoGDVPV33VPznT0xWNPnX2\n\
+sVrBEYR5y6xrZP8pZ+nAqgyAlxY3iBNdjVzb73SOsZzW5WfUpV0JMQFhEj8EJOtS\n\
+SeKgdVpDa8fcL0SpQaLhT8/AULrcql6kxex9QCTkWFCNR7g5RAbHTi870Tr+RL0T\n\
+2GJd7DvIuEpjOfKeW5Edh2c1au2jv+uFEk/wkvMgmnXm1auqvh751c+3JDxRyfhH\n\
+RWYNDrlThLtVpWvwhtOSGYbTFD9Xi7RlbbmkvDnjyiq/71DRzIkB3uSouF4UnprI\n\
+SCUFh7RZAgMBAAECggEAEvTHh4Svx9/w2jFum3DDk13ptzAx6TXXEbyzDoIZ/q7k\n\
+Hnycb1FbHw6OmSSB8ck8zSeHH+LwbJ/fYBSXjWpuT00tVHO9fWyEkh3QEjP8hbsK\n\
+mQDx0dnSHzYF6hqBCbyAwg3PpojEsgx7fohjjKCUUvw3TUakd0jcR8vBYaOUFFjw\n\
+fcXIlcLywJkUaGjZAhIqQzuT1xJFr4+t9qvtv/z+LDB71vjpreyY3zyn/aIUsA97\n\
+KDn4sTJcQNnB1dV6FoJ/8u48R/7iHRvAzLSvvOYvEN0VRLpFzbDyQ5cxJ17aVMj9\n\
+dEJfDHGm3E7KBDjfX46++EjDBPCeczoklVR6HK3ufQKBgQD224PZW0y0eOvvXAki\n\
+xlpoEItxytc9pRB9vqtgCYm3133Xz7YmQUiebK2JC9ZwlWGia+FFyf6FC07VL2F+\n\
+Egw20jiHVo4yjvnF3LIwplXhJ6rQDXP1xFAt3u6TjcTnd2WuTtrqjtpT43W61Wfg\n\
+BvYas1lfZW2jzwFnEQYbdeoxuwKBgQDsheWEp67kMqhBWfri8/Y/Mc9VBwl2qLVH\n\
+uppyzPKa0mneFkafcNjqJRmiRd6jBi7Cjk4utR+SKwIXE+KIrg0z/Wa1Kuf/hAec\n\
+wIMdQ3oab83Ji8xj5F1gQhF9O0CBfHMvDxvjfc9R3UkYZ5jNT9Zb7c/DgLBR2U1Q\n\
+UMx5RMq2+wKBgQDNCDw1rxhBmWHVN+s6n+b9Iii/xcsKn2vYFSLALIvfTzNtqU7P\n\
+7U9Ejl2AQ33Dmr8yKUo9Le2hUWgTtzvRe2n7qpVbC3Al3Azm40x5Dd6smMbN8S6M\n\
+RZaW0t/zXD/cRJYGteYsBaSfIoBpQtD5CK8mNCqaCmOLN+chVMluy3xN+wKBgQCL\n\
+ldXHPQKs7+x2bPjweZPI5cd7YaTHH3ektk6yE5vVnPoXtEPHktyhCnYfW2ayBVMR\n\
+RNSFIiVYqQMZxYV6rmViWlkD8Cdsl2m6q651Vb443eSv3k4oYbxts3AI3TALevur\n\
+ORp3Xmc85ABgY7s857IVHLrxoP/tvfWvwY96vgt4gwKBgQC1eY/8hcJgCUU8mv/y\n\
+PMQcqnWfEqst4+7F4LpMJq+XzEoIggGgclEsgkYOeOAVdnexI27VC1rYB3Tkqj7z\n\
+w+Yb9AUpQ43W8r0xsbjHI65Dun1/QvEcqlk0FVUl822yWZjpX908SggZH+Z2rzVb\n\
+Rum4xLxGUQzWML2WsEB/jk54VQ==\n\
+-----END PRIVATE KEY-----\n";
 
     #[derive(Default)]
     struct CountingWriter {
@@ -500,20 +471,11 @@ mod tests {
             .unwrap()
             .disable_cache()
             .set_max_redirect_count(-1)
-            .set_hostname_verifier(HostnameVerification::DangerousAcceptInvalid)
-            .set_block_size(-1)
-            .set_ignore_eof_error(true)
-            .set_decode_url(true)
-            .set_interceptor_on_redirect(true)
-            .set_follow_redirects_cookie(true)
-            .set_use_default_content_type_if_null(false)
-            .set_ignore_content_length(true);
+            .set_hostname_verifier(HostnameVerification::DangerousAcceptInvalid);
         assert_eq!(config.connect_timeout, Duration::from_millis(200));
         assert_eq!(config.timeout, Duration::from_millis(300));
         assert_eq!(config.redirect_limit, 0);
-        assert_eq!(config.block_size, None);
-        config.set_block_size(4096).set_max_redirect_count(3);
-        assert_eq!(config.block_size, Some(4096));
+        config.set_max_redirect_count(3);
         assert_eq!(config.redirect_limit, 3);
         assert_eq!(
             config.timeout_millis(-1).unwrap_err(),
@@ -550,14 +512,10 @@ mod tests {
         assert_eq!(TlsProtocol::Tls12.reqwest(), Version::TLS_1_2);
         assert_eq!(TlsProtocol::Tls13.reqwest(), Version::TLS_1_3);
 
-        let generated = generate_simple_self_signed(vec!["localhost".to_owned()]).unwrap();
-        let certificate_pem = generated.cert.pem();
-        let identity_pem = format!("{certificate_pem}{}", generated.key_pair.serialize_pem());
+        let identity = [TEST_CERTIFICATE, TEST_PRIVATE_KEY].concat();
         config
-            .set_ssl_identity(reqwest::Identity::from_pem(identity_pem.as_bytes()).unwrap())
-            .add_root_certificate(
-                reqwest::Certificate::from_pem(certificate_pem.as_bytes()).unwrap(),
-            );
+            .set_ssl_identity(reqwest::Identity::from_pem(&identity).unwrap())
+            .add_root_certificate(reqwest::Certificate::from_pem(TEST_CERTIFICATE).unwrap());
         let mut counter = CountingWriter::default();
         fmt::write(&mut counter, format_args!("{config:?}")).unwrap();
         for fail_at in 0..counter.writes {
@@ -568,17 +526,21 @@ mod tests {
         #[cfg(feature = "blocking")]
         assert!(crate::blocking::HttpClient::new(&config).is_ok());
 
-        let mut corrupted = HttpConfig::default();
-        corrupted.proxy_url = Some("not a proxy".to_owned());
-        assert!(matches!(
-            crate::HttpClient::new(&corrupted),
-            Err(crate::HttpError::Config(HttpConfigError::InvalidProxy(_)))
-        ));
+        let corrupted = HttpConfig {
+            proxy_url: Some("not a proxy".to_owned()),
+            ..HttpConfig::default()
+        };
+        assert_eq!(
+            crate::HttpClient::new(&corrupted).unwrap_err().to_string(),
+            "invalid HTTP proxy URL: not a proxy"
+        );
         #[cfg(feature = "blocking")]
-        assert!(matches!(
-            crate::blocking::HttpClient::new(&corrupted),
-            Err(crate::HttpError::Config(HttpConfigError::InvalidProxy(_)))
-        ));
+        assert_eq!(
+            crate::blocking::HttpClient::new(&corrupted)
+                .unwrap_err()
+                .to_string(),
+            "invalid HTTP proxy URL: not a proxy"
+        );
     }
 
     #[test]

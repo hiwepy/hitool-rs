@@ -65,31 +65,6 @@ async fn async_capture_server(
     (format!("http://{address}"), receiver, task)
 }
 
-#[cfg(feature = "cookies")]
-async fn async_cookie_redirect_server() -> (String, tokio::task::JoinHandle<String>) {
-    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let address = listener.local_addr().unwrap();
-    let task = tokio::spawn(async move {
-        let (mut first, _) = listener.accept().await.unwrap();
-        let mut request = [0_u8; 8_192];
-        let _ = first.read(&mut request).await.unwrap();
-        first
-            .write_all(
-                b"HTTP/1.1 302 Found\r\nLocation: /next\r\nSet-Cookie: session=hitool; Path=/\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
-            )
-            .await
-            .unwrap();
-        let (mut second, _) = listener.accept().await.unwrap();
-        let read = second.read(&mut request).await.unwrap();
-        second
-            .write_all(&response("200 OK", "redirected", ""))
-            .await
-            .unwrap();
-        String::from_utf8_lossy(&request[..read]).into_owned()
-    });
-    (format!("http://{address}"), task)
-}
-
 #[cfg(feature = "blocking")]
 fn blocking_server(response: Vec<u8>) -> (String, std::thread::JoinHandle<()>) {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
@@ -203,13 +178,8 @@ fn retry_policy_validation_delay_and_helpers_are_complete() {
 
 #[test]
 fn builders_debug_proxy_and_configuration_paths_are_complete() {
-    let mut config = HttpConfig::default();
-    config.connect_timeout = Duration::from_millis(25);
-    config.timeout = Duration::from_secs(1);
-    config.max_response_bytes = 42;
-    config.user_agent = "HiTool-Test".into();
-    config.redirect_limit = 0;
-    let direct = HttpClient::new(&config).unwrap();
+    let config = HttpConfig::default();
+    let direct = HttpClient::builder().max_response_size(42).build().unwrap();
     assert!(format!("{direct:?}").contains("max_response_bytes: 42"));
     let built = HttpClientBuilder::from_config(config)
         .connect_timeout(Duration::from_millis(50))
@@ -378,19 +348,6 @@ async fn configured_proxy_is_the_real_transport_destination() {
     server.await.unwrap();
 }
 
-#[cfg(feature = "cookies")]
-#[tokio::test]
-async fn cookie_feature_persists_set_cookie_across_real_redirects() {
-    let (url, server) = async_cookie_redirect_server().await;
-    let mut config = HttpConfig::default();
-    config.set_follow_redirects_cookie(true);
-    let client = HttpClient::new(&config).unwrap();
-    assert_eq!(client.get_text(&url).await.unwrap(), "redirected");
-    let redirected_request = server.await.unwrap().to_ascii_lowercase();
-    assert!(redirected_request.starts_with("get /next http/1.1"));
-    assert!(redirected_request.contains("cookie: session=hitool"));
-}
-
 #[tokio::test]
 async fn retry_path_propagates_response_interceptor_errors_for_every_status_family() {
     let mut rejecting_request = HttpConfig::default();
@@ -424,17 +381,6 @@ async fn retry_path_propagates_response_interceptor_errors_for_every_status_fami
         ));
         server.await.unwrap();
     }
-}
-
-#[cfg(not(feature = "cookies"))]
-#[test]
-fn cookie_persistence_requires_the_explicit_cargo_feature() {
-    let mut config = HttpConfig::default();
-    config.set_follow_redirects_cookie(true);
-    assert!(matches!(
-        HttpClient::new(&config),
-        Err(HttpError::Config(HttpConfigError::CookiesFeatureDisabled))
-    ));
 }
 
 #[tokio::test]
