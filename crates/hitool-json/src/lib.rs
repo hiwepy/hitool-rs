@@ -11,6 +11,23 @@ use serde::de::DeserializeOwned;
 pub use serde::{Deserialize, Serialize};
 pub use serde_json::{Map, Value, json};
 
+mod compat;
+mod facade;
+mod parser;
+mod serialize;
+mod xml;
+
+pub use compat::{
+    JSONArray, JSONConfig, JSONNull, JSONObject, JsonContainer, PathError, get_by_path, put_by_path,
+};
+pub use facade::{
+    JSONConverter, JSONStrFormatter, JSONSupport, JSONUtil, JSONWriter, JsonContainerObject,
+    ObjectMapper,
+};
+pub use parser::{JSONParser, JSONTokener, ParseConfig};
+pub use serialize::{GlobalSerializeMapping, JSONDeserializer, JSONSerializer, SerializeRegistry};
+pub use xml::{JSONXMLParser, JSONXMLSerializer, XML, XMLTokener};
+
 /// Result type returned by JSON operations.
 pub type Result<T> = std::result::Result<T, JsonError>;
 
@@ -30,6 +47,30 @@ pub enum JsonError {
         /// Actual JSON type.
         actual: &'static str,
     },
+
+    /// A JSON path could not be parsed or traversed.
+    #[error(transparent)]
+    Path(#[from] PathError),
+
+    /// A defensive parser resource limit was exceeded.
+    #[error("JSON resource limit exceeded: {0}")]
+    Limit(&'static str),
+
+    /// Stateful tokenizer syntax was invalid.
+    #[error("JSON syntax error: {0}")]
+    Syntax(String),
+
+    /// Reading JSON bytes failed.
+    #[error("JSON I/O failed: {0}")]
+    Io(#[from] std::io::Error),
+
+    /// Input bytes were not UTF-8.
+    #[error("JSON input is not UTF-8: {0}")]
+    Utf8(#[from] std::string::FromUtf8Error),
+
+    /// A custom serializer or deserializer was unavailable or incompatible.
+    #[error("JSON mapping failed: {0}")]
+    Mapping(&'static str),
 }
 
 /// Serializes a value to compact JSON.
@@ -152,6 +193,19 @@ pub mod prelude {
 mod tests {
     use super::*;
 
+    struct FailingSerialize;
+
+    impl Serialize for FailingSerialize {
+        fn serialize<S>(&self, _serializer: S) -> std::result::Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            Err(serde::ser::Error::custom(
+                "intentional serialization failure",
+            ))
+        }
+    }
+
     #[derive(Debug, Deserialize, PartialEq, Serialize)]
     struct Person {
         name: String,
@@ -181,6 +235,9 @@ mod tests {
         assert!(parse_object("[]").is_err());
         assert!(parse_array("{}").is_err());
         assert_eq!(parse_object(r#"{"a":1}"#).unwrap()["a"], 1);
+        for input in ["null", "true", "1", r#""x""#] {
+            assert!(parse_object(input).is_err());
+        }
     }
 
     #[test]
@@ -188,5 +245,11 @@ mod tests {
         let compact = minify("{ \"a\": [1, 2] }").unwrap();
         assert_eq!(compact, r#"{"a":[1,2]}"#);
         assert!(pretty(&compact).unwrap().contains('\n'));
+        assert!(minify("{").is_err());
+        assert!(pretty("[").is_err());
+        assert!(parse_object("{").is_err());
+        assert!(parse_array("[").is_err());
+        assert!(to_string(&FailingSerialize).is_err());
+        assert!(to_string_pretty(&FailingSerialize).is_err());
     }
 }
