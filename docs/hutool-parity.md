@@ -8,7 +8,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 |---|---|---|---|
 | `hutool-all` | `hitool` | idiomatic | Cargo feature-gated facade plus deterministic compile-time capability registry |
 | `hutool-bom` | workspace | native | lockstep versions and workspace dependencies |
-| `hutool-core` | `hitool-core` | idiomatic | strings, collections, codecs, dates, IDs |
+| `hutool-core` | `hitool-core` | idiomatic | strings, collections, codecs, dates, IDs, and closure/Serde-backed comparison, equality, hashing, identity, and generic builders |
 | `hutool-json` | `hitool-json` | complete | Serde typed/dynamic JSON plus Hutool-aligned configured objects/arrays, bounded tokenizer/parser, XML conversion, stateful writer and owned serializer registry |
 | `hutool-http` | `hitool-http` | idiomatic | Reqwest/Rustls client with limits, URL policy, streaming and explicit idempotent retry; Hutool-aligned methods, headers, content types, status codes, shared metadata and a bounded `HttpResponse` facade for status/header/body inspection and output; `HttpConfig` drives real async/blocking proxy, TLS, cache and interceptor behavior; User-Agent parsing backed by Woothee |
 | `hutool-crypto` | `hitool-crypto` | idiomatic | RustCrypto AEAD/HMAC/SHA-256/Argon2id |

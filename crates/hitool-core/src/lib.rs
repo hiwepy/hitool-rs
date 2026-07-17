@@ -7,6 +7,7 @@
 #![forbid(unsafe_code)]
 
 mod advanced_codec;
+mod builder;
 mod clone_support;
 mod codec;
 mod coll_stream_util;
@@ -36,6 +37,9 @@ pub use advanced_codec::{
     base62_inverted_encode, bcd_decode, bcd_encode, caesar_decode, caesar_encode,
     idna_decode_domain, idna_encode_domain, punycode_decode, punycode_encode,
     punycode_encode_prefixed, rot_decode, rot_encode,
+};
+pub use builder::{
+    Builder, BuilderError, CompareToBuilder, EqualsBuilder, GenericBuilder, HashCodeBuilder, IdKey,
 };
 pub use clone_support::{CloneRuntimeException, CloneSupport, Cloneable, DefaultCloneable};
 pub use codec::{

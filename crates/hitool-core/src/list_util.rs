@@ -278,8 +278,8 @@ mod tests {
         let values = [0, 1, 2, 3, 4];
         assert_eq!(ListUtil::page(&values, 0, 9).unwrap(), values);
         assert_eq!(ListUtil::page(&values, 1, 2).unwrap(), [2, 3]);
-        assert_eq!(ListUtil::page(&values, 3, 2).unwrap(), []);
-        assert_eq!(ListUtil::page(&values, usize::MAX, 2).unwrap(), []);
+        assert!(ListUtil::page(&values, 3, 2).unwrap().is_empty());
+        assert!(ListUtil::page(&values, usize::MAX, 2).unwrap().is_empty());
         assert!(ListUtil::page(&values, 0, 0).is_err());
         let mut pages = Vec::new();
         {
@@ -311,10 +311,10 @@ mod tests {
         assert_eq!(ListUtil::sub(&values, 1, 9, 2).unwrap(), [1, 3]);
         assert_eq!(ListUtil::sub(&values, -4, -1, 0).unwrap(), [1, 2, 3]);
         assert_eq!(ListUtil::sub(&values, 4, 1, 1).unwrap(), [1, 2, 3]);
-        assert_eq!(ListUtil::sub(&values, 5, 9, 1).unwrap(), []);
-        assert_eq!(ListUtil::sub(&values, 9, 10, 1).unwrap(), []);
+        assert!(ListUtil::sub(&values, 5, 9, 1).unwrap().is_empty());
+        assert!(ListUtil::sub(&values, 9, 10, 1).unwrap().is_empty());
         assert!(ListUtil::sub(&values, -9, 2, 1).is_err());
-        assert_eq!(ListUtil::sub::<i32>(&[], 0, 1, 1).unwrap(), []);
+        assert!(ListUtil::sub::<i32>(&[], 0, 1, 1).unwrap().is_empty());
         assert_eq!(
             ListUtil::last_index_of(&values, |value| value % 2 == 0),
             Some(4)

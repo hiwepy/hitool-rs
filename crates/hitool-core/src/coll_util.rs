@@ -1093,7 +1093,7 @@ mod tests {
 
     #[test]
     fn coll_util_matches_hutool_collection_algebra_and_construction() {
-        assert_eq!(CollUtil::empty_if_none::<i32>(None), []);
+        assert!(CollUtil::empty_if_none::<i32>(None).is_empty());
         assert_eq!(CollUtil::empty_if_none(Some(&[1, 2])), [1, 2]);
 
         let left = [1, 1, 2, 3];

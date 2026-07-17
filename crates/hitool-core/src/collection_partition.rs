@@ -229,7 +229,7 @@ mod tests {
                 .unwrap()
                 .iter()
                 .collect::<Vec<_>>(),
-            [&[][..], &[]]
+            [&[] as &[i32], &[] as &[i32]]
         );
         assert!(AvgPartition::<i32>::new(&[], 0).is_err());
     }
