@@ -32,6 +32,7 @@ Regenerate and verify with:
 ./scripts/record-cron-parity.py
 ./scripts/record-setting-parity.py
 ./scripts/record-ai-parity.py
+./scripts/record-http-useragent-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```

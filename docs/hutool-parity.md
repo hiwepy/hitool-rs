@@ -10,7 +10,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 | `hutool-bom` | workspace | native | lockstep versions and workspace dependencies |
 | `hutool-core` | `hitool-core` | idiomatic | strings, collections, codecs, dates, IDs |
 | `hutool-json` | `hitool-json` | complete | Serde typed/dynamic JSON plus Hutool-aligned configured objects/arrays, bounded tokenizer/parser, XML conversion, stateful writer and owned serializer registry |
-| `hutool-http` | `hitool-http` | idiomatic | Reqwest/Rustls client with limits, URL policy, streaming and explicit idempotent retry |
+| `hutool-http` | `hitool-http` | idiomatic | Reqwest/Rustls client with limits, URL policy, streaming, explicit idempotent retry, and Hutool-compatible User-Agent parsing backed by Woothee |
 | `hutool-crypto` | `hitool-crypto` | idiomatic | RustCrypto AEAD/HMAC/SHA-256/Argon2id |
 | `hutool-jwt` | `hitool-jwt` | idiomatic | dynamic claims, HS/RS/ES/none signers, PEM factories, typed validation, and explicit rejection of obsolete/non-JOSE algorithms |
 | `hutool-cache` | `hitool-cache` | idiomatic | Moka native cache plus deterministic FIFO/LFU/LRU/timed/weak/no-op compatibility caches, per-cache prune workers, listeners, statistics, and bounded file caching |
@@ -24,7 +24,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 | `hutool-script` | `hitool-script` | idiomatic | bounded Rhai engine; no JSR-223 globals |
 | `hutool-socket` | `hitool-socket` | idiomatic | Tokio TCP/UDP, bounded AIO/NIO sessions, protocol traits, timeouts, and managed shutdown |
 | `hutool-extra` | `hitool-extra` | idiomatic | QR SVG, safe ZIP, bounded image transforms, injectable Rustls SMTP/MIME mail |
-| `hutool-poi` | `hitool-poi` | idiomatic | bounded XLSX read/write, CSV read/write, and minimal Word 2007+ DOCX generation |
+| `hutool-poi` | `hitool-poi` | planned | current bounded XLSX/CSV/DOCX bootstrap remains available, but full parity is deferred until `easyexcel-rs`, `easydoc-rs`, `easyofd-rs`, and `easypdf-rs` can serve as dedicated engines behind a thin Hutool-compatible facade |
 | `hutool-captcha` | `hitool-captcha` | idiomatic | generator/challenge verification, randomized SVG/PNG, and injectable speech-to-WAV audio rendering |
 | `hutool-db` | `hitool-db` | idiomatic | SQLx pools, explicit transactions and pagination, not a custom ORM; PostgreSQL/MySQL/SQLite integration-tested |
 | `hutool-ai` | `hitool-ai` | complete | provider-neutral core plus Hutool-aligned configs, models, factory and exhaustive operations for seven providers; bounded JSON/media, proxy, redacted secrets and SSE |

@@ -9,6 +9,10 @@ use std::{fmt, net::IpAddr, sync::Arc, time::Duration};
 use thiserror::Error;
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 
+/// User-Agent parsing compatible with Hutool's `useragent` package.
+#[cfg(feature = "useragent")]
+pub mod useragent;
+
 /// HTTP client construction limits.
 #[derive(Debug, Clone)]
 pub struct HttpConfig {
@@ -62,10 +66,16 @@ pub struct DenyLocalTargets;
 
 impl UrlPolicy for DenyLocalTargets {
     fn validate(&self, url: &Url) -> Result<(), UrlPolicyError> {
-        if !matches!(url.scheme(), "http" | "https") {
+        Self::validate_parts(url.scheme(), url.host())
+    }
+}
+
+impl DenyLocalTargets {
+    fn validate_parts(scheme: &str, host: Option<url::Host<&str>>) -> Result<(), UrlPolicyError> {
+        if !matches!(scheme, "http" | "https") {
             return Err(UrlPolicyError::UnsupportedScheme);
         }
-        let host = url.host().ok_or(UrlPolicyError::MissingHost)?;
+        let host = host.ok_or(UrlPolicyError::MissingHost)?;
         let denied = match host {
             url::Host::Domain(domain) => domain.eq_ignore_ascii_case("localhost"),
             url::Host::Ipv4(address) => is_denied_ip(IpAddr::V4(address)),
@@ -303,14 +313,12 @@ impl HttpClient {
             return Err(HttpError::NonIdempotentRetry(template.method().clone()));
         }
         self.url_policy.validate(template.url())?;
-        if template.try_clone().is_none() {
-            return Err(HttpError::UncloneableRetryRequest);
-        }
 
-        for attempt in 1..=policy.max_attempts {
-            let current = template
-                .try_clone()
-                .ok_or(HttpError::UncloneableRetryRequest)?;
+        let mut attempt = 1_usize;
+        loop {
+            let Some(current) = template.try_clone() else {
+                return Err(HttpError::UncloneableRetryRequest);
+            };
             match self.inner.execute(current).await {
                 Ok(response)
                     if !response.status().is_client_error()
@@ -335,6 +343,7 @@ impl HttpClient {
                         };
                     }
                     tokio::time::sleep(policy.delay(attempt, retry_after)).await;
+                    attempt += 1;
                 }
                 Err(error) => {
                     let retryable = error.is_connect() || error.is_timeout();
@@ -349,10 +358,10 @@ impl HttpClient {
                         };
                     }
                     tokio::time::sleep(policy.delay(attempt, None)).await;
+                    attempt += 1;
                 }
             }
         }
-        unreachable!("retry policy always permits at least one attempt")
     }
 
     /// Streams a response into an asynchronous writer while enforcing the
@@ -365,17 +374,12 @@ impl HttpClient {
         let mut response = self.send(request).await?;
         let mut written = 0_usize;
         while let Some(chunk) = response.chunk().await? {
-            written = written
-                .checked_add(chunk.len())
-                .ok_or(HttpError::ResponseTooLarge {
-                    limit: self.max_response_bytes,
-                    actual: usize::MAX,
-                })?;
+            written = written.saturating_add(chunk.len());
             self.ensure_size(written)?;
             writer.write_all(&chunk).await?;
         }
         writer.flush().await?;
-        Ok(u64::try_from(written).unwrap_or(u64::MAX))
+        Ok(written as u64)
     }
 
     fn ensure_size(&self, actual: usize) -> Result<(), HttpError> {
@@ -551,6 +555,10 @@ pub mod blocking {
             config: &HttpConfig,
             url_policy: P,
         ) -> Result<Self, HttpError> {
+            Self::build(config, Arc::new(url_policy))
+        }
+
+        fn build(config: &HttpConfig, url_policy: Arc<dyn UrlPolicy>) -> Result<Self, HttpError> {
             let inner = reqwest::blocking::Client::builder()
                 .connect_timeout(config.connect_timeout)
                 .timeout(config.timeout)
@@ -560,7 +568,7 @@ pub mod blocking {
             Ok(Self {
                 inner,
                 max_response_bytes: config.max_response_bytes,
-                url_policy: Arc::new(url_policy),
+                url_policy,
             })
         }
 
@@ -605,17 +613,12 @@ pub mod blocking {
                 if read == 0 {
                     break;
                 }
-                written = written
-                    .checked_add(read)
-                    .ok_or(HttpError::ResponseTooLarge {
-                        limit: self.max_response_bytes,
-                        actual: usize::MAX,
-                    })?;
+                written = written.saturating_add(read);
                 self.ensure_size(written)?;
                 writer.write_all(&buffer[..read])?;
             }
             writer.flush()?;
-            Ok(u64::try_from(written).unwrap_or(u64::MAX))
+            Ok(written as u64)
         }
 
         fn ensure_size(&self, actual: usize) -> Result<(), HttpError> {
@@ -671,80 +674,7 @@ mod tests {
             .unwrap();
         assert_eq!(client.max_response_bytes, 1_024);
     }
-
-    #[tokio::test]
-    async fn buffered_responses_enforce_the_configured_limit() {
-        use tokio::io::{AsyncReadExt, AsyncWriteExt};
-        use tokio::net::TcpListener;
-
-        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let address = listener.local_addr().unwrap();
-        let server = tokio::spawn(async move {
-            let (mut socket, _) = listener.accept().await.unwrap();
-            let mut request = [0_u8; 1_024];
-            let _ = socket.read(&mut request).await.unwrap();
-            socket
-                .write_all(
-                    b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: close\r\n\r\nhello",
-                )
-                .await
-                .unwrap();
-        });
-        let client = HttpClient::builder().max_response_size(4).build().unwrap();
-        assert!(matches!(
-            client.get_text(format!("http://{address}")).await,
-            Err(HttpError::ResponseTooLarge {
-                limit: 4,
-                actual: 5
-            })
-        ));
-        server.await.unwrap();
-    }
-
-    #[tokio::test]
-    async fn retries_only_explicit_idempotent_requests() {
-        use tokio::io::{AsyncReadExt, AsyncWriteExt};
-        use tokio::net::TcpListener;
-
-        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let address = listener.local_addr().unwrap();
-        let server = tokio::spawn(async move {
-            for attempt in 1..=2 {
-                let (mut socket, _) = listener.accept().await.unwrap();
-                let mut request = [0_u8; 1_024];
-                let _ = socket.read(&mut request).await.unwrap();
-                let response = if attempt == 1 {
-                    b"HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".as_slice()
-                } else {
-                    b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok"
-                        .as_slice()
-                };
-                socket.write_all(response).await.unwrap();
-            }
-        });
-        let client = HttpClient::builder().build().unwrap();
-        let policy = RetryPolicy::new(2)
-            .unwrap()
-            .base_delay(Duration::ZERO)
-            .max_delay(Duration::ZERO);
-        let response = client
-            .send_idempotent(
-                client.request(Method::GET, format!("http://{address}")),
-                policy,
-            )
-            .await
-            .unwrap();
-        assert_eq!(response.status(), StatusCode::OK);
-        server.await.unwrap();
-
-        assert!(matches!(
-            client
-                .send_idempotent(
-                    client.request(Method::POST, "https://example.com"),
-                    RetryPolicy::new(1).unwrap()
-                )
-                .await,
-            Err(HttpError::NonIdempotentRetry(Method::POST))
-        ));
-    }
 }
+
+#[cfg(test)]
+mod coverage_tests;

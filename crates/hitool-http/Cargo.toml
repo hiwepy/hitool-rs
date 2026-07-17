@@ -14,14 +14,20 @@ description = "Secure, bounded HTTP client utilities for HiTool."
 workspace = true
 
 [features]
-default = []
+default = ["useragent"]
 blocking = ["reqwest/blocking"]
+useragent = ["dep:regex", "dep:woothee"]
 
 [dependencies]
 rand.workspace = true
+regex = { workspace = true, optional = true }
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 url.workspace = true
+woothee = { workspace = true, optional = true }
+
+[dev-dependencies]
+async-stream.workspace = true
