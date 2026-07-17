@@ -1237,6 +1237,7 @@ dependencies = [
  "percent-encoding",
  "proptest",
  "rand 0.9.5",
+ "regex",
  "rust_decimal",
  "serde",
  "serde_json",

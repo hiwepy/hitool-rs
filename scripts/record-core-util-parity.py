@@ -10,11 +10,14 @@ from pathlib import Path
 BOOLEAN_ROOT = "cn.hutool.core.util::BooleanUtil"
 BYTE_ROOT = "cn.hutool.core.util::ByteUtil"
 CHARSET_ROOT = "cn.hutool.core.util::CharsetUtil"
+COORDINATE_ROOT = "cn.hutool.core.util::CoordinateUtil"
 CREDIT_CODE_ROOT = "cn.hutool.core.util::CreditCodeUtil"
 HASH_ROOT = "cn.hutool.core.util::HashUtil"
 HEX_ROOT = "cn.hutool.core.util::HexUtil"
 PAGE_ROOT = "cn.hutool.core.util::PageUtil"
+PHONE_ROOT = "cn.hutool.core.util::PhoneUtil"
 RADIX_ROOT = "cn.hutool.core.util::RadixUtil"
+VERSION_ROOT = "cn.hutool.core.util::VersionUtil"
 MODERN_HASH_METHODS = {"murmur32", "murmur64", "murmur128", "cityHash32", "cityHash64", "cityHash128", "metroHash64", "metroHash128"}
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
@@ -64,6 +67,12 @@ def credit_code_evidence(name: str) -> str:
     return "weighted_validation_matches_hutool_vectors_and_rejects_bad_check_digits"
 
 
+def coordinate_evidence(qualified_name: str, name: str) -> str:
+    if qualified_name.startswith(f"{COORDINATE_ROOT}::Coordinate") or name == "outOfChina":
+        return "boundaries_mutation_equality_hash_and_display_are_real_value_semantics"
+    return "conversions_match_hutool_reference_vectors_and_round_trip_mercator"
+
+
 def hash_evidence(name: str) -> str:
     if name in {"additiveHash", "rotatingHash", "universal", "zobrist"}:
         return "modular_and_table_hashes_validate_inputs_and_cover_every_bit_branch"
@@ -90,6 +99,18 @@ def page_evidence(name: str) -> str:
     return "numbering_offsets_segments_and_totals_match_hutool_semantics"
 
 
+def phone_evidence(name: str) -> str:
+    if name.startswith("hide") or name.startswith("sub"):
+        return "masking_slicing_and_landline_capture_are_unicode_safe"
+    return "regional_and_service_patterns_match_hutool_exactly"
+
+
+def version_evidence(name: str) -> str:
+    if name in {"matchEl", "anyMatch"}:
+        return "exact_comparison_range_and_multi_expression_matching_are_complete"
+    return "comparisons_support_hutool_loose_versions_and_null_expression"
+
+
 def main() -> None:
     with INVENTORY.open(encoding="utf-8", newline="") as stream:
         inventory = list(csv.DictReader(stream))
@@ -112,6 +133,10 @@ def main() -> None:
             symbol = "hitool_core::CharsetUtil"
             test = charset_evidence(name, row["signature"])
             notes = "encoding_rs supplies mature WHATWG codecs while the thin facade preserves exact ISO-8859-1, ASCII, BOM-aware UTF-16, string repair, bounded file conversion, and candidate detection semantics."
+        elif qualified_name.startswith(COORDINATE_ROOT):
+            symbol = "hitool_core::CoordinateUtil"
+            test = coordinate_evidence(qualified_name, name)
+            notes = "Rust f64 math implements Hutool's WGS84, GCJ-02, BD-09, and Web Mercator formulas; the owned Coordinate value preserves mutation, Java-style equality, hashing, and display semantics."
         elif qualified_name.startswith(CREDIT_CODE_ROOT):
             symbol = "hitool_core::CreditCodeUtil"
             test = credit_code_evidence(name)
@@ -128,10 +153,18 @@ def main() -> None:
             symbol = "hitool_core::PageUtil"
             test = page_evidence(name)
             notes = "Explicit owned page-number configuration, Rust Range segments, Java-compatible wrapping offsets, checked total-page narrowing, and the complete rainbow algorithm implement Hutool behavior without hidden global state."
+        elif qualified_name.startswith(PHONE_ROOT):
+            symbol = "hitool_core::PhoneUtil"
+            test = phone_evidence(name)
+            notes = "The mature regex engine compiles Hutool's mainland, Hong Kong, Taiwan, Macao, landline, 400, and 800 rules once; the thin facade provides Unicode-safe masking, slicing, and typed optional captures."
         elif qualified_name.startswith(RADIX_ROOT):
             symbol = "hitool_core::RadixUtil"
             test = "integer_overloads_round_trip_zero_positive_negative_and_unicode_alphabets"
             notes = "A bounded unique Unicode alphabet, checked arithmetic, and exact unsigned-i32 and narrowing semantics provide reversible custom-radix conversion with structured errors."
+        elif qualified_name.startswith(VERSION_ROOT):
+            symbol = "hitool_core::VersionUtil"
+            test = version_evidence(name)
+            notes = "A direct loose-version token engine preserves Hutool's non-SemVer ordering, null comparison, exact, operator, inclusive-range, multi-expression, and delimiter-validation behavior."
         else:
             continue
 
@@ -140,11 +173,14 @@ def main() -> None:
             "hitool_core::BooleanUtil": "boolean_util.rs",
             "hitool_core::ByteUtil": "byte_util.rs",
             "hitool_core::CharsetUtil": "charset_util.rs",
+            "hitool_core::CoordinateUtil": "coordinate_util.rs",
             "hitool_core::CreditCodeUtil": "credit_code_util.rs",
             "hitool_core::HashUtil": "hash_util.rs",
             "hitool_core::HexUtil": "hex_util.rs",
             "hitool_core::PageUtil": "page_util.rs",
+            "hitool_core::PhoneUtil": "phone_util.rs",
             "hitool_core::RadixUtil": "radix_util.rs",
+            "hitool_core::VersionUtil": "version_util.rs",
         }[symbol]
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
@@ -154,8 +190,8 @@ def main() -> None:
             "notes": notes,
         }
 
-    if selected != 154:
-        raise SystemExit(f"expected 154 reviewed core util APIs, selected {selected}")
+    if selected != 199:
+        raise SystemExit(f"expected 199 reviewed core util APIs, selected {selected}")
 
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)

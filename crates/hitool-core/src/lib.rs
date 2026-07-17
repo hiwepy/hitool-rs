@@ -22,6 +22,7 @@ mod collection_partition;
 mod collection_types;
 mod compiler;
 mod compress;
+mod coordinate_util;
 mod credit_code_util;
 mod date;
 mod error;
@@ -34,10 +35,12 @@ mod iter_util;
 mod list_util;
 mod mutable;
 mod page_util;
+mod phone_util;
 mod radix_codec;
 mod radix_util;
 mod stream;
 mod string;
+mod version_util;
 
 pub use advanced_codec::{
     HashIds, MorseCodec, base32_decode, base32_encode, base32_hex_decode, base32_hex_encode,
@@ -86,6 +89,7 @@ pub use compress::{
     DEFAULT_MAX_SIZE_DIFF, Deflate, Gzip, ZipCopyVisitor, ZipEntry, ZipLimits, ZipReader,
     ZipWriter, memory_zip_writer,
 };
+pub use coordinate_util::{Coordinate, CoordinateUtil};
 pub use credit_code_util::CreditCodeUtil;
 pub use date::DateUtil;
 pub use error::{CoreError, Result};
@@ -110,6 +114,7 @@ pub use mutable::{
     MutableObj, MutablePair, MutableShort,
 };
 pub use page_util::{PageError, PageUtil};
+pub use phone_util::PhoneUtil;
 pub use radix_codec::{
     Base32Decoder, Base32Encoder, Base58Decoder, Base58Encoder, Base62Decoder, Base62Encoder,
     base32_decode_text, base32_decode_to_file, base32_decode_to_writer, base32_encode_file,
@@ -122,13 +127,14 @@ pub use stream::{CollectorCharacteristic, CollectorUtil, SimpleCollector, Stream
 pub use string::{
     StrExt, format_template, is_blank, lower_first, remove_all, remove_chars, split, upper_first,
 };
+pub use version_util::{VersionError, VersionUtil};
 
 /// Common imports for applications using `hitool-core`.
 pub mod prelude {
     pub use crate::{
-        BooleanUtil, ByteOrder, ByteUtil, Charset, CharsetUtil, CreditCodeUtil, DateUtil, HashUtil,
-        HexUtil, IdUtil, Mutable, MutableBool, MutableByte, MutableDouble, MutableFloat,
-        MutableInt, MutableLong, MutableObj, MutablePair, MutableShort, PageUtil, RadixUtil,
-        RgbColor, StrExt,
+        BooleanUtil, ByteOrder, ByteUtil, Charset, CharsetUtil, Coordinate, CoordinateUtil,
+        CreditCodeUtil, DateUtil, HashUtil, HexUtil, IdUtil, Mutable, MutableBool, MutableByte,
+        MutableDouble, MutableFloat, MutableInt, MutableLong, MutableObj, MutablePair,
+        MutableShort, PageUtil, PhoneUtil, RadixUtil, RgbColor, StrExt, VersionUtil,
     };
 }
