@@ -19,7 +19,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 | `hutool-setting` | `hitool-setting` | idiomatic | layered files and environment |
 | `hutool-cron` | `hitool-cron` | idiomatic | cron occurrences and externally hosted Tokio jobs with cancellation, timeout, tracing, non-overlap and bounded retries |
 | `hutool-log` | `hitool-log` | idiomatic | tracing subscriber and redaction wrapper |
-| `hutool-system` | `hitool-system` | idiomatic | portable point-in-time host snapshot |
+| `hutool-system` | `hitool-system` | idiomatic | sysinfo-backed CPU/process/memory/disk/network/sensor snapshots plus OS, host, user, runtime and explicit optional Java/JVM properties |
 | `hutool-aop` | `hitool-aop` | idiomatic | explicit interceptor chain instead of runtime proxying |
 | `hutool-script` | `hitool-script` | idiomatic | bounded Rhai engine; no JSR-223 globals |
 | `hutool-socket` | `hitool-socket` | idiomatic | Tokio TCP/UDP, bounded AIO/NIO sessions, protocol traits, timeouts, and managed shutdown |

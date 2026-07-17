@@ -28,6 +28,7 @@ Regenerate and verify with:
 ./scripts/record-jwt-parity.py
 ./scripts/record-cache-parity.py
 ./scripts/record-all-parity.py
+./scripts/record-system-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```

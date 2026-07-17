@@ -4,6 +4,18 @@
 
 use sysinfo::System;
 
+mod compat;
+pub mod oshi;
+
+pub use compat::{
+    CompilationInfo, HostInfo, JavaInfo, JavaRuntimeInfo, JavaSpecInfo, JvmInfo, JvmSpecInfo,
+    ManagementInfo, OsInfo, RuntimeInfo, SystemPropsKeys, SystemUtil, UserInfo,
+};
+pub use oshi::{
+    CpuInfo, CpuTicks, DiskInfo, HardwareInfo, MemoryInfo, NetworkInfo, OshiUtil, ProcessInfo,
+    SensorInfo,
+};
+
 /// A point-in-time view of the current host.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SystemSnapshot {
