@@ -18,7 +18,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 | `hutool-dfa` | `hitool-dfa` | idiomatic | Aho-Corasick leftmost-longest matching |
 | `hutool-setting` | `hitool-setting` | complete | ordered grouped settings and sets, variable expansion, Java properties and typed conversion, owned/injectable auto-reload, profiles, layered files/environment, and YAML |
 | `hutool-cron` | `hitool-cron` | complete | Hutool-aligned 5/6/7-part patterns, parsers and matchers; task tables, listeners and executors; explicitly owned Tokio schedulers; timing wheel/system timer; cancellation, timeout, tracing, non-overlap and bounded retries |
-| `hutool-log` | `hitool-log` | idiomatic | tracing subscriber and redaction wrapper |
+| `hutool-log` | `hitool-log` | complete | Hutool-aligned levels, records, factories, static facade and backend aliases over an injectable tracing sink; logger caches are owned and the compatibility global is replaceable/resettable |
 | `hutool-system` | `hitool-system` | idiomatic | sysinfo-backed CPU/process/memory/disk/network/sensor snapshots plus OS, host, user, runtime and explicit optional Java/JVM properties |
 | `hutool-aop` | `hitool-aop` | idiomatic | explicit interceptor chain instead of runtime proxying |
 | `hutool-script` | `hitool-script` | idiomatic | bounded Rhai engine; no JSR-223 globals |
