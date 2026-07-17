@@ -17,6 +17,8 @@ pub use config::{
 };
 mod metadata;
 pub use metadata::{ContentType, GlobalHeaders, Header, HttpStatus, Status};
+mod response;
+pub use response::HttpResponse;
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 
 /// User-Agent parsing compatible with Hutool's `useragent` package.
@@ -252,11 +254,9 @@ impl HttpClient {
         self.inner.request(method, url)
     }
 
-    /// Sends a GET request and reads a bounded UTF-8 response body.
+    /// Sends a GET request and decodes a bounded response body.
     pub async fn get_text(&self, url: impl reqwest::IntoUrl) -> Result<String, HttpError> {
-        let bytes = self.send(self.inner.get(url)).await?.bytes().await?;
-        self.ensure_size(bytes.len())?;
-        Ok(String::from_utf8_lossy(&bytes).into_owned())
+        self.get_text_request(self.inner.get(url)).await
     }
 
     /// Sends a GET request and deserializes a bounded JSON response body.
@@ -272,9 +272,33 @@ impl HttpClient {
         &self,
         request: reqwest::RequestBuilder,
     ) -> Result<T, HttpError> {
-        let bytes = self.send(request).await?.bytes().await?;
-        self.ensure_size(bytes.len())?;
-        Ok(serde_json::from_slice(&bytes)?)
+        let response = self.send_response_checked(request).await?;
+        Ok(serde_json::from_slice(response.body_bytes())?)
+    }
+
+    async fn get_text_request(
+        &self,
+        request: reqwest::RequestBuilder,
+    ) -> Result<String, HttpError> {
+        Ok(self.send_response_checked(request).await?.body())
+    }
+
+    /// Sends a GET request and returns a bounded, repeatable response facade.
+    pub async fn get_response(
+        &self,
+        url: impl reqwest::IntoUrl,
+    ) -> Result<HttpResponse, HttpError> {
+        self.send_response(self.inner.get(url)).await
+    }
+
+    /// Sends a prepared request and buffers the response under the configured
+    /// limit without converting non-success statuses into transport errors.
+    pub async fn send_response(
+        &self,
+        request: reqwest::RequestBuilder,
+    ) -> Result<HttpResponse, HttpError> {
+        let response = self.execute(request).await?;
+        self.buffer_response(response).await
     }
 
     /// Sends a prepared request after applying URL policy and HTTP status
@@ -283,12 +307,41 @@ impl HttpClient {
         &self,
         request: reqwest::RequestBuilder,
     ) -> Result<reqwest::Response, HttpError> {
+        Ok(self.execute(request).await?.error_for_status()?)
+    }
+
+    async fn execute(
+        &self,
+        request: reqwest::RequestBuilder,
+    ) -> Result<reqwest::Response, HttpError> {
         let mut request = request.build()?;
         apply_async_request_interceptors(&self.config, &mut request)?;
         self.url_policy.validate(request.url())?;
         let mut response = self.inner.execute(request).await?;
         apply_response_interceptors(&self.config, response.status(), response.headers_mut())?;
-        Ok(response.error_for_status()?)
+        Ok(response)
+    }
+
+    async fn send_response_checked(
+        &self,
+        request: reqwest::RequestBuilder,
+    ) -> Result<HttpResponse, HttpError> {
+        let response = self.execute(request).await?.error_for_status()?;
+        self.buffer_response(response).await
+    }
+
+    async fn buffer_response(
+        &self,
+        mut response: reqwest::Response,
+    ) -> Result<HttpResponse, HttpError> {
+        let status = response.status();
+        let headers = response.headers().clone();
+        let mut body = Vec::new();
+        while let Some(chunk) = response.chunk().await? {
+            self.ensure_size(body.len().saturating_add(chunk.len()))?;
+            body.extend_from_slice(&chunk);
+        }
+        Ok(HttpResponse::new(status, headers, body))
     }
 
     /// Sends an idempotent request with an explicit retry policy.
@@ -645,8 +698,9 @@ impl HttpClientBuilder {
 #[cfg(feature = "blocking")]
 pub mod blocking {
     use super::{
-        AllowAllUrls, HttpConfig, HttpError, UrlPolicy, apply_blocking_request_interceptors,
-        apply_response_interceptors, configure_blocking_builder,
+        AllowAllUrls, HttpConfig, HttpError, HttpResponse, UrlPolicy,
+        apply_blocking_request_interceptors, apply_response_interceptors,
+        configure_blocking_builder,
     };
     use serde::de::DeserializeOwned;
     use std::{fmt, io::Write, sync::Arc};
@@ -705,19 +759,66 @@ pub mod blocking {
             &self,
             request: reqwest::blocking::RequestBuilder,
         ) -> Result<reqwest::blocking::Response, HttpError> {
+            Ok(self.execute(request)?.error_for_status()?)
+        }
+
+        /// Sends a GET request and returns a bounded, repeatable response facade.
+        pub fn get_response(&self, url: impl reqwest::IntoUrl) -> Result<HttpResponse, HttpError> {
+            self.send_response(self.inner.get(url))
+        }
+
+        /// Sends a prepared request and buffers non-success responses without
+        /// discarding their status, headers, or body.
+        pub fn send_response(
+            &self,
+            request: reqwest::blocking::RequestBuilder,
+        ) -> Result<HttpResponse, HttpError> {
+            let response = self.execute(request)?;
+            self.buffer_response(response)
+        }
+
+        fn execute(
+            &self,
+            request: reqwest::blocking::RequestBuilder,
+        ) -> Result<reqwest::blocking::Response, HttpError> {
             let mut request = request.build()?;
             apply_blocking_request_interceptors(&self.config, &mut request)?;
             self.url_policy.validate(request.url())?;
             let mut response = self.inner.execute(request)?;
             apply_response_interceptors(&self.config, response.status(), response.headers_mut())?;
-            Ok(response.error_for_status()?)
+            Ok(response)
         }
 
-        /// Sends a GET request and reads a bounded UTF-8 body.
+        fn buffer_response(
+            &self,
+            mut response: reqwest::blocking::Response,
+        ) -> Result<HttpResponse, HttpError> {
+            let status = response.status();
+            let headers = response.headers().clone();
+            let mut body = Vec::new();
+            let mut buffer = [0_u8; 16 * 1024];
+            loop {
+                let read = std::io::Read::read(&mut response, &mut buffer)?;
+                if read == 0 {
+                    break;
+                }
+                self.ensure_size(body.len().saturating_add(read))?;
+                body.extend_from_slice(&buffer[..read]);
+            }
+            Ok(HttpResponse::new(status, headers, body))
+        }
+
+        fn send_response_checked(
+            &self,
+            request: reqwest::blocking::RequestBuilder,
+        ) -> Result<HttpResponse, HttpError> {
+            let response = self.execute(request)?.error_for_status()?;
+            self.buffer_response(response)
+        }
+
+        /// Sends a GET request and decodes a bounded response body.
         pub fn get_text(&self, url: impl reqwest::IntoUrl) -> Result<String, HttpError> {
-            let bytes = self.send(self.inner.get(url))?.bytes()?;
-            self.ensure_size(bytes.len())?;
-            Ok(String::from_utf8_lossy(&bytes).into_owned())
+            self.get_text_request(self.inner.get(url))
         }
 
         /// Sends a GET request and decodes a bounded JSON body.
@@ -725,9 +826,23 @@ pub mod blocking {
             &self,
             url: impl reqwest::IntoUrl,
         ) -> Result<T, HttpError> {
-            let bytes = self.send(self.inner.get(url))?.bytes()?;
-            self.ensure_size(bytes.len())?;
-            Ok(serde_json::from_slice(&bytes)?)
+            self.send_json(self.inner.get(url))
+        }
+
+        /// Sends a prepared request and decodes a bounded JSON response.
+        pub fn send_json<T: DeserializeOwned>(
+            &self,
+            request: reqwest::blocking::RequestBuilder,
+        ) -> Result<T, HttpError> {
+            let response = self.send_response_checked(request)?;
+            Ok(serde_json::from_slice(response.body_bytes())?)
+        }
+
+        fn get_text_request(
+            &self,
+            request: reqwest::blocking::RequestBuilder,
+        ) -> Result<String, HttpError> {
+            Ok(self.send_response_checked(request)?.body())
         }
 
         /// Streams a response into a writer while enforcing the byte ceiling.

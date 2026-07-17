@@ -577,6 +577,7 @@ mod tests {
         let (url, task) = server(vec![
             ("application/json", successful),
             ("application/json", empty),
+            ("application/json", b"not-json".to_vec()),
             ("text/event-stream", sse),
         ])
         .await;
@@ -595,6 +596,12 @@ mod tests {
                 .err()
                 .map(|error| error.to_string()),
             Some("provider returned no chat choices".into())
+        );
+        assert!(
+            provider
+                .chat(ChatRequest::user("invalid-json"))
+                .await
+                .is_err()
         );
         let mut stream = provider.stream(ChatRequest::user("stream")).await.unwrap();
         let first = std::future::poll_fn(|cx| stream.as_mut().poll_next(cx))

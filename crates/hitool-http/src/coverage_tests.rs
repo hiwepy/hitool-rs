@@ -263,6 +263,89 @@ async fn buffered_text_json_send_and_policy_paths_are_complete() {
 }
 
 #[tokio::test]
+async fn response_facade_preserves_non_success_status_and_bounded_body() {
+    let (url, server) = async_server(vec![
+        response(
+            "404 Not Found",
+            "missing",
+            "Content-Type: text/plain; charset=utf-8\r\nSet-Cookie: sid=one\r\n",
+        ),
+        response("201 Created", "created", "X-Origin: runtime\r\n"),
+        response("200 OK", "too-large", ""),
+    ])
+    .await;
+    let client = HttpClient::builder().max_response_size(8).build().unwrap();
+
+    let missing = client.get_response(&url).await.unwrap();
+    assert_eq!(missing.get_status(), 404);
+    assert!(!missing.is_ok());
+    assert_eq!(missing.body(), "missing");
+    assert_eq!(missing.get_cookie_str(), Some("sid=one"));
+
+    let created = client
+        .send_response(client.request(Method::POST, &url).body("request"))
+        .await
+        .unwrap();
+    assert_eq!(created.status(), StatusCode::CREATED);
+    assert_eq!(created.header("x-origin"), Some("runtime"));
+    assert_eq!(created.body_bytes(), b"created");
+
+    assert!(matches!(
+        client.get_response(&url).await,
+        Err(HttpError::ResponseTooLarge {
+            limit: 8,
+            actual: 9
+        })
+    ));
+    server.await.unwrap();
+
+    assert!(matches!(
+        client
+            .send_response(client.request(Method::GET, "::bad-url::"))
+            .await,
+        Err(HttpError::Request(_))
+    ));
+}
+
+#[tokio::test]
+async fn checked_buffering_internal_path_covers_every_exit() {
+    let (url, server) = async_server(vec![
+        response("200 OK", "ok", ""),
+        response("404 Not Found", "missing", ""),
+        response("200 OK", "too-large", ""),
+    ])
+    .await;
+    let client = HttpClient::builder().max_response_size(8).build().unwrap();
+    assert_eq!(
+        client
+            .send_response_checked(client.request(Method::GET, &url))
+            .await
+            .unwrap()
+            .body(),
+        "ok"
+    );
+    assert!(matches!(
+        client
+            .send_response_checked(client.request(Method::GET, &url))
+            .await,
+        Err(HttpError::Request(_))
+    ));
+    assert!(matches!(
+        client
+            .send_response_checked(client.request(Method::GET, &url))
+            .await,
+        Err(HttpError::ResponseTooLarge { .. })
+    ));
+    server.await.unwrap();
+    assert!(matches!(
+        client
+            .send_response_checked(client.request(Method::GET, "::bad-url::"))
+            .await,
+        Err(HttpError::Request(_))
+    ));
+}
+
+#[tokio::test]
 async fn runtime_config_changes_real_requests_responses_and_errors() {
     let (url, captured, server) =
         async_capture_server(response("200 OK", "configured", "X-Origin: server\r\n")).await;
@@ -800,6 +883,38 @@ fn blocking_runtime_config_changes_real_requests_responses_and_errors() {
 
 #[cfg(feature = "blocking")]
 #[test]
+fn blocking_response_facade_preserves_error_responses_and_enforces_limit() {
+    use super::blocking;
+
+    let (url, server) = blocking_server(response(
+        "418 I'm a teapot",
+        "teapot",
+        "Content-Type: text/plain\r\n",
+    ));
+    let client = blocking::HttpClient::new(&HttpConfig {
+        max_response_bytes: 8,
+        ..HttpConfig::default()
+    })
+    .unwrap();
+    let actual = client.get_response(&url).unwrap();
+    assert_eq!(actual.get_status(), 418);
+    assert!(!actual.is_ok());
+    assert_eq!(actual.body(), "teapot");
+    server.join().unwrap();
+
+    let (url, server) = blocking_server(response("200 OK", "too-large", ""));
+    assert!(matches!(
+        client.get_response(url),
+        Err(HttpError::ResponseTooLarge {
+            limit: 8,
+            actual: 9
+        })
+    ));
+    server.join().unwrap();
+}
+
+#[cfg(feature = "blocking")]
+#[test]
 fn blocking_client_covers_text_json_send_policy_and_download_paths() {
     use super::blocking;
 
@@ -863,6 +978,7 @@ fn blocking_client_covers_text_json_send_policy_and_download_paths() {
 
 #[cfg(feature = "blocking")]
 #[test]
+#[allow(clippy::too_many_lines)]
 fn blocking_client_propagates_every_builder_body_and_writer_failure() {
     use super::blocking;
 
@@ -882,6 +998,14 @@ fn blocking_client_propagates_every_builder_body_and_writer_failure() {
         client.send(requests.get("::bad-url::")),
         Err(HttpError::Request(_))
     ));
+    assert!(matches!(
+        client.send_response(requests.get("::bad-url::")),
+        Err(HttpError::Request(_))
+    ));
+    assert!(matches!(
+        client.get_text("::bad-url::"),
+        Err(HttpError::Request(_))
+    ));
 
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let closed = listener.local_addr().unwrap();
@@ -893,18 +1017,15 @@ fn blocking_client_propagates_every_builder_body_and_writer_failure() {
 
     let incomplete =
         b"HTTP/1.1 200 OK\r\nContent-Length: 10\r\nConnection: close\r\n\r\nhi".to_vec();
-    for operation in 0..2 {
-        let (url, server) = blocking_server(incomplete.clone());
-        let result = if operation == 0 {
-            client.get_text(&url).map(|_| Message {
-                message: String::new(),
-            })
-        } else {
-            client.get_json::<Message>(&url)
-        };
-        assert!(matches!(result, Err(HttpError::Request(_))));
-        server.join().unwrap();
-    }
+    let (url, server) = blocking_server(incomplete.clone());
+    assert!(matches!(client.get_text(&url), Err(HttpError::Io(_))));
+    server.join().unwrap();
+    let (url, server) = blocking_server(incomplete.clone());
+    assert!(matches!(
+        client.get_json::<Message>(&url),
+        Err(HttpError::Io(_))
+    ));
+    server.join().unwrap();
 
     let (url, server) = blocking_server(response("404 Not Found", "missing", ""));
     assert!(matches!(client.get_text(&url), Err(HttpError::Request(_))));
