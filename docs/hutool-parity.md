@@ -10,7 +10,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 | `hutool-bom` | workspace | native | lockstep versions and workspace dependencies |
 | `hutool-core` | `hitool-core` | idiomatic | strings, collections, codecs, dates, IDs |
 | `hutool-json` | `hitool-json` | complete | Serde typed/dynamic JSON plus Hutool-aligned configured objects/arrays, bounded tokenizer/parser, XML conversion, stateful writer and owned serializer registry |
-| `hutool-http` | `hitool-http` | idiomatic | Reqwest/Rustls client with limits, URL policy, streaming and explicit idempotent retry; Hutool-aligned methods, headers, content types, status codes and explicitly owned default headers; User-Agent parsing backed by Woothee |
+| `hutool-http` | `hitool-http` | idiomatic | Reqwest/Rustls client with limits, URL policy, streaming and explicit idempotent retry; Hutool-aligned methods, headers, content types, status codes, shared request/response metadata and explicitly owned default headers; User-Agent parsing backed by Woothee |
 | `hutool-crypto` | `hitool-crypto` | idiomatic | RustCrypto AEAD/HMAC/SHA-256/Argon2id |
 | `hutool-jwt` | `hitool-jwt` | idiomatic | dynamic claims, HS/RS/ES/none signers, PEM factories, typed validation, and explicit rejection of obsolete/non-JOSE algorithms |
 | `hutool-cache` | `hitool-cache` | idiomatic | Moka native cache plus deterministic FIFO/LFU/LRU/timed/weak/no-op compatibility caches, per-cache prune workers, listeners, statistics, and bounded file caching |

@@ -34,6 +34,7 @@ Regenerate and verify with:
 ./scripts/record-ai-parity.py
 ./scripts/record-http-useragent-parity.py
 ./scripts/record-http-metadata-parity.py
+./scripts/record-http-base-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```

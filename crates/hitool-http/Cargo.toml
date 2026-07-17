@@ -19,6 +19,7 @@ blocking = ["reqwest/blocking"]
 useragent = ["dep:regex", "dep:woothee"]
 
 [dependencies]
+encoding_rs.workspace = true
 rand.workspace = true
 regex = { workspace = true, optional = true }
 reqwest.workspace = true
