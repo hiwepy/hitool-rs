@@ -9,9 +9,11 @@ from pathlib import Path
 
 BOOLEAN_ROOT = "cn.hutool.core.util::BooleanUtil"
 BYTE_ROOT = "cn.hutool.core.util::ByteUtil"
+CHAR_ROOT = "cn.hutool.core.util::CharUtil"
 CHARSET_ROOT = "cn.hutool.core.util::CharsetUtil"
 COORDINATE_ROOT = "cn.hutool.core.util::CoordinateUtil"
 CREDIT_CODE_ROOT = "cn.hutool.core.util::CreditCodeUtil"
+DESENSITIZED_ROOT = "cn.hutool.core.util::DesensitizedUtil"
 HASH_ROOT = "cn.hutool.core.util::HashUtil"
 HEX_ROOT = "cn.hutool.core.util::HexUtil"
 PAGE_ROOT = "cn.hutool.core.util::PageUtil"
@@ -59,6 +61,14 @@ def charset_evidence(name: str, signature: str) -> str:
     return "resolution_parsing_names_and_special_java_charsets_are_explicit"
 
 
+def char_evidence(name: str) -> str:
+    if name.startswith("toClose"):
+        return "enclosed_conversions_cover_supported_tables_and_errors"
+    if name in {"isBlankChar", "isEmoji", "isFileSeparator", "equals", "getType", "digit16"}:
+        return "unicode_blank_emoji_category_and_digit_paths_are_explicit"
+    return "ascii_classification_and_dynamic_character_checks_match_hutool"
+
+
 def credit_code_evidence(name: str) -> str:
     if name == "isCreditCodeSimple":
         return "simple_validation_enforces_every_structural_section"
@@ -79,6 +89,14 @@ def hash_evidence(name: str) -> str:
     if name == "tianlHash":
         return "tianl_hash_covers_empty_short_tail_long_and_ascii_case_rules"
     return "classic_hashes_match_java_utf16_wrapping_and_signed_byte_rules"
+
+
+def desensitized_evidence(name: str) -> str:
+    if name in {"desensitized", ""}:
+        return "dispatcher_covers_every_strategy_and_blank_short_circuit"
+    if name in {"bankCard", "ipv4", "ipv6", "passport", "creditCode"}:
+        return "bank_network_passport_and_credit_code_paths_are_complete"
+    return "individual_masking_functions_cover_invalid_short_and_unicode_inputs"
 
 
 def hex_evidence(name: str) -> str:
@@ -129,6 +147,10 @@ def main() -> None:
             symbol = "hitool_core::ByteUtil"
             test = byte_evidence(name)
             notes = "Rust endian primitives implement checked offset conversion; generic traits replace Java Class dispatch while preserving primitive, atomic, adder, BigInteger, BigDecimal, and Java-canonical NaN behavior."
+        elif qualified_name.startswith(CHAR_ROOT):
+            symbol = "hitool_core::CharUtil"
+            test = char_evidence(name)
+            notes = "Rust char and Any provide the thin facade; unicode-general-category supplies Unicode 16 categories while explicit Java constants, blank characters, digit values, emoji heuristics, and checked enclosed conversions preserve Hutool behavior."
         elif qualified_name.startswith(CHARSET_ROOT):
             symbol = "hitool_core::CharsetUtil"
             test = charset_evidence(name, row["signature"])
@@ -141,6 +163,10 @@ def main() -> None:
             symbol = "hitool_core::CreditCodeUtil"
             test = credit_code_evidence(name)
             notes = "A direct GB 32100-2015 weighted checksum implementation validates every section and rand-backed generation always appends a verified parity character."
+        elif qualified_name.startswith(DESENSITIZED_ROOT):
+            symbol = "hitool_core::DesensitizedUtil"
+            test = desensitized_evidence(name)
+            notes = "A Unicode-safe owned-string facade implements every Hutool masking policy while Option preserves the observable null versus empty distinction for dispatcher, bank-card, passport, and credit-code paths."
         elif qualified_name.startswith(HASH_ROOT) and name not in MODERN_HASH_METHODS:
             symbol = "hitool_core::HashUtil"
             test = hash_evidence(name)
@@ -172,9 +198,11 @@ def main() -> None:
         source = {
             "hitool_core::BooleanUtil": "boolean_util.rs",
             "hitool_core::ByteUtil": "byte_util.rs",
+            "hitool_core::CharUtil": "char_util.rs",
             "hitool_core::CharsetUtil": "charset_util.rs",
             "hitool_core::CoordinateUtil": "coordinate_util.rs",
             "hitool_core::CreditCodeUtil": "credit_code_util.rs",
+            "hitool_core::DesensitizedUtil": "desensitized_util.rs",
             "hitool_core::HashUtil": "hash_util.rs",
             "hitool_core::HexUtil": "hex_util.rs",
             "hitool_core::PageUtil": "page_util.rs",
@@ -190,8 +218,8 @@ def main() -> None:
             "notes": notes,
         }
 
-    if selected != 199:
-        raise SystemExit(f"expected 199 reviewed core util APIs, selected {selected}")
+    if selected != 241:
+        raise SystemExit(f"expected 241 reviewed core util APIs, selected {selected}")
 
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)

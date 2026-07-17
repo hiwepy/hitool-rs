@@ -10,6 +10,7 @@ mod advanced_codec;
 mod boolean_util;
 mod builder;
 mod byte_util;
+mod char_util;
 mod charset_util;
 mod clone_support;
 mod codec;
@@ -25,6 +26,7 @@ mod compress;
 mod coordinate_util;
 mod credit_code_util;
 mod date;
+mod desensitized_util;
 mod error;
 mod getter;
 mod hash_util;
@@ -57,6 +59,7 @@ pub use builder::{
 pub use byte_util::{
     ByteOrder, ByteUtil, ByteUtilError, BytesToNumber, DoubleAdder, LongAdder, NumberToBytes,
 };
+pub use char_util::{CharError, CharUtil};
 pub use charset_util::{Charset, CharsetError, CharsetUtil};
 pub use clone_support::{CloneRuntimeException, CloneSupport, Cloneable, DefaultCloneable};
 pub use codec::{
@@ -92,6 +95,7 @@ pub use compress::{
 pub use coordinate_util::{Coordinate, CoordinateUtil};
 pub use credit_code_util::CreditCodeUtil;
 pub use date::DateUtil;
+pub use desensitized_util::{DesensitizedType, DesensitizedUtil};
 pub use error::{CoreError, Result};
 pub use getter::{
     ArrayTypeGetter, BasicTypeGetter, GroupedTypeGetter, ListTypeGetter, OptArrayTypeGetter,
@@ -132,9 +136,10 @@ pub use version_util::{VersionError, VersionUtil};
 /// Common imports for applications using `hitool-core`.
 pub mod prelude {
     pub use crate::{
-        BooleanUtil, ByteOrder, ByteUtil, Charset, CharsetUtil, Coordinate, CoordinateUtil,
-        CreditCodeUtil, DateUtil, HashUtil, HexUtil, IdUtil, Mutable, MutableBool, MutableByte,
-        MutableDouble, MutableFloat, MutableInt, MutableLong, MutableObj, MutablePair,
-        MutableShort, PageUtil, PhoneUtil, RadixUtil, RgbColor, StrExt, VersionUtil,
+        BooleanUtil, ByteOrder, ByteUtil, CharUtil, Charset, CharsetUtil, Coordinate,
+        CoordinateUtil, CreditCodeUtil, DateUtil, DesensitizedType, DesensitizedUtil, HashUtil,
+        HexUtil, IdUtil, Mutable, MutableBool, MutableByte, MutableDouble, MutableFloat,
+        MutableInt, MutableLong, MutableObj, MutablePair, MutableShort, PageUtil, PhoneUtil,
+        RadixUtil, RgbColor, StrExt, VersionUtil,
     };
 }
