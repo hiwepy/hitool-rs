@@ -5,6 +5,8 @@
 
 #![forbid(unsafe_code)]
 
+use std::{collections::BTreeSet, io};
+
 #[cfg(feature = "ai")]
 pub use hitool_ai as ai;
 #[cfg(feature = "aop")]
@@ -56,6 +58,64 @@ pub mod prelude {
     pub use hitool_json::prelude::*;
 }
 
+/// Compile-time view of the `HiTool` capabilities enabled for this build.
+///
+/// This is the Rust counterpart of Hutool's classpath-scanning `Hutool`
+/// helper. Cargo features provide a deterministic registry without runtime
+/// reflection or filesystem scanning.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Hutool;
+
+impl Hutool {
+    /// Returns enabled capability crate names in stable lexical order.
+    #[must_use]
+    pub fn get_all_utils() -> BTreeSet<&'static str> {
+        #[allow(unused_mut)]
+        let mut modules = BTreeSet::new();
+        macro_rules! enabled {
+            ($feature:literal, $name:literal) => {
+                #[cfg(feature = $feature)]
+                modules.insert($name);
+            };
+        }
+        enabled!("ai", "ai");
+        enabled!("aop", "aop");
+        enabled!("bloom-filter", "bloom_filter");
+        enabled!("cache", "cache");
+        enabled!("captcha", "captcha");
+        enabled!("core", "core");
+        enabled!("cron", "cron");
+        enabled!("crypto", "crypto");
+        enabled!("db", "db");
+        enabled!("dfa", "dfa");
+        enabled!("extra", "extra");
+        enabled!("http", "http");
+        enabled!("hutool-compat", "compat");
+        enabled!("json", "json");
+        enabled!("jwt", "jwt");
+        enabled!("log", "log");
+        enabled!("poi", "poi");
+        enabled!("script", "script");
+        enabled!("setting", "setting");
+        enabled!("socket", "socket");
+        enabled!("system", "system");
+        modules
+    }
+
+    /// Writes enabled capability names, one per line, to an injected sink.
+    pub fn write_all_utils(writer: &mut dyn io::Write) -> io::Result<()> {
+        for module in Self::get_all_utils() {
+            writeln!(writer, "{module}")?;
+        }
+        Ok(())
+    }
+
+    /// Prints enabled capability names to standard output.
+    pub fn print_all_utils() -> io::Result<()> {
+        Self::write_all_utils(&mut io::stdout().lock())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[cfg(all(feature = "core", feature = "json"))]
@@ -65,5 +125,43 @@ mod tests {
 
         assert!(" \t".is_blank());
         assert_eq!(crate::json::parse(r#"{"ok":true}"#).unwrap()["ok"], true);
+    }
+
+    #[test]
+    fn hutool_registry_is_feature_aware_stable_and_writable() {
+        #[cfg(feature = "core")]
+        struct FailingWriter;
+
+        #[cfg(feature = "core")]
+        impl std::io::Write for FailingWriter {
+            fn write(&mut self, _buffer: &[u8]) -> std::io::Result<usize> {
+                Err(std::io::Error::other("injected writer failure"))
+            }
+
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+
+        let modules = super::Hutool::get_all_utils();
+        #[cfg(feature = "core")]
+        assert!(modules.contains("core"));
+        #[cfg(feature = "json")]
+        assert!(modules.contains("json"));
+
+        let mut output = Vec::new();
+        super::Hutool::write_all_utils(&mut output).unwrap();
+        let text = String::from_utf8(output).unwrap();
+        let lines: Vec<_> = text.lines().collect();
+        assert!(lines.windows(2).all(|pair| pair[0] < pair[1]));
+        assert_eq!(lines.len(), modules.len());
+        #[cfg(feature = "core")]
+        {
+            let mut failing = FailingWriter;
+            std::io::Write::flush(&mut failing).unwrap();
+            assert!(super::Hutool::write_all_utils(&mut failing).is_err());
+        }
+        super::Hutool::print_all_utils().unwrap();
+        assert!(format!("{:?}", super::Hutool).contains("Hutool"));
     }
 }

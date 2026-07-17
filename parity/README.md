@@ -27,6 +27,7 @@ Regenerate and verify with:
 ./scripts/record-socket-parity.py
 ./scripts/record-jwt-parity.py
 ./scripts/record-cache-parity.py
+./scripts/record-all-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```

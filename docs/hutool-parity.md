@@ -6,7 +6,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 
 | Hutool module | HiTool crate | Status | Current mapping |
 |---|---|---|---|
-| `hutool-all` | `hitool` | idiomatic | Cargo feature-gated facade |
+| `hutool-all` | `hitool` | idiomatic | Cargo feature-gated facade plus deterministic compile-time capability registry |
 | `hutool-bom` | workspace | native | lockstep versions and workspace dependencies |
 | `hutool-core` | `hitool-core` | idiomatic | strings, collections, codecs, dates, IDs |
 | `hutool-json` | `hitool-json` | idiomatic | Serde typed and dynamic JSON |
