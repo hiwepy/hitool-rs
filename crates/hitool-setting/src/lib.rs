@@ -1,10 +1,54 @@
-//! Layered settings aligned with Hutool's setting module.
+//! Hutool-aligned, ordered configuration utilities with explicit ownership.
 
 #![forbid(unsafe_code)]
+#![allow(
+    clippy::assigning_clones,
+    clippy::missing_panics_doc,
+    clippy::struct_field_names
+)]
+
+mod grouped;
+mod profile;
+mod props;
+mod setting;
+mod yaml;
 
 pub use config::{Config, ConfigError, Environment, File, FileFormat};
+pub use grouped::{GroupedMap, GroupedSet};
+pub use profile::{GlobalProfile, Profile};
+pub use props::{Props, PropsUtil};
+pub use setting::{AutoLoadHandle, Setting, SettingLoader, SettingUtil};
+pub use yaml::YamlUtil;
+
+use encoding_rs::{Encoding, UTF_8};
 use serde::de::DeserializeOwned;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+
+/// Errors produced by Hutool-compatible configuration operations.
+#[derive(Debug, thiserror::Error)]
+pub enum SettingError {
+    /// A path, group, key, encoding, or expression was invalid.
+    #[error("invalid setting: {0}")]
+    Invalid(String),
+    /// A filesystem operation failed.
+    #[error("setting I/O failed: {0}")]
+    Io(#[from] std::io::Error),
+    /// Decoding failed for the configured character set.
+    #[error("setting input is not valid {0}")]
+    Decode(&'static str),
+    /// A dynamic configuration operation failed.
+    #[error(transparent)]
+    Config(#[from] ConfigError),
+    /// YAML parsing or serialization failed.
+    #[error(transparent)]
+    Yaml(#[from] serde_yaml_ng::Error),
+    /// A file-watching operation failed.
+    #[error("setting watcher failed: {0}")]
+    Watch(#[from] notify::Error),
+}
+
+/// Hutool's runtime exception analogue.
+pub type SettingRuntimeException = SettingError;
 
 /// One configuration file and whether it must exist.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -82,6 +126,30 @@ impl SettingsLoader {
     }
 }
 
+pub(crate) fn checked_path(path: &Path) -> Result<PathBuf, SettingError> {
+    if path.as_os_str().is_empty() {
+        return Err(SettingError::Invalid("path must not be blank".into()));
+    }
+    Ok(path.to_path_buf())
+}
+
+pub(crate) fn read_text(path: &Path, encoding: &'static Encoding) -> Result<String, SettingError> {
+    let bytes = std::fs::read(path)?;
+    let (text, _, malformed) = encoding.decode(&bytes);
+    if malformed {
+        return Err(SettingError::Decode(encoding.name()));
+    }
+    Ok(text.into_owned())
+}
+
+pub(crate) const DEFAULT_ENCODING: &Encoding = UTF_8;
+
+pub(crate) fn config_from_string_map(
+    values: &std::collections::HashMap<String, String>,
+) -> Result<Config, ConfigError> {
+    Config::try_from(values)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -103,6 +171,29 @@ mod tests {
                 name: "hitool".into(),
                 workers: 4
             }
+        );
+        let optional = SettingsLoader::new()
+            .optional_file("/definitely/missing/config.json")
+            .environment("HITOOL_SETTING_TEST_NEVER")
+            .build()
+            .unwrap();
+        assert!(
+            optional
+                .try_deserialize::<std::collections::HashMap<String, String>>()
+                .unwrap()
+                .is_empty()
+        );
+        let directory = tempfile::tempdir().unwrap();
+        let invalid = directory.path().join("invalid.txt");
+        std::fs::write(&invalid, [0xff]).unwrap();
+        let decode_error = read_text(&invalid, DEFAULT_ENCODING).unwrap_err();
+        assert!(decode_error.to_string().contains("UTF-8"));
+        assert!(read_text(&directory.path().join("missing"), DEFAULT_ENCODING).is_err());
+        assert!(
+            SettingsLoader::new()
+                .required_file(directory.path().join("missing.json"))
+                .load::<AppSettings>()
+                .is_err()
         );
     }
 }

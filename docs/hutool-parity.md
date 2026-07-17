@@ -16,7 +16,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 | `hutool-cache` | `hitool-cache` | idiomatic | Moka native cache plus deterministic FIFO/LFU/LRU/timed/weak/no-op compatibility caches, per-cache prune workers, listeners, statistics, and bounded file caching |
 | `hutool-bloomFilter` | `hitool-bloom-filter` | idiomatic | typed probabilistic membership |
 | `hutool-dfa` | `hitool-dfa` | idiomatic | Aho-Corasick leftmost-longest matching |
-| `hutool-setting` | `hitool-setting` | idiomatic | layered files and environment |
+| `hutool-setting` | `hitool-setting` | complete | ordered grouped settings and sets, variable expansion, Java properties and typed conversion, owned/injectable auto-reload, profiles, layered files/environment, and YAML |
 | `hutool-cron` | `hitool-cron` | complete | Hutool-aligned 5/6/7-part patterns, parsers and matchers; task tables, listeners and executors; explicitly owned Tokio schedulers; timing wheel/system timer; cancellation, timeout, tracing, non-overlap and bounded retries |
 | `hutool-log` | `hitool-log` | idiomatic | tracing subscriber and redaction wrapper |
 | `hutool-system` | `hitool-system` | idiomatic | sysinfo-backed CPU/process/memory/disk/network/sensor snapshots plus OS, host, user, runtime and explicit optional Java/JVM properties |

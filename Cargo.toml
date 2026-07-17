@@ -32,7 +32,9 @@ hex = "0.4.3"
 hmac = "0.12.1"
 idna = "1.1.0"
 image = { version = "=0.25.9", default-features = false, features = ["gif", "jpeg", "png", "webp"] }
-indexmap = "2.14.0"
+indexmap = { version = "2.14.0", features = ["serde"] }
+notify = "8.2.0"
+num-bigint = "0.5.1"
 lettre = { version = "0.11.22", default-features = false, features = ["builder", "hostname", "pool", "smtp-transport", "tokio1-rustls-tls", "tracing"] }
 futures-core = "0.3.32"
 font8x8 = "0.3.1"
@@ -50,9 +52,11 @@ quote = "1.0.46"
 quick-xml = "0.41.0"
 reqwest = { version = "0.12.28", default-features = false, features = ["json", "rustls-tls"] }
 rhai = "1.25.1"
+rust_decimal = "1.42.1"
 rust_xlsxwriter = "0.96.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
+serde_yaml_ng = "0.10.0"
 secrecy = "0.10.3"
 sha2 = "0.10.9"
 sqlx = { version = "0.8.6", default-features = false, features = ["runtime-tokio-rustls"] }
