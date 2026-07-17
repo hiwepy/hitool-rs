@@ -1082,6 +1082,8 @@ name = "hitool-cache"
 version = "0.1.0"
 dependencies = [
  "moka",
+ "parking_lot",
+ "tempfile",
 ]
 
 [[package]]

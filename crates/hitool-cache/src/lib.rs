@@ -5,6 +5,29 @@
 use moka::sync::{Cache as MokaCache, CacheBuilder};
 use std::{hash::Hash, sync::Arc, time::Duration};
 
+mod compat;
+mod file_cache;
+
+pub use compat::{
+    AbstractCache, CacheListener, CacheObj, CachePolicy, CacheUtil, FIFOCache, GlobalPruneTimer,
+    LFUCache, LRUCache, NoCache, PruneHandle, ReentrantCache, ScheduledTimedCache, StampedCache,
+    TimedCache, WeakCache,
+};
+pub use file_cache::{AbstractFileCache, FileCachePolicy, LFUFileCache, LRUFileCache};
+
+/// Hutool-aligned implementation namespace.
+pub mod r#impl {
+    pub use crate::{
+        AbstractCache, CacheObj, FIFOCache, LFUCache, LRUCache, NoCache, ReentrantCache,
+        StampedCache, TimedCache, WeakCache,
+    };
+}
+
+/// Hutool-aligned file-cache namespace.
+pub mod file {
+    pub use crate::{AbstractFileCache, LFUFileCache, LRUFileCache};
+}
+
 /// Builder for a bounded, concurrent cache.
 #[derive(Debug, Clone, Copy)]
 pub struct CacheConfig {
@@ -102,5 +125,34 @@ mod tests {
         assert_eq!(*cache.get(&"answer").unwrap(), 42);
         cache.invalidate(&"answer");
         assert!(cache.get(&"answer").is_none());
+    }
+
+    #[test]
+    fn mature_cache_covers_clone_clear_count_ttl_tti_and_capacity() {
+        let cache = Cache::new(CacheConfig {
+            max_capacity: 2,
+            time_to_live: Some(Duration::from_millis(8)),
+            time_to_idle: Some(Duration::from_millis(5)),
+        });
+        let clone = cache.clone();
+        cache.insert("a", 1);
+        cache.insert("b", 2);
+        cache.inner.run_pending_tasks();
+        assert_eq!(cache.entry_count(), 2);
+        assert_eq!(*clone.get(&"a").unwrap(), 1);
+        std::thread::sleep(Duration::from_millis(10));
+        assert!(cache.get(&"a").is_none());
+        cache.clear();
+        cache.inner.run_pending_tasks();
+        assert_eq!(cache.entry_count(), 0);
+
+        let bounded = Cache::new(CacheConfig {
+            max_capacity: 1,
+            ..CacheConfig::default()
+        });
+        bounded.insert("a", 1);
+        bounded.insert("b", 2);
+        bounded.inner.run_pending_tasks();
+        assert!(bounded.entry_count() <= 1);
     }
 }

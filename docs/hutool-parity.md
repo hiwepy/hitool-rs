@@ -13,7 +13,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 | `hutool-http` | `hitool-http` | idiomatic | Reqwest/Rustls client with limits, URL policy, streaming and explicit idempotent retry |
 | `hutool-crypto` | `hitool-crypto` | idiomatic | RustCrypto AEAD/HMAC/SHA-256/Argon2id |
 | `hutool-jwt` | `hitool-jwt` | idiomatic | dynamic claims, HS/RS/ES/none signers, PEM factories, typed validation, and explicit rejection of obsolete/non-JOSE algorithms |
-| `hutool-cache` | `hitool-cache` | idiomatic | bounded concurrent Moka cache |
+| `hutool-cache` | `hitool-cache` | idiomatic | Moka native cache plus deterministic FIFO/LFU/LRU/timed/weak/no-op compatibility caches, per-cache prune workers, listeners, statistics, and bounded file caching |
 | `hutool-bloomFilter` | `hitool-bloom-filter` | idiomatic | typed probabilistic membership |
 | `hutool-dfa` | `hitool-dfa` | idiomatic | Aho-Corasick leftmost-longest matching |
 | `hutool-setting` | `hitool-setting` | idiomatic | layered files and environment |
