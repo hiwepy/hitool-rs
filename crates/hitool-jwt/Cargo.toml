@@ -14,9 +14,11 @@ description = "Strict JSON Web Token creation and validation utilities for HiToo
 workspace = true
 
 [dependencies]
+base64.workspace = true
 jsonwebtoken.workspace = true
+p256.workspace = true
+p384.workspace = true
+rsa.workspace = true
 serde.workspace = true
-thiserror.workspace = true
-
-[dev-dependencies]
 serde_json.workspace = true
+thiserror.workspace = true

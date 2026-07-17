@@ -6,6 +6,22 @@ pub use jsonwebtoken::{Algorithm, Header, TokenData, Validation};
 use jsonwebtoken::{DecodingKey, EncodingKey, decode, encode};
 use serde::{Serialize, de::DeserializeOwned};
 
+mod compat;
+
+pub use compat::{
+    AlgorithmUtil, AsymmetricJWTSigner, Claims, EllipticCurveJWTSigner, HMacJWTSigner, JWT,
+    JWTException, JWTHeader, JWTPayload, JWTSigner, JWTSignerUtil, JWTUtil, JWTValidator,
+    NoneJWTSigner, RegisteredPayload,
+};
+
+/// Hutool-aligned signer namespace.
+pub mod signers {
+    pub use crate::{
+        AlgorithmUtil, AsymmetricJWTSigner, EllipticCurveJWTSigner, HMacJWTSigner, JWTSigner,
+        JWTSignerUtil, NoneJWTSigner,
+    };
+}
+
 /// Explicit validation requirements for issued tokens.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JwtValidationPolicy {
@@ -116,6 +132,12 @@ mod tests {
                 .decode::<Claims>(&token)
                 .is_err()
         );
+
+        let policy = JwtValidationPolicy::new("hitool", "hitool-tests", 0, false);
+        let codec = JwtHs256::new(b"a sufficiently long test secret", &policy);
+        let claims = serde_json::json!({"iss":"hitool", "aud":"hitool-tests"});
+        let token = codec.encode(&claims).unwrap();
+        assert!(codec.decode::<serde_json::Value>(&token).is_ok());
     }
 
     #[test]

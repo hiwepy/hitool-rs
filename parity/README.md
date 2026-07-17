@@ -25,6 +25,7 @@ Regenerate and verify with:
 ./scripts/record-script-parity.py
 ./scripts/record-captcha-parity.py
 ./scripts/record-socket-parity.py
+./scripts/record-jwt-parity.py
 ./scripts/verify-parity.py
 ./scripts/verify-parity.py --require-complete
 ```

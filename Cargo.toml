@@ -37,6 +37,9 @@ lettre = { version = "0.11.22", default-features = false, features = ["builder",
 futures-core = "0.3.32"
 font8x8 = "0.3.1"
 jsonwebtoken = { version = "=10.3.0", default-features = false, features = ["rust_crypto"] }
+p256 = "=0.13.2"
+p384 = "=0.13.1"
+rsa = "=0.9.10"
 moka = { version = "0.12.15", features = ["sync"] }
 parking_lot = "0.12.5"
 percent-encoding = "2.3.2"

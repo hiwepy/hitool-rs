@@ -14,7 +14,7 @@ method-for-method Hutool compatibility.
 | No reverse/cyclic component dependency | complete | facade-only aggregation; components never depend on `hitool` |
 | Idiomatic and compatibility APIs separated | complete | `hitool-compat-hutool` delegates to core/JSON implementations |
 | No hidden global client, pool, config, or runtime | complete | stateful resources are constructed and injected explicitly |
-| Complete Hutool functional parity | in progress | pinned v5.8.46 inventory contains 13,871 public production API records; 1,150 records have implementation and executable evidence: all 175 `core.codec`, 422 `core.collection`, 9 `core.getter`, 10 `core.clone`, 33 `core.compiler`, 36 `core.stream`, 45 `core.compress`, 37 `hutool-aop`, 43 `hutool-dfa`, 72 `hutool-bloomFilter`, 79 `hutool-script`, 87 `hutool-captcha`, and 102 `hutool-socket` records |
+| Complete Hutool functional parity | in progress | pinned v5.8.46 inventory contains 13,871 public production API records; 1,271 records have implementation and executable evidence: all 175 `core.codec`, 422 `core.collection`, 9 `core.getter`, 10 `core.clone`, 33 `core.compiler`, 36 `core.stream`, 45 `core.compress`, 37 `hutool-aop`, 43 `hutool-dfa`, 72 `hutool-bloomFilter`, 79 `hutool-script`, 87 `hutool-captcha`, 102 `hutool-socket`, and 121 `hutool-jwt` records |
 
 ## Runtime boundaries
 
@@ -32,14 +32,14 @@ method-for-method Hutool compatibility.
 | Requirement | Status | Evidence or boundary |
 |---|---|---|
 | No workspace unsafe code | complete | every crate forbids unsafe; CI builds all features |
-| Secure crypto defaults | complete | AES-256-GCM, HMAC-SHA-256, Argon2id, scoped HS256 JWT |
-| Legacy crypto isolated | complete | explicit empty migration feature; insecure algorithms are not exported |
+| Secure crypto defaults | complete | AES-256-GCM, HMAC-SHA-256, Argon2id, scoped HS256 JWT, and RustCrypto-backed HS/RS/ES JOSE signers |
+| Legacy crypto isolated | complete | Hutool-named MD5/SHA1/DSA/SM4-CMAC and unavailable ES512 JWT entry points return typed rejection errors instead of enabling unsafe compatibility |
 | Supply-chain policy | complete | `cargo-deny` advisories, licenses, bans, and sources checks |
 | Default/no-default/all-feature tests | complete | CI quality job and local release gate |
 | Per-feature compilation | complete | `cargo hack --each-feature --locked` |
 | Stable, MSRV, Nightly, GNU/MUSL, macOS, Windows | complete | CI matrix; MSRV is Rust 1.85 |
 | Property, compile-fail, fuzz and integration testing | complete for current parsers | codec properties; compile-fail docs; structured parser fuzz targets; real HTTP/database tests |
-| 100% test coverage | in progress | current all-feature baseline: lines 94.32%, regions 94.54%, functions 93.72%; new collection, getter, clone, compiler, stream, compression, AOP, DFA, bloom-filter, script, CAPTCHA, and Socket implementations are 100% across regions, functions, lines, and generic instantiations, while CI requires 100% workspace-wide |
+| 100% test coverage | in progress | current all-feature baseline: lines 94.75%, regions 94.99%, functions 94.16%; the expanded JWT module is exactly 100% (2,029 regions, 143 functions, 1,148 lines), while CI requires 100% workspace-wide |
 | SemVer regression check | ready after first release | tag workflow runs `cargo-semver-checks`; no published baseline exists yet |
 | Performance baseline | deferred with evidence required | no hotspot is claimed in `0.1`; add Criterion baselines only after representative profiles identify one |
 

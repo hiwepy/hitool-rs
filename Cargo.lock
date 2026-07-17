@@ -1211,7 +1211,11 @@ dependencies = [
 name = "hitool-jwt"
 version = "0.1.0"
 dependencies = [
+ "base64",
  "jsonwebtoken",
+ "p256",
+ "p384",
+ "rsa",
  "serde",
  "serde_json",
  "thiserror",

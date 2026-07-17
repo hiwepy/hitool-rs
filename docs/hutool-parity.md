@@ -12,7 +12,7 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 | `hutool-json` | `hitool-json` | idiomatic | Serde typed and dynamic JSON |
 | `hutool-http` | `hitool-http` | idiomatic | Reqwest/Rustls client with limits, URL policy, streaming and explicit idempotent retry |
 | `hutool-crypto` | `hitool-crypto` | idiomatic | RustCrypto AEAD/HMAC/SHA-256/Argon2id |
-| `hutool-jwt` | `hitool-jwt` | idiomatic | algorithm-pinned, scoped JWT validation |
+| `hutool-jwt` | `hitool-jwt` | idiomatic | dynamic claims, HS/RS/ES/none signers, PEM factories, typed validation, and explicit rejection of obsolete/non-JOSE algorithms |
 | `hutool-cache` | `hitool-cache` | idiomatic | bounded concurrent Moka cache |
 | `hutool-bloomFilter` | `hitool-bloom-filter` | idiomatic | typed probabilistic membership |
 | `hutool-dfa` | `hitool-dfa` | idiomatic | Aho-Corasick leftmost-longest matching |
