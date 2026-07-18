@@ -361,8 +361,19 @@ impl IdcardUtil {
         if comparison < birth {
             return Err(IdcardError::BirthAfterComparison);
         }
-        let before_birthday = (comparison.month(), comparison.day()) < (birth.month(), birth.day());
-        Ok(comparison.year() - birth.year() - i32::from(before_birthday))
+        // 对齐 Hutool `CalendarUtil.age(long, long)`:
+        // 1. 月份小于生日月份 → 年龄减 1
+        // 2. 月份相等且日小于等于生日当天 → 年龄减 1
+        //    注: Hutool issue#I6E6ZG,法定生日当天不算年龄,从第二天开始计算,
+        //    即生日当天 dayOfMonth <= dayOfMonthBirth 仍减 1。
+        let comp_md = (comparison.month(), comparison.day());
+        let birth_md = (birth.month(), birth.day());
+        let not_yet_birthday_this_year = match comp_md.0.cmp(&birth_md.0) {
+            std::cmp::Ordering::Less => true,
+            std::cmp::Ordering::Equal => comp_md.1 <= birth_md.1,
+            std::cmp::Ordering::Greater => false,
+        };
+        Ok(comparison.year() - birth.year() - i32::from(not_yet_birthday_this_year))
     }
 
     /// Returns the embedded four-digit birth year.

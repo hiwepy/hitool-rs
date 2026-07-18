@@ -1,0 +1,26 @@
+//! `cn.hutool.core.text` 子包对齐
+//!
+//! 自动生成的模块入口,1:1 镜像 Java 包结构。
+//! 每个子模块对应一个 Java 类(`.java` → `.rs`),命名遵循 snake_case。
+//! 详细对齐信息见各 `.rs` 文件头注释。
+
+pub mod ant_path_matcher;
+pub mod ascii_str_cache;
+pub mod char_pool;
+pub mod char_sequence_util;
+pub mod naming_case;
+pub mod passwd_strength;
+pub mod simhash;
+pub mod str_builder;
+pub mod str_formatter;
+pub mod str_joiner;
+pub mod str_matcher;
+pub mod str_pool;
+pub mod str_splitter;
+pub mod text_similarity;
+pub mod unicode_util;
+pub mod csv;
+pub mod escape;
+pub mod finder;
+pub mod replacer;
+pub mod split;

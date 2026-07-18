@@ -1,0 +1,24 @@
+//! 对齐: `cn.hutool.core.lang.DefaultSegment`
+//! 来源: hutool-core/src/main/java/cn/hutool/core/lang/DefaultSegment.java
+//!
+//! Hutool 的 `DefaultSegment` Java 类型,等待完整实现。
+//! 状态: 对齐桩(对象/方法/参数已对齐),等待 `hitool-core` 内部继续迁移。
+
+use crate::{CoreError, Result};
+
+/// 对齐 Java: `cn.hutool.core.lang.DefaultSegment`
+#[derive(Debug, Clone, Default)]
+pub struct DefaultSegment;
+
+impl DefaultSegment {
+    /// 对齐 Java: `DefaultSegment.getStartIndex()`
+    #[allow(clippy::too_many_arguments)]
+    pub fn getStartIndex() -> Result<T> {
+        Err(CoreError::PendingEngine("DefaultSegment::getStartIndex (waiting for full impl)"))
+    }
+    /// 对齐 Java: `DefaultSegment.getEndIndex()`
+    #[allow(clippy::too_many_arguments)]
+    pub fn getEndIndex() -> Result<T> {
+        Err(CoreError::PendingEngine("DefaultSegment::getEndIndex (waiting for full impl)"))
+    }
+}

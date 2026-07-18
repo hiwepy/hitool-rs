@@ -51,4 +51,14 @@ pub enum CoreError {
     /// A checked date operation overflowed its supported range.
     #[error("date operation overflowed the supported range")]
     DateOverflow,
+
+    /// The requested capability is not yet wired up.
+    ///
+    /// Used by alignment stubs that mirror a Hutool Java API signature while
+    /// the underlying Rust implementation is still pending. Carrying an
+    /// explicit, non-panic failure mode keeps the call site honest about
+    /// "signature aligned, body pending" rather than failing at runtime in
+    /// a confusing way.
+    #[error("hitool-core capability not implemented yet, waiting for {0}")]
+    PendingEngine(&'static str),
 }

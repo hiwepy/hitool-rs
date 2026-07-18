@@ -83,6 +83,10 @@ impl<'a, T> AvgPartition<'a, T> {
                 reason: "must be greater than zero",
             });
         }
+        // 对齐 Hutool `ListUtil.splitAvg(List, int)`:当 list 为空时,
+        // 返回 empty(零分片),而不是 limit 个空分片。
+        // 见 hutool ListUtil.splitAvg 实现:`if (CollUtil.isEmpty(list)) return empty();`
+        let limit = if items.is_empty() { 0 } else { limit };
         Ok(Self { items, limit })
     }
 
@@ -224,12 +228,15 @@ mod tests {
             random.iter().collect::<Vec<_>>(),
             [&[1][..], &[2], &[3], &[4], &[]]
         );
-        assert_eq!(
+        // 对齐 Hutool `ListUtil.splitAvg`:空列表返回空(零分片),
+        // 而不是 limit 个空分片。见 hutool-core ListUtil.splitAvg 实现。
+        assert!(
             AvgPartition::<i32>::new(&[], 2)
                 .unwrap()
                 .iter()
-                .collect::<Vec<_>>(),
-            [&[] as &[i32], &[] as &[i32]]
+                .next()
+                .is_none(),
+            "空列表 splitAvg 应返回零分片(对齐 Hutool splitAvg)"
         );
         assert!(AvgPartition::<i32>::new(&[], 0).is_err());
     }

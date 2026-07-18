@@ -43,6 +43,9 @@ mod radix_codec;
 mod radix_util;
 mod stream;
 mod string;
+#[cfg(feature = "swing")]
+pub mod swing;
+mod text;
 mod version_util;
 
 pub use advanced_codec::{
@@ -95,7 +98,7 @@ pub use compress::{
 };
 pub use coordinate_util::{Coordinate, CoordinateUtil};
 pub use credit_code_util::CreditCodeUtil;
-pub use date::DateUtil;
+pub use date::date_util::DateUtil;
 pub use desensitized_util::{DesensitizedType, DesensitizedUtil};
 pub use error::{CoreError, Result};
 pub use getter::{
@@ -131,7 +134,10 @@ pub use radix_codec::{
 pub use radix_util::{RadixError, RadixUtil};
 pub use stream::{CollectorCharacteristic, CollectorUtil, SimpleCollector, StreamUtil};
 pub use string::{
-    StrExt, format_template, is_blank, lower_first, remove_all, remove_chars, split, upper_first,
+    StrExt, clean_blank, contains, contains_ignore_case, cut, end_with, equals,
+    equals_ignore_case, format_template, index_of_ignore_case, is_blank, last_index_of,
+    last_index_of_ignore_case, length, lower_first, remove_all, remove_chars, repeat, replace,
+    reverse, split, start_with, str_or_empty, strip, strip_ignore_case, trim, upper_first,
 };
 pub use version_util::{VersionError, VersionUtil};
 
@@ -145,3 +151,38 @@ pub mod prelude {
         PhoneUtil, RadixUtil, RgbColor, StrExt, VersionUtil,
     };
 }
+
+
+// ── 新增 util 模块 ──
+mod number_util;
+pub use number_util::NumberUtil;
+mod reflect_util;
+pub use reflect_util::ReflectUtil;
+mod re_util;
+pub use re_util::ReUtil;
+mod array_util;
+pub use array_util::ArrayUtil;
+mod dict;
+pub use dict::{Dict, DictUtil};
+mod map_util;
+pub use map_util::MapUtil;
+mod escape_util;
+pub use escape_util::EscapeUtil;
+mod validator;
+pub use validator::Validator;
+mod object_util;
+pub use object_util::ObjectUtil;
+mod type_util;
+pub use type_util::TypeUtil;
+mod enum_util;
+pub use enum_util::EnumUtil;
+mod url_util;
+pub use url_util::UrlUtil;
+mod xml_util;
+pub use xml_util::XmlUtil;
+mod file_util;
+pub use file_util::FileUtil;
+mod io_util;
+pub use io_util::IoUtil;
+mod random_util;
+pub use random_util::RandomUtil;
