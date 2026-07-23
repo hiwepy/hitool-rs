@@ -2007,355 +2007,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
-name = "hitool"
-version = "0.1.0"
-dependencies = [
- "hitool-ai",
- "hitool-aop",
- "hitool-bloom-filter",
- "hitool-cache",
- "hitool-captcha",
- "hitool-compat-hutool",
- "hitool-core",
- "hitool-cron",
- "hitool-crypto",
- "hitool-db",
- "hitool-dfa",
- "hitool-extra",
- "hitool-http",
- "hitool-json",
- "hitool-jwt",
- "hitool-log",
- "hitool-script",
- "hitool-setting",
- "hitool-socket",
- "hitool-system",
-]
-
-[[package]]
-name = "hitool-ai"
-version = "0.1.0"
-dependencies = [
- "async-stream",
- "async-trait",
- "futures-core",
- "hitool-http",
- "reqwest",
- "secrecy",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "url",
-]
-
-[[package]]
-name = "hitool-aop"
-version = "0.1.0"
-dependencies = [
- "parking_lot",
-]
-
-[[package]]
-name = "hitool-bloom-filter"
-version = "0.1.0"
-dependencies = [
- "bloomfilter",
- "encoding_rs",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
-name = "hitool-cache"
-version = "0.1.0"
-dependencies = [
- "moka",
- "parking_lot",
- "rand 0.9.5",
- "tempfile",
-]
-
-[[package]]
-name = "hitool-captcha"
-version = "0.1.0"
-dependencies = [
- "base64",
- "font8x8",
- "image",
- "rand 0.9.5",
- "thiserror",
-]
-
-[[package]]
-name = "hitool-compat-hutool"
-version = "0.1.0"
-dependencies = [
- "hitool-core",
- "hitool-json",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "hitool-core"
-version = "0.1.0"
-dependencies = [
- "base64",
- "bincode",
- "chrono",
- "cityhasher",
- "crc32fast",
- "criterion",
- "csv",
- "data-encoding",
- "encoding_rs",
- "enigo",
- "flate2",
- "hex",
- "idna",
- "image",
- "indexmap",
- "md-5",
- "murmur3",
- "musli",
- "num-bigint",
- "open",
- "parking_lot",
- "percent-encoding",
- "postcard",
- "proptest",
- "quick-xml 0.41.0",
- "rand 0.9.5",
- "regex",
- "rust_decimal",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
- "thiserror",
- "tokio",
- "unicode-general-category",
- "unicode-normalization",
- "url",
- "uuid",
- "xcap",
- "zip",
-]
-
-[[package]]
-name = "hitool-cron"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "cron",
- "thiserror",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "hitool-crypto"
-version = "0.1.0"
-dependencies = [
- "aes",
- "aes-gcm",
- "argon2",
- "base64",
- "block-padding",
- "cbc",
- "chacha20 0.9.1",
- "cmac",
- "data-encoding",
- "der",
- "des",
- "ecb",
- "generic-array",
- "hex",
- "hmac",
- "md-5",
- "num-bigint",
- "p256",
- "pbkdf2",
- "rand 0.9.5",
- "rand_core 0.6.4",
- "rc4",
- "rsa",
- "secrecy",
- "sha1",
- "sha2",
- "signature",
- "sm2",
- "sm3",
- "sm4",
- "thiserror",
- "x509-cert",
- "zeroize",
-]
-
-[[package]]
-name = "hitool-db"
-version = "0.1.0"
-dependencies = [
- "indexmap",
- "num-bigint",
- "regex",
- "rust_decimal",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "hitool-dfa"
-version = "0.1.0"
-dependencies = [
- "aho-corasick",
- "parking_lot",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "hitool-extra"
-version = "0.1.0"
-dependencies = [
- "emojis",
- "image",
- "lettre",
- "pinyin",
- "qrcode",
- "secrecy",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "zip",
-]
-
-[[package]]
-name = "hitool-http"
-version = "0.1.0"
-dependencies = [
- "async-stream",
- "encoding_rs",
- "fancy-regex",
- "flate2",
- "hitool-core",
- "indexmap",
- "rand 0.9.5",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "url",
- "woothee",
-]
-
-[[package]]
-name = "hitool-json"
-version = "0.1.0"
-dependencies = [
- "base64",
- "quick-xml 0.41.0",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "hitool-jwt"
-version = "0.1.0"
-dependencies = [
- "base64",
- "jsonwebtoken",
- "p256",
- "p384",
- "rsa",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "hitool-log"
-version = "0.1.0"
-dependencies = [
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "hitool-macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
-name = "hitool-poi"
-version = "0.1.0"
-dependencies = [
- "thiserror",
-]
-
-[[package]]
-name = "hitool-script"
-version = "0.1.0"
-dependencies = [
- "rhai",
- "thiserror",
-]
-
-[[package]]
-name = "hitool-setting"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "config",
- "encoding_rs",
- "indexmap",
- "notify",
- "num-bigint",
- "rust_decimal",
- "serde",
- "serde_json",
- "serde_yaml_ng",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
-name = "hitool-socket"
-version = "0.1.0"
-dependencies = [
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "hitool-system"
-version = "0.1.0"
-dependencies = [
- "sysinfo",
-]
-
-[[package]]
-name = "hitool-test-support"
-version = "0.1.0"
-dependencies = [
- "serde_json",
- "tempfile",
-]
-
-[[package]]
 name = "hkdf"
 version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2437,6 +2088,355 @@ name = "httpdate"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
+
+[[package]]
+name = "hutool"
+version = "0.1.0"
+dependencies = [
+ "hutool-ai",
+ "hutool-aop",
+ "hutool-bloom-filter",
+ "hutool-cache",
+ "hutool-captcha",
+ "hutool-compat-hutool",
+ "hutool-core",
+ "hutool-cron",
+ "hutool-crypto",
+ "hutool-db",
+ "hutool-dfa",
+ "hutool-extra",
+ "hutool-http",
+ "hutool-json",
+ "hutool-jwt",
+ "hutool-log",
+ "hutool-script",
+ "hutool-setting",
+ "hutool-socket",
+ "hutool-system",
+]
+
+[[package]]
+name = "hutool-ai"
+version = "0.1.0"
+dependencies = [
+ "async-stream",
+ "async-trait",
+ "futures-core",
+ "hutool-http",
+ "reqwest",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "url",
+]
+
+[[package]]
+name = "hutool-aop"
+version = "0.1.0"
+dependencies = [
+ "parking_lot",
+]
+
+[[package]]
+name = "hutool-bloom-filter"
+version = "0.1.0"
+dependencies = [
+ "bloomfilter",
+ "encoding_rs",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "hutool-cache"
+version = "0.1.0"
+dependencies = [
+ "moka",
+ "parking_lot",
+ "rand 0.9.5",
+ "tempfile",
+]
+
+[[package]]
+name = "hutool-captcha"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "font8x8",
+ "image",
+ "rand 0.9.5",
+ "thiserror",
+]
+
+[[package]]
+name = "hutool-compat-hutool"
+version = "0.1.0"
+dependencies = [
+ "hutool-core",
+ "hutool-json",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "hutool-core"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "bincode",
+ "chrono",
+ "cityhasher",
+ "crc32fast",
+ "criterion",
+ "csv",
+ "data-encoding",
+ "encoding_rs",
+ "enigo",
+ "flate2",
+ "hex",
+ "idna",
+ "image",
+ "indexmap",
+ "md-5",
+ "murmur3",
+ "musli",
+ "num-bigint",
+ "open",
+ "parking_lot",
+ "percent-encoding",
+ "postcard",
+ "proptest",
+ "quick-xml 0.41.0",
+ "rand 0.9.5",
+ "regex",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "unicode-general-category",
+ "unicode-normalization",
+ "url",
+ "uuid",
+ "xcap",
+ "zip",
+]
+
+[[package]]
+name = "hutool-cron"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "cron",
+ "thiserror",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "hutool-crypto"
+version = "0.1.0"
+dependencies = [
+ "aes",
+ "aes-gcm",
+ "argon2",
+ "base64",
+ "block-padding",
+ "cbc",
+ "chacha20 0.9.1",
+ "cmac",
+ "data-encoding",
+ "der",
+ "des",
+ "ecb",
+ "generic-array",
+ "hex",
+ "hmac",
+ "md-5",
+ "num-bigint",
+ "p256",
+ "pbkdf2",
+ "rand 0.9.5",
+ "rand_core 0.6.4",
+ "rc4",
+ "rsa",
+ "secrecy",
+ "sha1",
+ "sha2",
+ "signature",
+ "sm2",
+ "sm3",
+ "sm4",
+ "thiserror",
+ "x509-cert",
+ "zeroize",
+]
+
+[[package]]
+name = "hutool-db"
+version = "0.1.0"
+dependencies = [
+ "indexmap",
+ "num-bigint",
+ "regex",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "hutool-dfa"
+version = "0.1.0"
+dependencies = [
+ "aho-corasick",
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "hutool-extra"
+version = "0.1.0"
+dependencies = [
+ "emojis",
+ "image",
+ "lettre",
+ "pinyin",
+ "qrcode",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "zip",
+]
+
+[[package]]
+name = "hutool-http"
+version = "0.1.0"
+dependencies = [
+ "async-stream",
+ "encoding_rs",
+ "fancy-regex",
+ "flate2",
+ "hutool-core",
+ "indexmap",
+ "rand 0.9.5",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "url",
+ "woothee",
+]
+
+[[package]]
+name = "hutool-json"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "quick-xml 0.41.0",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "hutool-jwt"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "jsonwebtoken",
+ "p256",
+ "p384",
+ "rsa",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "hutool-log"
+version = "0.1.0"
+dependencies = [
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "hutool-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "hutool-poi"
+version = "0.1.0"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
+name = "hutool-script"
+version = "0.1.0"
+dependencies = [
+ "rhai",
+ "thiserror",
+]
+
+[[package]]
+name = "hutool-setting"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "config",
+ "encoding_rs",
+ "indexmap",
+ "notify",
+ "num-bigint",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "serde_yaml_ng",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "hutool-socket"
+version = "0.1.0"
+dependencies = [
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "hutool-system"
+version = "0.1.0"
+dependencies = [
+ "sysinfo",
+]
+
+[[package]]
+name = "hutool-test-support"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tempfile",
+]
 
 [[package]]
 name = "hyper"

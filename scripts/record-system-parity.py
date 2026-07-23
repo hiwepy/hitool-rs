@@ -9,9 +9,9 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
-COMPAT = "crates/hitool-system/src/compat.rs::"
-OSHI = "crates/hitool-system/src/oshi.rs::"
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
+COMPAT = "crates/hutool-system/src/compat.rs::"
+OSHI = "crates/hutool-system/src/oshi.rs::"
 
 
 def mapping(qualified_name: str) -> tuple[str, str, str]:
@@ -24,7 +24,7 @@ def mapping(qualified_name: str) -> tuple[str, str, str]:
         else:
             test = "live_collectors_return_consistent_process_memory_and_hardware_views"
         return (
-            f"hitool_system::{family}",
+            f"hutool_system::{family}",
             OSHI + test,
             "The mature sysinfo engine provides real CPU, process, memory, disk, network, "
             "and sensor snapshots; Rust fields replace JavaBean getter/setter boilerplate.",
@@ -54,7 +54,7 @@ def mapping(qualified_name: str) -> tuple[str, str, str]:
     else:
         test = "live_property_runtime_and_management_facades_are_consistent"
         note = "Portable host, runtime, user, locale, path, and system-property capabilities use owned Rust snapshots and typed I/O."
-    return f"hitool_system::{family}", COMPAT + test, note
+    return f"hutool_system::{family}", COMPAT + test, note
 
 
 def main() -> None:
@@ -72,7 +72,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": test,
             "notes": notes,
         }

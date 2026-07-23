@@ -8,7 +8,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 MODULE = "hutool-extra"
 EXPECTED = 1082
 
@@ -22,46 +22,46 @@ def mapping(qualified_name: str) -> tuple[str, str, str, str] | None:
     if pkg.startswith("cn.hutool.extra.qrcode"):
         return (
             "idiomatic",
-            "hitool_extra::qrcode::{QrCodeUtil,QrConfig,to_svg,to_ascii_art,ErrorCorrection}",
-            "crates/hitool-extra/src/qrcode.rs::qr_code_util_svg_ascii_and_config",
+            "hutool_extra::qrcode::{QrCodeUtil,QrConfig,to_svg,to_ascii_art,ErrorCorrection}",
+            "crates/hutool-extra/src/qrcode.rs::qr_code_util_svg_ascii_and_config",
             "QrCodeUtil/QrConfig facades map SVG/ASCII/(feature-gated) PNG; "
             "ZXing BufferedImage decode/PDF417/DataMatrix overloads share the SVG generation surface.",
         )
     if pkg.startswith("cn.hutool.extra.mail"):
         return (
             "idiomatic",
-            "hitool_extra::{MailUtil,Mail,MailAccount,mail::{MailMessage,SmtpClient,SmtpConfig}}",
-            "crates/hitool-extra/src/mail_facade.rs::mail_builder_matches_hutool_flow",
+            "hutool_extra::{MailUtil,Mail,MailAccount,mail::{MailMessage,SmtpClient,SmtpConfig}}",
+            "crates/hutool-extra/src/mail_facade.rs::mail_builder_matches_hutool_flow",
             "MailUtil/Mail/MailAccount facades delegate to injectable SmtpConfig + MailMessage; "
             "Jakarta* names alias the same surface; GlobalMailAccount singleton is not ported.",
         )
     if pkg.startswith("cn.hutool.extra.compress"):
         return (
             "idiomatic",
-            "hitool_extra::archive::{CompressUtil,ZipUtil,create_zip,extract_zip,ExtractionLimits}",
-            "crates/hitool-extra/src/archive.rs::compress_and_zip_util_roundtrip",
+            "hutool_extra::archive::{CompressUtil,ZipUtil,create_zip,extract_zip,ExtractionLimits}",
+            "crates/hutool-extra/src/archive.rs::compress_and_zip_util_roundtrip",
             "CompressUtil/ZipUtil ZIP path is implemented; 7z/tar ledger rows share ZIP round-trip tests.",
         )
     if pkg.startswith("cn.hutool.extra.validation"):
         return (
             "idiomatic",
-            "hitool_extra::validation::{BeanValidationResult,ErrorMessage,ValidationUtil}",
-            "crates/hitool-extra/src/validation.rs::validation_util_warp_helpers",
+            "hutool_extra::validation::{BeanValidationResult,ErrorMessage,ValidationUtil}",
+            "crates/hutool-extra/src/validation.rs::validation_util_warp_helpers",
             "BeanValidationResult/ErrorMessage + ValidationUtil warp helpers; "
             "Jakarta ValidatorFactory getValidator/validate remain intentionally unported.",
         )
     if pkg.startswith("cn.hutool.extra.emoji"):
         return (
             "idiomatic",
-            "hitool_extra::emoji::EmojiUtil",
-            "crates/hitool-extra/src/emoji.rs::emoji_util_detect_convert_and_strip",
+            "hutool_extra::emoji::EmojiUtil",
+            "crates/hutool-extra/src/emoji.rs::emoji_util_detect_convert_and_strip",
             "EmojiUtil facade over the emojis crate (detect/alias/html/strip/extract).",
         )
     if pkg.startswith("cn.hutool.extra.pinyin"):
         return (
             "idiomatic",
-            "hitool_extra::pinyin::{PinyinUtil,PinyinEngine,PinyinFactory,PinyinException,DefaultPinyinEngine}",
-            "crates/hitool-extra/src/pinyin.rs::pinyin_util_chinese_roundtrip",
+            "hutool_extra::pinyin::{PinyinUtil,PinyinEngine,PinyinFactory,PinyinException,DefaultPinyinEngine}",
+            "crates/hutool-extra/src/pinyin.rs::pinyin_util_chinese_roundtrip",
             "PinyinUtil + engine aliases over the pinyin crate; Java engine SPI variants share DefaultPinyinEngine.",
         )
     return None
@@ -86,7 +86,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": status,
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": evidence,
             "notes": notes,
         }

@@ -9,10 +9,10 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 MODULE = "hutool-poi"
 EXPECTED = 555
-ROOT = Path("crates/hitool-poi/src")
+ROOT = Path("crates/hutool-poi/src")
 
 ENGINE_NOTE = (
     "Signature-aligned empty implementation; waiting for easyexcel-rs / "
@@ -38,7 +38,7 @@ def path_score(path: str) -> int:
 
 
 def build_class_paths() -> dict[str, str]:
-    """Map Hutool simple class name → best stub source file under hitool-poi."""
+    """Map Hutool simple class name → best stub source file under hutool-poi."""
     found: dict[str, str] = {}
     for path in ROOT.rglob("*.rs"):
         text = path.read_text(encoding="utf-8", errors="ignore")
@@ -66,11 +66,11 @@ def build_class_paths() -> dict[str, str]:
 
 
 def to_symbol(class_name: str, file_path: str) -> str:
-    rel = file_path.split("crates/hitool-poi/src/")[-1]
+    rel = file_path.split("crates/hutool-poi/src/")[-1]
     if rel.endswith(".rs"):
         rel = rel[:-3]
     modules = "::".join(part for part in rel.split("/") if part)
-    return f"hitool_poi::{modules}::{class_name}"
+    return f"hutool_poi::{modules}::{class_name}"
 
 
 def engine_for(class_name: str, qualified_name: str) -> str:
@@ -98,14 +98,14 @@ def main() -> None:
         selected += 1
         class_name = family(row["qualified_name"])
         file_path = class_paths.get(
-            class_name, "crates/hitool-poi/src/excel/excel_util.rs"
+            class_name, "crates/hutool-poi/src/excel/excel_util.rs"
         )
         engine = engine_for(class_name, row["qualified_name"])
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "planned",
-            "hitool_symbol": to_symbol(class_name, file_path),
-            "test_evidence": "crates/hitool-poi/tests/poi_parity.rs::read_test",
+            "hutool_symbol": to_symbol(class_name, file_path),
+            "test_evidence": "crates/hutool-poi/tests/poi_parity.rs::read_test",
             "notes": (
                 f"{ENGINE_NOTE} Stub path for {class_name}; engine={engine}."
             ),

@@ -6,7 +6,7 @@
 2. Hutool Java source defines capability coverage and compatibility semantics;
    Java implementations are not mechanically translated.
 3. Code adapted from yimi-rutool must be reviewed, attributed, and substantially
-   revised for HiTool's crate boundaries, error model, and security defaults.
+   revised for Hutool-Rust's crate boundaries, error model, and security defaults.
 4. Security-sensitive code is implemented through audited upstream crates and is
    never copied merely for API parity.
 

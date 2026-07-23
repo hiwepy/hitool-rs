@@ -9,7 +9,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 
 def mapping(qualified_name: str) -> tuple[str, str] | None:
@@ -20,25 +20,25 @@ def mapping(qualified_name: str) -> tuple[str, str] | None:
     if family == "FullSupportScriptEngine":
         invocation = any(token in qualified_name for token in ("invoke", "getInterface"))
         test = (
-            "crates/hitool-script/src/compat.rs::invocable_functions_methods_and_interfaces_share_the_active_ast"
+            "crates/hutool-script/src/compat.rs::invocable_functions_methods_and_interfaces_share_the_active_ast"
             if invocation
-            else "crates/hitool-script/src/compat.rs::full_engine_compiles_evaluates_readers_bindings_and_contexts"
+            else "crates/hutool-script/src/compat.rs::full_engine_compiles_evaluates_readers_bindings_and_contexts"
         )
-        return "hitool_script::FullSupportScriptEngine", test
+        return "hutool_script::FullSupportScriptEngine", test
     if family == "JavaScriptEngine":
         return (
-            "hitool_script::JavaScriptEngine",
-            "crates/hitool-script/src/compat.rs::javascript_wrapper_and_util_cover_supported_and_optional_languages",
+            "hutool_script::JavaScriptEngine",
+            "crates/hutool-script/src/compat.rs::javascript_wrapper_and_util_cover_supported_and_optional_languages",
         )
     if family == "ScriptRuntimeException":
         return (
-            "hitool_script::ScriptRuntimeException",
-            "crates/hitool-script/src/compat.rs::runtime_exception_constructors_and_locations_match_hutool",
+            "hutool_script::ScriptRuntimeException",
+            "crates/hutool-script/src/compat.rs::runtime_exception_constructors_and_locations_match_hutool",
         )
     if family == "ScriptUtil":
         return (
-            "hitool_script::ScriptUtil",
-            "crates/hitool-script/src/compat.rs::javascript_wrapper_and_util_cover_supported_and_optional_languages",
+            "hutool_script::ScriptUtil",
+            "crates/hutool-script/src/compat.rs::javascript_wrapper_and_util_cover_supported_and_optional_languages",
         )
     return None
 
@@ -61,7 +61,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": test,
             "notes": (
                 "Sandboxed Rhai replaces JSR-223 while preserving compile, evaluate, bindings, "

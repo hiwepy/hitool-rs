@@ -1,8 +1,8 @@
-# hitool-rs ↔ hutool 迁移完成度对比报告
+# hutool-rust ↔ hutool 迁移完成度对比报告
 
 > **生成时间**：2026-07-21
 > **对照基线**：`/Users/wandl/workspaces/workspace-github/hutool`（hutool-5.x）
-> **目标仓库**：`/Users/wandl/workspaces/workspace-github/hitool-rs`
+> **目标仓库**：`/Users/wandl/workspaces/workspace-github/hutool-rust`
 > **重要说明**：本报告基于 `git status` 的当前工作目录快照，**不包含已 untracked / 未跟踪文件**。
 > **统计口径**：`src/main/java` 与 `src` 下的源代码文件（不含 `pom.xml`、`Cargo.toml`、测试文件、构建脚本）。
 >
@@ -13,74 +13,74 @@
 
 ## 0. 总览数字
 
-| 维度 | hutool | hitool-rs | 完成度 |
+| 维度 | hutool | hutool-rust | 完成度 |
 |---|---:|---:|---|
 | 模块/crate 数 | 24（含 hutool-bom/hutool-all） | 23 | — |
 | 主源代码文件总数 | **1 553**（Java） | **926**（Rust） | **59.6%** |
-| 仅 hutool-core | 713（Java） | 780（Rust，含 109 个集成测试） | **结构性已对齐**（hitool-core 含双重遗留路径） |
+| 仅 hutool-core | 713（Java） | 780（Rust，含 109 个集成测试） | **结构性已对齐**（hutool-core 含双重遗留路径） |
 | 仅 hutool-core 测试 | 330 | 109 | 33% |
 | 文档迁移 | docs/ + JavaDoc 注释 | cn/（中文）+ rustdoc 注释 | 已迁移 docs 中文化 |
-| 示例迁移 | — | `crates/hitool/examples/*.rs` + `crates/*/examples/*.rs` | 已迁移 |
+| 示例迁移 | — | `crates/hutool/examples/*.rs` + `crates/*/examples/*.rs` | 已迁移 |
 
 ### 0.1 模块清单对应表
 
-| hutool 模块 | hitool-rs crate | 状态 | 备注 |
+| hutool 模块 | hutool-rust crate | 状态 | 备注 |
 |---|---|---|---|
 | hutool-bom | （无） | N/A | Java BOM 仅管理依赖版本，无 Rust 对应 |
-| hutool-all | `crates/hitool`（facade） | ✅ 已迁移 | 入口 facade，通过 re-export 聚合 |
-| hutool-core | `crates/hitool-core` | ✅ 大量迁移 | 命名基本 1:1，但存在双重路径 |
-| hutool-ai | `crates/hitool-ai` | 🟡 部分迁移 | 仅 OpenAI provider，其它 6 家未实现 |
-| hutool-aop | `crates/hitool-aop` | ✅ 已迁移 | Rust 重写为 trait/Aspect/Proxy 模型 |
-| hutool-bloomFilter | `crates/hitool-bloom-filter` | ✅ 已迁移 | 命名规范化（kebab-case crate 名） |
-| hutool-cache | `crates/hitool-cache` | ✅ 已迁移 | 基于 moka 实现 |
-| hutool-captcha | `crates/hitool-captcha` | ✅ 已迁移 | 自定义 image renderer |
-| hutool-cron | `crates/hitool-cron` | 🟡 部分迁移 | 仅 4 文件，缺失 pattern/、timingwheel/、task/ 等子包 |
-| hutool-crypto | `crates/hitool-crypto` | 🟡 部分迁移 | 缺失对称算法枚举、Sign、SignUtil、SmUtil、SpecUtil、asymmetric/digest/symmetric 子包 |
-| hutool-db | `crates/hitool-db` | 🟡 部分迁移 | 仅 connection/ds/pool/row/sql；缺 Entity、Page、Query、SqlBuilder、dialect/、nosql/、ds/ 多个子包 |
-| hutool-dfa | `crates/hitool-dfa` | ✅ 已迁移 | 4 文件完整 |
-| hutool-extra | `crates/hitool-extra` | 🟡 部分迁移 | 仅 codec/compression/invocation/qrcode/template；缺 mail/ftp/ssh/pinyin/tokenizer/expression/servlet/spring |
-| hutool-http | `crates/hitool-http` | ✅ 已迁移 | 22 文件，含 body/html 子模块 |
-| hutool-json | `crates/hitool-json` | ✅ 已迁移 | 6 文件（兼容 facade 完整） |
-| hutool-jwt | `crates/hitool-jwt` | ✅ 已迁移 | 2 文件（lib + compat），结构紧凑 |
-| hutool-log | `crates/hitool-log` | 🟡 部分迁移 | 缺 7+ 个 dialect 子模块（log4j/log4j2/slf4j/jboss/jdk/tinylog/logtube），通过 tracing 抽象 |
-| hutool-poi | （**不存在** `crates/hitool-poi`） | 🔴 **未迁移** | 按用户说明：保留空实现待后续完成 |
-| hutool-script | `crates/hitool-script` | ✅ 已迁移 | 基于 rhai 实现 JavaScript 兼容层 |
-| hutool-setting | `crates/hitool-setting` | ✅ 已迁移 | 基于 config crate + serde_yaml |
-| hutool-socket | `crates/hitool-socket` | ✅ 已迁移 | 基于 tokio 实现 |
-| hutool-system | `crates/hitool-system` | ✅ 已迁移 | 基于 sysinfo 实现 |
-| （新增） | `crates/hitool-compat-hutool` | ➕ Rust 扩展 | Java 风格兼容层（无 Java 原型） |
-| （新增） | `crates/hitool-macros` | ➕ Rust 扩展 | proc-macro 工具 |
-| （新增） | `crates/hitool-test-support` | ➕ Rust 扩展 | 测试工具 |
+| hutool-all | `crates/hutool`（facade） | ✅ 已迁移 | 入口 facade，通过 re-export 聚合 |
+| hutool-core | `crates/hutool-core` | ✅ 大量迁移 | 命名基本 1:1，但存在双重路径 |
+| hutool-ai | `crates/hutool-ai` | 🟡 部分迁移 | 仅 OpenAI provider，其它 6 家未实现 |
+| hutool-aop | `crates/hutool-aop` | ✅ 已迁移 | Rust 重写为 trait/Aspect/Proxy 模型 |
+| hutool-bloomFilter | `crates/hutool-bloom-filter` | ✅ 已迁移 | 命名规范化（kebab-case crate 名） |
+| hutool-cache | `crates/hutool-cache` | ✅ 已迁移 | 基于 moka 实现 |
+| hutool-captcha | `crates/hutool-captcha` | ✅ 已迁移 | 自定义 image renderer |
+| hutool-cron | `crates/hutool-cron` | 🟡 部分迁移 | 仅 4 文件，缺失 pattern/、timingwheel/、task/ 等子包 |
+| hutool-crypto | `crates/hutool-crypto` | 🟡 部分迁移 | 缺失对称算法枚举、Sign、SignUtil、SmUtil、SpecUtil、asymmetric/digest/symmetric 子包 |
+| hutool-db | `crates/hutool-db` | 🟡 部分迁移 | 仅 connection/ds/pool/row/sql；缺 Entity、Page、Query、SqlBuilder、dialect/、nosql/、ds/ 多个子包 |
+| hutool-dfa | `crates/hutool-dfa` | ✅ 已迁移 | 4 文件完整 |
+| hutool-extra | `crates/hutool-extra` | 🟡 部分迁移 | 仅 codec/compression/invocation/qrcode/template；缺 mail/ftp/ssh/pinyin/tokenizer/expression/servlet/spring |
+| hutool-http | `crates/hutool-http` | ✅ 已迁移 | 22 文件，含 body/html 子模块 |
+| hutool-json | `crates/hutool-json` | ✅ 已迁移 | 6 文件（兼容 facade 完整） |
+| hutool-jwt | `crates/hutool-jwt` | ✅ 已迁移 | 2 文件（lib + compat），结构紧凑 |
+| hutool-log | `crates/hutool-log` | 🟡 部分迁移 | 缺 7+ 个 dialect 子模块（log4j/log4j2/slf4j/jboss/jdk/tinylog/logtube），通过 tracing 抽象 |
+| hutool-poi | （**不存在** `crates/hutool-poi`） | 🔴 **未迁移** | 按用户说明：保留空实现待后续完成 |
+| hutool-script | `crates/hutool-script` | ✅ 已迁移 | 基于 rhai 实现 JavaScript 兼容层 |
+| hutool-setting | `crates/hutool-setting` | ✅ 已迁移 | 基于 config crate + serde_yaml |
+| hutool-socket | `crates/hutool-socket` | ✅ 已迁移 | 基于 tokio 实现 |
+| hutool-system | `crates/hutool-system` | ✅ 已迁移 | 基于 sysinfo 实现 |
+| （新增） | `crates/hutool-compat-hutool` | ➕ Rust 扩展 | Java 风格兼容层（无 Java 原型） |
+| （新增） | `crates/hutool-macros` | ➕ Rust 扩展 | proc-macro 工具 |
+| （新增） | `crates/hutool-test-support` | ➕ Rust 扩展 | 测试工具 |
 
 ### 0.2 总体完成度结论
 
 | 类别 | 完成度 | 含义 |
 |---|---|---|
-| 文件命名一致性 | ⭐⭐⭐⭐ 90% | hitool-core 内部出现 "hutool-legacy" + "new path" 双轨，**违反"不得删减"原则需要梳理** |
-| 对象/类型命名一致性 | ⭐⭐⭐ 75% | 部分 hutool 类（SetUtil、URLDecodeUtil、RegexUtil、SecureUtil 等）**未在 hitool-rs 中以同名 struct 存在** |
-| 方法签名一致性 | ⭐⭐⭐ 70% | hitool-rs 用 trait/方法组重新切分了原 Java 的静态工具类，参数顺序大致一致，返回值改为 `Result<T>` |
-| 业务逻辑一致性 | ⭐⭐ 50% | hitool-core 实现了原代码骨架但内部细节有简化（如 HashUtil、Codec） |
-| **hitool-poi 迁移** | ⭐ 0% | **不存在** `crates/hitool-poi`，按用户要求保留空实现 |
-| **示例/文档/注释** | ⭐⭐⭐⭐ 85% | 已有 `crates/hitool/examples/`、`cn/` 中文文档、rustdoc 注释 |
+| 文件命名一致性 | ⭐⭐⭐⭐ 90% | hutool-core 内部出现 "hutool-legacy" + "new path" 双轨，**违反"不得删减"原则需要梳理** |
+| 对象/类型命名一致性 | ⭐⭐⭐ 75% | 部分 hutool 类（SetUtil、URLDecodeUtil、RegexUtil、SecureUtil 等）**未在 hutool-rust 中以同名 struct 存在** |
+| 方法签名一致性 | ⭐⭐⭐ 70% | hutool-rust 用 trait/方法组重新切分了原 Java 的静态工具类，参数顺序大致一致，返回值改为 `Result<T>` |
+| 业务逻辑一致性 | ⭐⭐ 50% | hutool-core 实现了原代码骨架但内部细节有简化（如 HashUtil、Codec） |
+| **hutool-poi 迁移** | ⭐ 0% | **不存在** `crates/hutool-poi`，按用户要求保留空实现 |
+| **示例/文档/注释** | ⭐⭐⭐⭐ 85% | 已有 `crates/hutool/examples/`、`cn/` 中文文档、rustdoc 注释 |
 
 ---
 
-## 1. 核心模块 hutool-core ↔ hitool-core 详细对比
+## 1. 核心模块 hutool-core ↔ hutool-core 详细对比
 
 ### 1.1 规模对比
 
-| 维度 | hutool-core | hitool-core | 比例 |
+| 维度 | hutool-core | hutool-core | 比例 |
 |---|---:|---:|---|
-| 主源码文件 | 713（Java） | 780（Rust） | 1.09×（hitool 多但分散） |
+| 主源码文件 | 713（Java） | 780（Rust） | 1.09×（hutool 多但分散） |
 | 测试文件 | 330 | 109 | 0.33× |
 | 顶层顶级包/目录 | 25（cn.hutool.core.X） | 32（src/X.rs 或 src/X/） | 1.28× |
 | 子包数量 | ~80 | ~70 | 0.88× |
 
 ### 1.2 包到子目录的映射（已完成）
 
-> 命中定义：hutool 包内的 Java 类数 / hitool 同名子目录中可找到的 snake_case .rs 文件数。
+> 命中定义：hutool 包内的 Java 类数 / hutool 同名子目录中可找到的 snake_case .rs 文件数。
 
-| hutool 包 | Java 类数 | hitool 子目录 | rs 文件数 | 匹配率 | 缺失类（snake_case） |
+| hutool 包 | Java 类数 | hutool 子目录 | rs 文件数 | 匹配率 | 缺失类（snake_case） |
 |---|---:|---|---:|---:|---|
 | annotation | 36 | annotation | 49 | 97.2% | (已基本对齐) |
 | bean | 11 | bean | 24 | 90.9% | (已基本对齐) |
@@ -109,9 +109,9 @@
 
 ### 1.3 关键问题：**双重路径（hutool-legacy vs new）**
 
-按照用户要求"不得对已经迁移的实现进行删减操作"，**但当前 hitool-core 内部出现了同一实体的两个位置**：
+按照用户要求"不得对已经迁移的实现进行删减操作"，**但当前 hutool-core 内部出现了同一实体的两个位置**：
 
-| hutool 类 | hitool-rs 当前位置（双重） | 期望处理 |
+| hutool 类 | hutool-rust 当前位置（双重） | 期望处理 |
 |---|---|---|
 | `cn.hutool.core.collection.CollUtil` | `src/coll_util.rs` **+** `src/collection/coll_util.rs` | **保留两份**（满足"不删减"原则），但应通过 `pub use` 重新导出 |
 | `cn.hutool.core.bean.BeanUtil` | `src/bean_util.rs` **+** `src/bean/bean_util.rs` | 同上 |
@@ -124,16 +124,16 @@
 
 #### 1.3.1 缺失的核心类（用户提到的）
 
-| 用户期待类名 | hitool-rs 实际 | 替代物 |
+| 用户期待类名 | hutool-rust 实际 | 替代物 |
 |---|---|---|
 | `SetUtil` | ❌ 不存在 | 通过 `coll_util::new_hash_set` / `coll_util::new_tree_set` 实现 |
 | `URLDecodeUtil` | ❌ 不存在 | 通过 `url_util::decode` / `net::url_decoder` 实现 |
 | `RegexUtil` | ❌ 不存在 | 通过 `re_util` 实现（合并了 RegexUtil + ReUtil） |
 | `DigestUtil` | ❌ 不存在 | 通过 `crypto::digest`（独立 crate）实现 |
 | `SecureUtil` | ❌ 不存在 | 通过 `crypto::*`（独立 crate）实现 |
-| `DES` / `AES` / `RSA`（hutool-core 内） | ❌ 不存在 | 移到了 `hitool-crypto` crate |
+| `DES` / `AES` / `RSA`（hutool-core 内） | ❌ 不存在 | 移到了 `hutool-crypto` crate |
 | `Base32Util` / `Base64Util` | ❌ 不存在 | 通过 `codec::base32` / `codec::base64` 实现 |
-| `CharacterUtil` | ❌ 不存在（hutool 实际是 `CharUtil`） | hitool-core 用 `char_util` |
+| `CharacterUtil` | ❌ 不存在（hutool 实际是 `CharUtil`） | hutool-core 用 `char_util` |
 | `URLEncodeUtil` | ❌ 不存在 | 通过 `net::url_encode_util` 实现 |
 | `StrUtil`（外层） | 🟡 占位 | `src/str_util.rs` 1.1KB，主体功能在 `text/str_*.rs` + `string.rs` |
 | `DateTime`（独立类） | 🟡 type alias | `pub type DateTime = chrono::NaiveDateTime` |
@@ -142,7 +142,7 @@
 
 > 完整对比（>500 方法）请见 §1.5 表的概要。本节展示关键不一致点。
 
-#### 1.4.1 `CollUtil` ↔ `hitool::coll_util::CollUtil`
+#### 1.4.1 `CollUtil` ↔ `hutool::coll_util::CollUtil`
 
 | Java 方法 | Rust 方法 | 差异 |
 |---|---|---|
@@ -153,9 +153,9 @@
 | `static String[] union(...)` | `fn union<T>(...) -> Vec<T>` | 数组→Vec |
 | `static String[] unionDistinct(...)` | `fn union_distinct<T>(...) -> IndexSet<T>` | 返回 `IndexSet` 而非 `List` |
 
-**未迁移**：原始 `CollUtil` 有 180+ 静态方法；hitool-rs 实现约 120+ 个公开方法（部分 hutool 内部工具方法暂未实现）。
+**未迁移**：原始 `CollUtil` 有 180+ 静态方法；hutool-rust 实现约 120+ 个公开方法（部分 hutool 内部工具方法暂未实现）。
 
-#### 1.4.2 `DateUtil` ↔ `hitool::date::date_util::DateUtil`
+#### 1.4.2 `DateUtil` ↔ `hutool::date::date_util::DateUtil`
 
 | Java 方法 | Rust 方法 | 差异 |
 |---|---|---|
@@ -168,7 +168,7 @@
 
 **未迁移**：`DatePattern` 常量未全部保留；`formatChineseDate`、`formatHttpDate` 已实现，但部分内部 helper 暂未。
 
-#### 1.4.3 `FileUtil` ↔ `hitool::file_util::FileUtil`
+#### 1.4.3 `FileUtil` ↔ `hutool::file_util::FileUtil`
 
 | Java 方法 | Rust 方法 | 差异 |
 |---|---|---|
@@ -180,9 +180,9 @@
 | `static String readUtf8Str(String)` | `fn read_utf8_string(path: &str) -> std::io::Result<String>` | ✅ |
 | `static boolean del(String)` | `fn delete(path: &str) -> std::io::Result<()>` | ✅ |
 
-**未迁移**：`FileUtil` 原有 160+ 静态方法；hitool-rs 实现约 80+ 个方法。
+**未迁移**：`FileUtil` 原有 160+ 静态方法；hutool-rust 实现约 80+ 个方法。
 
-#### 1.4.4 `NumberUtil` ↔ `hitool::number_util::NumberUtil`
+#### 1.4.4 `NumberUtil` ↔ `hutool::number_util::NumberUtil`
 
 | Java 方法 | Rust 方法 | 差异 |
 |---|---|---|
@@ -193,17 +193,17 @@
 | `static BigDecimal toBigDecimal(String)` | `fn to_big_decimal_str(s) -> Result<Decimal>` | 返回 `Result` |
 | `static String decimalFormat(String, double)` | `fn decimal_format(pattern: &str, value: f64) -> Result<String>` | ✅ |
 
-**未迁移**：`NumberUtil` 原始 130+ 方法；hitool-rs 约 80+ 方法。Java 的 `MathUtil`、`Money`、`Calculator`、`Arrangement`、`Combination`、`BitStatusUtil` 全部已对齐。
+**未迁移**：`NumberUtil` 原始 130+ 方法；hutool-rust 约 80+ 方法。Java 的 `MathUtil`、`Money`、`Calculator`、`Arrangement`、`Combination`、`BitStatusUtil` 全部已对齐。
 
-#### 1.4.5 `StrUtil` ↔ hitool-rs（**关键不一致**）
+#### 1.4.5 `StrUtil` ↔ hutool-rust（**关键不一致**）
 
-hutool 的 `StrUtil` 是核心门面类（1200+ 行，180+ 方法）。hitool-rs **没有同名的 struct**：
+hutool 的 `StrUtil` 是核心门面类（1200+ 行，180+ 方法）。hutool-rust **没有同名的 struct**：
 - 顶层 `src/str_util.rs` 仅 1.1KB，作为 thin facade
 - 实际功能分散到 `text/str_builder.rs`、`text/str_joiner.rs`、`text/str_splitter.rs`、`text/str_formatter.rs`、`text/str_pool.rs`、`text/str_matcher.rs`、`text/str_finder.rs` 等
 
 **这是违反"对象/方法名称一致"要求的最严重一处**。建议补一个 `src/str_util.rs` 聚合 facade struct + re-export 各子模块方法。
 
-#### 1.4.6 `MapUtil` ↔ `hitool::map_util::MapUtil`
+#### 1.4.6 `MapUtil` ↔ `hutool::map_util::MapUtil`
 
 | Java 方法 | Rust 方法 | 差异 |
 |---|---|---|
@@ -213,33 +213,33 @@ hutool 的 `StrUtil` 是核心门面类（1200+ 行，180+ 方法）。hitool-rs
 | `static String getStr(Map, Object, String)` | `fn get_str_or<'a, K: Eq + Hash>(map: &'a HashMap<K, String>, key: &K, default: &str) -> &'a str` | 命名 `get_str_or` 而非 `getStr` |
 | `static void putAll(Map, Map)` | `fn put_all<K, V>(target: &mut HashMap<K, V>, source: HashMap<K, V>)` | ✅ |
 
-### 1.5 hitool-core 完整性 checklist
+### 1.5 hutool-core 完整性 checklist
 
 | 用户要求 | 满足情况 | 备注 |
 |---|---|---|
-| **文件数量一致** | ❌ hutool 713 / hitool 780 | hitool 多 67 个，但内部出现双重路径 |
+| **文件数量一致** | ❌ hutool 713 / hutool 780 | hutool 多 67 个，但内部出现双重路径 |
 | **文件路径一致** | 🟡 部分 | 顶层 `*_util.rs` 与 `X/*_util.rs` 并存 |
 | **方法名称一致** | 🟡 75% | Java camelCase → Rust snake_case（命名约定差异，非错误），但部分类完全缺失 |
 | **方法参数一致** | 🟡 70% | 类型映射（Collection→&[T]、String→&str、boolean→Result）属合理 |
 | **方法逻辑一致** | 🟡 50% | 核心逻辑已对齐，但部分边界处理、异常路径、Java 特有的 checked exception 处理被简化 |
 | **rust 生态组件** | ✅ 已使用 | chrono / uuid / md5 / sha2 / sha1 / indexmap / ahash / tokio 等 |
-| **示例迁移** | 🟡 部分 | hitool-core 没有 `examples/` 子目录；只有 facade `crates/hitool/examples/` |
+| **示例迁移** | 🟡 部分 | hutool-core 没有 `examples/` 子目录；只有 facade `crates/hutool/examples/` |
 | **文档迁移** | ✅ 已迁移 | `cn/` 中文 docs + rustdoc 注释 |
 | **对象注释、方法注释、代码段落注释** | 🟡 部分 | 已有 rustdoc，但未明确标注"原 Java 对应文件路径/方法" |
 | **标注原 Java 对应文件** | ❌ 未做 | 大量 `.rs` 文件缺少 `/// 迁移自 cn.hutool.core.X.Y#method` 注释 |
 
 ---
 
-## 2. hutool-cron ↔ hitool-cron
+## 2. hutool-cron ↔ hutool-cron
 
-| 维度 | hutool-cron | hitool-cron | 比例 |
+| 维度 | hutool-cron | hutool-cron | 比例 |
 |---|---:|---:|---|
 | 主源文件 | 41 | 4 | **9.8%** |
 | 子包/子模块 | 6（listener/、pattern/、task/、timingwheel/、pattern/matcher/） | 0 | — |
 
 ### 2.1 已迁移（4 文件）
 
-| hutool 文件 | hitool 文件 | 说明 |
+| hutool 文件 | hutool 文件 | 说明 |
 |---|---|---|
 | `cn.hutool.cron.CronPattern` | `src/expression.rs::CronExpression` | 字段化实现，差异较大 |
 | `cn.hutool.cron.CronPatternUtil` | `src/parser.rs` | 提供 `parse()` 顶层函数 |
@@ -269,16 +269,16 @@ hutool 的 `StrUtil` 是核心门面类（1200+ 行，180+ 方法）。hitool-rs
 
 ---
 
-## 3. hutool-http ↔ hitool-http
+## 3. hutool-http ↔ hutool-http
 
-| 维度 | hutool-http | hitool-http | 比例 |
+| 维度 | hutool-http | hutool-http | 比例 |
 |---|---:|---:|---|
 | 主源文件 | 72 | 22 | 30.5% |
 | 子包 | 5（body/、cookie/、server/、ssl/、webservice/、useragent/） | 2（body/、html/） | 40% |
 
 ### 3.1 已对齐的类
 
-| hutool 类 | hitool 类 | 备注 |
+| hutool 类 | hutool 类 | 备注 |
 |---|---|---|
 | `HttpUtil` | `client::HttpClient`（部分静态 facade 通过顶层 fn） | 重写为 client + static fn 混合 |
 | `HttpRequest` | `request::HttpRequest` | ✅ |
@@ -310,23 +310,23 @@ hutool 的 `StrUtil` 是核心门面类（1200+ 行，180+ 方法）。hitool-rs
 | `server.action.*` / `server.filter.*` / `server.handler.*` | ❌ 全部未迁移 |
 | `SSL` 相关：`AndroidSupportSSLFactory`、`CustomProtocolsSSLFactory`、`DefaultSSLFactory`、`DefaultSSLInfo`、`SSLSocketFactoryBuilder`、`TrustAnyHostnameVerifier` | ❌ ssl 子包整体未迁移（依赖 reqwest TLS） |
 | `SoapClient` / `SoapProtocol` / `SoapRuntimeException` / `SoapUtil` / `JakartaSoap*` | ❌ webservice 子包未迁移 |
-| `useragent` 子包下 `OS`、`Engine`、`Platform`（已在 hitool-http 但结构不同） | ✅ |
+| `useragent` 子包下 `OS`、`Engine`、`Platform`（已在 hutool-http 但结构不同） | ✅ |
 | `package-info` × 多 | ❌ |
 
 **完成度：~70%**
 
 ---
 
-## 4. hutool-json ↔ hitool-json
+## 4. hutool-json ↔ hutool-json
 
-| 维度 | hutool-json | hitool-json | 比例 |
+| 维度 | hutool-json | hutool-json | 比例 |
 |---|---:|---:|---|
 | 主源文件 | 33 | 6 | 18.2% |
 | 子包 | 3（serialize/、xml/、xml/readers/） | 0（内部模块化） | — |
 
 ### 4.1 已对齐
 
-| hutool 类 | hitool 类 | 备注 |
+| hutool 类 | hutool 类 | 备注 |
 |---|---|---|
 | `JSONUtil` | `facade::JSONUtil` | ✅ 完整 facade |
 | `JSONObject` / `JSONArray` / `JSON` | `compat::JSONObject` / `compat::JSONArray` / `facade::JSONSupport` trait | ✅ |
@@ -352,16 +352,16 @@ hutool 的 `StrUtil` 是核心门面类（1200+ 行，180+ 方法）。hitool-rs
 
 ---
 
-## 5. hutool-log ↔ hitool-log
+## 5. hutool-log ↔ hutool-log
 
-| 维度 | hutool-log | hitool-log | 比例 |
+| 维度 | hutool-log | hutool-log | 比例 |
 |---|---:|---:|---|
 | 主源文件 | 46 | 2 | 4.3% |
 | 子包/子模块 | 3（dialect/、level/、dialect/console/、dialect/jboss/、dialect/jdk/、dialect/log4j/、dialect/log4j2/、dialect/logtube/、dialect/slf4j/、dialect/tinylog/） | `dialect`/`level` 子模块（仅类型别名） | 极低 |
 
 ### 5.1 已对齐
 
-| hutool 类 | hitool 类 | 备注 |
+| hutool 类 | hutool 类 | 备注 |
 |---|---|---|
 | `Log` | `compat::Log` trait | ✅ |
 | `AbstractLog` | `compat::AbstractLog` | ✅ |
@@ -389,22 +389,22 @@ hutool 的 `StrUtil` 是核心门面类（1200+ 行，180+ 方法）。hitool-rs
 
 ---
 
-## 6. hutool-poi ↔ hitool-poi（**用户特别要求**）
+## 6. hutool-poi ↔ hutool-poi（**用户特别要求**）
 
-| 维度 | hutool-poi | hitool-poi |
+| 维度 | hutool-poi | hutool-poi |
 |---|---:|---:|
-| 存在性 | ✅ 78 Java 文件 | ❌ **不存在** `crates/hitool-poi/` |
+| 存在性 | ✅ 78 Java 文件 | ❌ **不存在** `crates/hutool-poi/` |
 
-**结论**：按用户说明，`hitool-poi` 模块**尚未迁移**，"展示只做对象，方法，参数对齐，留着空实现，等待后续完成"。
+**结论**：按用户说明，`hutool-poi` 模块**尚未迁移**，"展示只做对象，方法，参数对齐，留着空实现，等待后续完成"。
 
 **当前状态**：
-- `crates/` 目录下没有 `hitool-poi` 子目录
-- `Cargo.toml` workspace members 不包含 hitool-poi
+- `crates/` 目录下没有 `hutool-poi` 子目录
+- `Cargo.toml` workspace members 不包含 hutool-poi
 - 对应 Java 端的 `easyexcel-rs`、`easydoc-rs`、`easyofd-rs`、`easypdf-rs` 等也已存在但尚未实现完整
 
 **建议下一步**：
-1. 在 `crates/` 下创建 `hitool-poi/` 目录
-2. 在 `Cargo.toml` 中 `members` 添加 `"crates/hitool-poi"`
+1. 在 `crates/` 下创建 `hutool-poi/` 目录
+2. 在 `Cargo.toml` 中 `members` 添加 `"crates/hutool-poi"`
 3. 按 hutool-poi 的 78 个 .java 文件建立 .rs 占位文件
 4. 每个 .rs 文件实现 `struct Xxx;` 占位 + 对应方法的 `todo!()` / `unimplemented!()` 桩
 5. 在每个方法上添加 rustdoc：
@@ -449,9 +449,9 @@ package-info × 多
 
 ## 7. 其他模块快速对比
 
-### 7.1 hutool-ai ↔ hitool-ai
+### 7.1 hutool-ai ↔ hutool-ai
 
-| 维度 | hutool-ai | hitool-ai |
+| 维度 | hutool-ai | hutool-ai |
 |---|---:|---:|
 | 主源文件 | 58 | 4 |
 
@@ -461,9 +461,9 @@ package-info × 多
 
 **完成度：~15%**（架构完成，但实现仅 OpenAI 一个 provider）
 
-### 7.2 hutool-aop ↔ hitool-aop
+### 7.2 hutool-aop ↔ hutool-aop
 
-| 维度 | hutool-aop | hitool-aop |
+| 维度 | hutool-aop | hutool-aop |
 |---|---:|---:|
 | 主源文件 | 15 | 6 |
 
@@ -473,9 +473,9 @@ package-info × 多
 
 **完成度：~50%**（Java 的 CGLIB/JDKProxy 在 Rust 中由 trait object 替代，不需要单独类）
 
-### 7.3 hutool-bloomFilter ↔ hitool-bloom-filter
+### 7.3 hutool-bloomFilter ↔ hutool-bloom-filter
 
-| 维度 | hutool-bloomFilter | hitool-bloom-filter |
+| 维度 | hutool-bloomFilter | hutool-bloom-filter |
 |---|---:|---:|
 | 主源文件 | 22 | 5 |
 
@@ -485,9 +485,9 @@ package-info × 多
 
 **完成度：~25%**（仅保留通用 hash + bloom filter 抽象，多种 hash 函数过滤器未迁移）
 
-### 7.4 hutool-cache ↔ hitool-cache
+### 7.4 hutool-cache ↔ hutool-cache
 
-| 维度 | hutool-cache | hitool-cache |
+| 维度 | hutool-cache | hutool-cache |
 |---|---:|---:|
 | 主源文件 | 22 | 3 |
 
@@ -497,9 +497,9 @@ package-info × 多
 
 **完成度：~30%**（直接用 moka 替换，简化了 hutool 多种实现）
 
-### 7.5 hutool-captcha ↔ hitool-captcha
+### 7.5 hutool-captcha ↔ hutool-captcha
 
-| 维度 | hutool-captcha | hitool-captcha |
+| 维度 | hutool-captcha | hutool-captcha |
 |---|---:|---:|
 | 主源文件 | 13 | 4 |
 
@@ -509,9 +509,9 @@ package-info × 多
 
 **完成度：~50%**
 
-### 7.6 hutool-crypto ↔ hitool-crypto
+### 7.6 hutool-crypto ↔ hutool-crypto
 
-| 维度 | hutool-crypto | hitool-crypto |
+| 维度 | hutool-crypto | hutool-crypto |
 |---|---:|---:|
 | 主源文件 | 70 | 22 |
 
@@ -529,9 +529,9 @@ package-info × 多
 
 **完成度：~25%**（顶层函数已实现，但 hutool 的 OO 抽象层未迁移）
 
-### 7.7 hutool-db ↔ hitool-db
+### 7.7 hutool-db ↔ hutool-db
 
-| 维度 | hutool-db | hitool-db |
+| 维度 | hutool-db | hutool-db |
 |---|---:|---:|
 | 主源文件 | 107 | 32 |
 
@@ -541,9 +541,9 @@ package-info × 多
 
 **完成度：~15%**
 
-### 7.8 hutool-dfa ↔ hitool-dfa
+### 7.8 hutool-dfa ↔ hutool-dfa
 
-| 维度 | hutool-dfa | hitool-dfa |
+| 维度 | hutool-dfa | hutool-dfa |
 |---|---:|---:|
 | 主源文件 | 6 | 5 |
 
@@ -551,9 +551,9 @@ package-info × 多
 
 **完成度：~70%**
 
-### 7.9 hutool-extra ↔ hitool-extra
+### 7.9 hutool-extra ↔ hutool-extra
 
-| 维度 | hutool-extra | hitool-extra |
+| 维度 | hutool-extra | hutool-extra |
 |---|---:|---:|
 | 主源文件 | 179 | 9 |
 
@@ -576,9 +576,9 @@ package-info × 多
 
 **完成度：~5%**
 
-### 7.10 hutool-jwt ↔ hitool-jwt
+### 7.10 hutool-jwt ↔ hutool-jwt
 
-| 维度 | hutool-jwt | hitool-jwt |
+| 维度 | hutool-jwt | hutool-jwt |
 |---|---:|---:|
 | 主源文件 | 17 | 2 |
 
@@ -586,9 +586,9 @@ package-info × 多
 
 **完成度：~95%**（非常完整）
 
-### 7.11 hutool-script ↔ hitool-script
+### 7.11 hutool-script ↔ hutool-script
 
-| 维度 | hutool-script | hitool-script |
+| 维度 | hutool-script | hutool-script |
 |---|---:|---:|
 | 主源文件 | 5 | 2 |
 
@@ -598,9 +598,9 @@ package-info × 多
 
 **完成度：~80%**
 
-### 7.12 hutool-setting ↔ hitool-setting
+### 7.12 hutool-setting ↔ hutool-setting
 
-| 维度 | hutool-setting | hitool-setting |
+| 维度 | hutool-setting | hutool-setting |
 |---|---:|---:|
 | 主源文件 | 16 | 6 |
 
@@ -608,9 +608,9 @@ package-info × 多
 
 **完成度：~95%**
 
-### 7.13 hutool-socket ↔ hitool-socket
+### 7.13 hutool-socket ↔ hutool-socket
 
-| 维度 | hutool-socket | hitool-socket |
+| 维度 | hutool-socket | hutool-socket |
 |---|---:|---:|
 | 主源文件 | 24 | 2 |
 
@@ -618,9 +618,9 @@ package-info × 多
 
 **完成度：~85%**
 
-### 7.14 hutool-system ↔ hitool-system
+### 7.14 hutool-system ↔ hutool-system
 
-| 维度 | hutool-system | hitool-system |
+| 维度 | hutool-system | hutool-system |
 |---|---:|---:|
 | 主源文件 | 16 | 3 |
 
@@ -636,10 +636,10 @@ package-info × 多
 
 | 问题 | 涉及模块 | 工作量 | 备注 |
 |---|---|---|---|
-| hitool-poi 模块完全缺失 | hitool-poi | 大（78 文件占位） | 按用户说明先做占位 |
-| `StrUtil` 顶层占位缺失 | hitool-core | 中 | 需补一个 facade struct + re-export 各 text/str_* 子模块 |
-| `SetUtil` / `URLDecodeUtil` / `URLEncodeUtil` / `RegexUtil` 缺失 | hitool-core | 小 | 应作为 facade struct 包装 |
-| `SecureUtil` / `DigestUtil` 缺失（hutool-core 内没有，但常被引用） | hitool-core 或 hitool-crypto | 小 | 在 hitool-core 添加 re-export |
+| hutool-poi 模块完全缺失 | hutool-poi | 大（78 文件占位） | 按用户说明先做占位 |
+| `StrUtil` 顶层占位缺失 | hutool-core | 中 | 需补一个 facade struct + re-export 各 text/str_* 子模块 |
+| `SetUtil` / `URLDecodeUtil` / `URLEncodeUtil` / `RegexUtil` 缺失 | hutool-core | 小 | 应作为 facade struct 包装 |
+| `SecureUtil` / `DigestUtil` 缺失（hutool-core 内没有，但常被引用） | hutool-core 或 hutool-crypto | 小 | 在 hutool-core 添加 re-export |
 
 ### 8.2 P1：hutool-core 双重路径（违反"不删减"原则的潜在风险）
 
@@ -733,13 +733,13 @@ pub fn get<T>(values: &[T], index: isize) -> Option<&T>
 
 ## 10. 行动建议（按用户要求）
 
-### 10.1 立即执行（补 hitool-poi 占位）
+### 10.1 立即执行（补 hutool-poi 占位）
 
 ```bash
-# 1. 创建 hitool-poi crate
-mkdir -p crates/hitool-poi/src/{excel,cell,ofd,word,exceptions}
+# 1. 创建 hutool-poi crate
+mkdir -p crates/hutool-poi/src/{excel,cell,ofd,word,exceptions}
 
-# 2. 在 hitool-poi/src/ 中创建 mod.rs 和 78 个 .rs 占位文件
+# 2. 在 hutool-poi/src/ 中创建 mod.rs 和 78 个 .rs 占位文件
 # 每个 .rs 文件内容模板：
 ```
 
@@ -761,12 +761,12 @@ pub fn get_reader(_file: &Path) -> ExcelReader {
 pub struct ExcelReader;
 ```
 
-### 10.2 中期（补 hitool-core 缺失的 facade）
+### 10.2 中期（补 hutool-core 缺失的 facade）
 
 1. 创建 `src/str_util.rs` 作为完整 facade struct（替代 1.1KB 占位）
 2. 创建 `src/set_util.rs`、`src/url_encode_util.rs`、`src/url_decode_util.rs`、`src/regex_util.rs`
-3. 在 `src/secure_util.rs` 中 re-export `hitool_crypto::*`
-4. 在 `src/digest_util.rs` 中 re-export `hitool_crypto::digest::*`
+3. 在 `src/secure_util.rs` 中 re-export `hutool_crypto::*`
+4. 在 `src/digest_util.rs` 中 re-export `hutool_crypto::digest::*`
 
 ### 10.3 长期（补所有未迁移子包）
 
@@ -804,25 +804,25 @@ pub struct ExcelReader;
 
 ### 关键风险点
 
-1. **hitool-core 内部双重路径**（违反"不删减"原则的潜在风险点，需明确选择策略：保留双份 + re-export）
-2. **hitool-poi 完全缺失**（78 文件需要先建立占位骨架）
+1. **hutool-core 内部双重路径**（违反"不删减"原则的潜在风险点，需明确选择策略：保留双份 + re-export）
+2. **hutool-poi 完全缺失**（78 文件需要先建立占位骨架）
 3. **大量 hutool-extra 子模块未迁移**（170+ 文件，主要是第三方适配）
 4. **rustdoc 注释未标注原 Java 文件/方法**（影响可维护性）
 5. **缺失的 facade 类**（SetUtil、URLDecodeUtil、RegexUtil、SecureUtil 等）
 
 ### 关键成功点
 
-1. **hitool-core 基础类型和集合/IO/日期/字符串/数字/Map 工具类主体已对齐**
-2. **hitool-http / hitool-json / hitool-jwt / hitool-script / hitool-setting / hitool-socket / hitool-system 几乎完整**
+1. **hutool-core 基础类型和集合/IO/日期/字符串/数字/Map 工具类主体已对齐**
+2. **hutool-http / hutool-json / hutool-jwt / hutool-script / hutool-setting / hutool-socket / hutool-system 几乎完整**
 3. **Rust 生态组件已合理使用**（chrono、uuid、md5、sha2、indexmap、ahash、moka、reqwest、tokio、tracing、sysinfo、serde、rhai、config 等）
-4. **架构层面有 hitool-compat-hutool crate 专门提供 Java 风格兼容层**（降低迁移阻力）
+4. **架构层面有 hutool-compat-hutool crate 专门提供 Java 风格兼容层**（降低迁移阻力）
 5. **示例和中文文档已迁移**
 
 ---
 
 > **报告生成方法**：
-> - 通过 Explore agents 并行扫描 `hutool/src/main/java` 和 `hitool-rs/crates/*/src` 完整目录树
+> - 通过 Explore agents 并行扫描 `hutool/src/main/java` 和 `hutool-rust/crates/*/src` 完整目录树
 > - 用 Python 脚本做 CamelCase ↔ snake_case 自动映射验证
-> - 按 24 个 hutool 模块 × 23 个 hitool crate 逐个比对
-> - 对 hitool-core 进行了完整的方法签名对比（命中 80% 类）
-> - 对 hitool-poi 进行了"不存在"事实确认 + 78 个待迁移类的清单梳理
+> - 按 24 个 hutool 模块 × 23 个 hutool crate 逐个比对
+> - 对 hutool-core 进行了完整的方法签名对比（命中 80% 类）
+> - 对 hutool-poi 进行了"不存在"事实确认 + 78 个待迁移类的清单梳理

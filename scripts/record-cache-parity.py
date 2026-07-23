@@ -9,10 +9,10 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
-COMPAT = "crates/hitool-cache/src/compat.rs::"
-FILE = "crates/hitool-cache/src/file_cache.rs::"
-NATIVE = "crates/hitool-cache/src/lib.rs::"
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
+COMPAT = "crates/hutool-cache/src/compat.rs::"
+FILE = "crates/hutool-cache/src/file_cache.rs::"
+NATIVE = "crates/hutool-cache/src/lib.rs::"
 
 
 def mapping(qualified_name: str) -> tuple[str, str, str]:
@@ -24,7 +24,7 @@ def mapping(qualified_name: str) -> tuple[str, str, str]:
         else:
             test = "file_cache_reuses_bytes_reports_limits_and_clears"
         return (
-            f"hitool_cache::{family}",
+            f"hutool_cache::{family}",
             FILE + test,
             "Path-based Rust file caching preserves Hutool byte limits, LRU/LFU eviction, "
             "expiration, cache statistics, clear, and I/O failure behavior with Arc byte slices.",
@@ -44,7 +44,7 @@ def mapping(qualified_name: str) -> tuple[str, str, str]:
         else:
             test = "abstract_cache_covers_expiration_refresh_counters_and_views"
         return (
-            f"hitool_cache::{family}",
+            f"hutool_cache::{family}",
             COMPAT + test,
             "The thread-safe Rust compatibility engine preserves Hutool cache lifecycle, "
             "statistics, iteration snapshots, listeners, expiration, and deterministic policy behavior.",
@@ -67,7 +67,7 @@ def mapping(qualified_name: str) -> tuple[str, str, str]:
         test = "factories_listeners_replacement_clear_and_unlimited_capacity_work"
         prefix = COMPAT
     return (
-        f"hitool_cache::{family}",
+        f"hutool_cache::{family}",
         prefix + test,
         "Hutool's cache contract maps to explicit Rust ownership, Arc-backed values, typed "
         "durations, per-cache workers, and mature Moka concurrency without hidden global state.",
@@ -89,7 +89,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": test,
             "notes": notes,
         }

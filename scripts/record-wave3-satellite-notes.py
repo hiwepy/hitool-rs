@@ -22,7 +22,7 @@ classify_row = _mod.classify_row
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 MODULES = {"hutool-extra", "hutool-db", "hutool-http", "hutool-crypto"}
 
 

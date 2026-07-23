@@ -7,7 +7,7 @@ Versioning once public releases begin.
 
 ### Added
 
-- Hutool-aligned workspace with the `hitool` facade and 20 capability crates.
+- Hutool-aligned workspace with the `hutool` facade and 20 capability crates.
 - Additive feature model with minimal `core` + `json` defaults.
 - Initial production-oriented implementations for every public capability.
 - Provenance, security, feature-cost and Hutool-parity documentation.

@@ -12,10 +12,10 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 NOTE = (
     "[jvm_only] poi deferred until easyexcel-rs / easydoc-rs / easyofd-rs / "
-    "easypdf-rs; hitool-poi keeps Hutool-aligned signatures with empty PendingEngine stubs"
+    "easypdf-rs; hutool-poi keeps Hutool-aligned signatures with empty PendingEngine stubs"
 )
 
 
@@ -32,7 +32,7 @@ def main() -> None:
             decisions[api_id] = {
                 "api_id": api_id,
                 "status": "planned",
-                "hitool_symbol": "hitool_poi::PendingEngine",
+                "hutool_symbol": "hutool_poi::PendingEngine",
                 "test_evidence": "",
                 "notes": NOTE,
             }
@@ -40,7 +40,7 @@ def main() -> None:
             continue
         if row["status"] != "planned" or "easyexcel-rs" not in (row.get("notes") or ""):
             row["status"] = "planned"
-            row["hitool_symbol"] = row.get("hitool_symbol") or "hitool_poi::PendingEngine"
+            row["hutool_symbol"] = row.get("hutool_symbol") or "hutool_poi::PendingEngine"
             row["test_evidence"] = ""
             row["notes"] = NOTE
             fixed += 1

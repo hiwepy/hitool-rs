@@ -1,6 +1,6 @@
 # Performance baselines
 
-HiTool adds benchmarks only for measured hot paths with a stable input corpus.
+Hutool-Rust adds benchmarks only for measured hot paths with a stable input corpus.
 This directory records that policy so release work does not accumulate
 decorative microbenchmarks. Candidate baselines for the API-freeze phase are
 DFA scanning, codec throughput, XLSX parsing, and bounded HTTP framing.

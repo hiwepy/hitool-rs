@@ -8,86 +8,86 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 # prefix -> (symbol, evidence, notes)
 SURFACES: list[tuple[str, str, str, str]] = [
     (
         "cn.hutool.http::HttpGlobalConfig",
-        "hitool_http::HttpGlobalConfig",
-        "crates/hitool-http/src/global_config.rs::global_config_roundtrip_and_reset",
+        "hutool_http::HttpGlobalConfig",
+        "crates/hutool-http/src/global_config.rs::global_config_roundtrip_and_reset",
         "Process-scoped Hutool HttpGlobalConfig store; callers opt in — HttpRequest does not auto-apply.",
     ),
     (
         "cn.hutool.http.cookie::GlobalCookieManager",
-        "hitool_http::GlobalCookieManager",
-        "crates/hitool-http/src/cookie/mod.rs::thread_local_cookie_store_roundtrip",
+        "hutool_http::GlobalCookieManager",
+        "crates/hutool-http/src/cookie/mod.rs::thread_local_cookie_store_roundtrip",
         "Opt-in shared CookieJar handle; add/store/getCookies take URL strings instead of HttpConnection.",
     ),
     (
         "cn.hutool.http.cookie::ThreadLocalCookieStore",
-        "hitool_http::ThreadLocalCookieStore",
-        "crates/hitool-http/src/cookie/mod.rs::thread_local_cookie_store_roundtrip",
+        "hutool_http::ThreadLocalCookieStore",
+        "crates/hutool-http/src/cookie/mod.rs::thread_local_cookie_store_roundtrip",
         "Thread-local CookieJar matching Hutool ThreadLocalCookieStore.",
     ),
     (
         "cn.hutool.http.body::BytesBody",
-        "hitool_http::BytesBody",
-        "crates/hitool-http/src/body/bytes_form.rs::bytes_and_form_bodies_write",
+        "hutool_http::BytesBody",
+        "crates/hutool-http/src/body/bytes_form.rs::bytes_and_form_bodies_write",
         "Raw byte RequestBody writer.",
     ),
     (
         "cn.hutool.http.body::FormUrlEncodedBody",
-        "hitool_http::FormUrlEncodedBody",
-        "crates/hitool-http/src/body/bytes_form.rs::bytes_and_form_bodies_write",
+        "hutool_http::FormUrlEncodedBody",
+        "crates/hutool-http/src/body/bytes_form.rs::bytes_and_form_bodies_write",
         "application/x-www-form-urlencoded body; toString returns encoded payload.",
     ),
     (
         "cn.hutool.http.body::ResourceBody",
-        "hitool_http::ResourceBody",
-        "crates/hitool-http/src/body/bytes_form.rs::resource_body_from_bytes",
+        "hutool_http::ResourceBody",
+        "crates/hutool-http/src/body/bytes_form.rs::resource_body_from_bytes",
         "Resource-backed body from bytes or filesystem path.",
     ),
     (
         "cn.hutool.http.body::RequestBody",
-        "hitool_http::RequestBody",
-        "crates/hitool-http/src/body/bytes_form.rs::resource_body_from_bytes",
+        "hutool_http::RequestBody",
+        "crates/hutool-http/src/body/bytes_form.rs::resource_body_from_bytes",
         "RequestBody.write trait shared by BytesBody/FormUrlEncodedBody/ResourceBody.",
     ),
     (
         "cn.hutool.http::HttpDownloader",
-        "hitool_http::HttpDownloader",
-        "crates/hitool-http/src/downloader.rs::HttpDownloader",
+        "hutool_http::HttpDownloader",
+        "crates/hutool-http/src/downloader.rs::HttpDownloader",
         "Thin HttpUtil download facade with optional StreamProgress.",
     ),
     (
         "cn.hutool.http::GlobalInterceptor",
-        "hitool_http::GlobalInterceptor",
-        "crates/hitool-http/src/interceptor.rs::global_interceptor_add_clear_and_apply",
+        "hutool_http::GlobalInterceptor",
+        "crates/hutool-http/src/interceptor.rs::global_interceptor_add_clear_and_apply",
         "Process-scoped request/response interceptor registry with clear helpers.",
     ),
     (
         "cn.hutool.http::HttpInterceptor",
-        "hitool_http::{RequestInterceptor,ResponseInterceptor,HttpInterceptorError}",
-        "crates/hitool-http/src/interceptor.rs::global_interceptor_add_clear_and_apply",
+        "hutool_http::{RequestInterceptor,ResponseInterceptor,HttpInterceptorError}",
+        "crates/hutool-http/src/interceptor.rs::global_interceptor_add_clear_and_apply",
         "Interceptor callbacks + Chain semantics via Vec/clear/apply on GlobalInterceptor.",
     ),
     (
         "cn.hutool.http::HttpResource",
-        "hitool_http::HttpResource",
-        "crates/hitool-http/src/resource.rs::http_resource_name_type_and_stream",
+        "hutool_http::HttpResource",
+        "crates/hutool-http/src/resource.rs::http_resource_name_type_and_stream",
         "Named resource wrapper over ResourceBody with content-type and stream cursor.",
     ),
     (
         "cn.hutool.http::MultipartOutputStream",
-        "hitool_http::MultipartOutputStream",
-        "crates/hitool-http/src/body/multipart_stream.rs::multipart_output_stream_writes_fields",
+        "hutool_http::MultipartOutputStream",
+        "crates/hutool-http/src/body/multipart_stream.rs::multipart_output_stream_writes_fields",
         "Incremental multipart/form-data writer with finish/close.",
     ),
     (
         "cn.hutool.http::HttpInputStream",
-        "hitool_http::HttpInputStream",
-        "crates/hitool-http/src/input_stream.rs::http_input_stream_read_skip_reset",
+        "hutool_http::HttpInputStream",
+        "crates/hutool-http/src/input_stream.rs::http_input_stream_read_skip_reset",
         "Seekable Cursor over HttpResponse body bytes (Read/skip/reset/available).",
     ),
 ]
@@ -109,7 +109,7 @@ def main() -> None:
                 indexed[api_id] = {
                     "api_id": api_id,
                     "status": "idiomatic",
-                    "hitool_symbol": symbol,
+                    "hutool_symbol": symbol,
                     "test_evidence": evidence,
                     "notes": notes,
                 }

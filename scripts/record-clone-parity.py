@@ -10,26 +10,26 @@ from pathlib import Path
 ROOT = "cn.hutool.core.clone::"
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 FAMILIES = {
     "Cloneable": (
         "native",
-        "hitool_core::Cloneable",
+        "hutool_core::Cloneable",
         "clone_contract_supports_owned_and_shared_rust_values",
     ),
     "DefaultCloneable": (
         "idiomatic",
-        "hitool_core::DefaultCloneable",
+        "hutool_core::DefaultCloneable",
         "clone_contract_supports_owned_and_shared_rust_values",
     ),
     "CloneSupport": (
         "idiomatic",
-        "hitool_core::CloneSupport",
+        "hutool_core::CloneSupport",
         "clone_contract_supports_owned_and_shared_rust_values",
     ),
     "CloneRuntimeException": (
         "idiomatic",
-        "hitool_core::CloneRuntimeException",
+        "hutool_core::CloneRuntimeException",
         "clone_runtime_exception_preserves_messages_templates_and_sources",
     ),
 }
@@ -58,8 +58,8 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": status,
-            "hitool_symbol": symbol,
-            "test_evidence": f"crates/hitool-core/src/clone_support.rs::{test}",
+            "hutool_symbol": symbol,
+            "test_evidence": f"crates/hutool-core/src/clone_support.rs::{test}",
             "notes": (
                 "Rust's Clone supplies the ownership-safe clone contract; the "
                 "wrapper, extension trait, and sourced error preserve Hutool intent."

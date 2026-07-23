@@ -10,35 +10,35 @@ from pathlib import Path
 ROOT = "cn.hutool.core.builder::"
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 FAMILIES = {
     "Builder": (
-        "hitool_core::Builder",
+        "hutool_core::Builder",
         "generic_builder_supports_every_supplier_and_modifier_shape",
         "Rust's typed Builder contract returns the current state without Java serialization machinery.",
     ),
     "GenericBuilder": (
-        "hitool_core::GenericBuilder",
+        "hutool_core::GenericBuilder",
         "generic_builder_supports_every_supplier_and_modifier_shape",
         "Boxed Rust suppliers and modifiers cover zero through five constructor arguments, one-shot mutation, and reuse.",
     ),
     "CompareToBuilder": (
-        "hitool_core::CompareToBuilder",
+        "hutool_core::CompareToBuilder",
         "compare_builder_short_circuits_options_slices_custom_and_float_edges",
         "Ord, explicit comparators, slices, options, Java floating-point bit rules, and Serde structural traversal provide real lexicographic comparison.",
     ),
     "EqualsBuilder": (
-        "hitool_core::EqualsBuilder",
+        "hutool_core::EqualsBuilder",
         "equals_builder_matches_java_float_bits_short_circuit_and_reset",
         "PartialEq, Java floating-point bit rules, reset, short-circuiting, and Serde structural traversal provide real equality behavior.",
     ),
     "HashCodeBuilder": (
-        "hitool_core::HashCodeBuilder",
+        "hutool_core::HashCodeBuilder",
         "hash_builder_matches_hutool_primitive_array_and_structural_rules",
         "Wrapping i32 arithmetic preserves Hutool's 17/37 hash formulas across primitives, UTF-16 strings, slices, superclass values, and Serde structures.",
     ),
     "IDKey": (
-        "hitool_core::IdKey",
+        "hutool_core::IdKey",
         "identity_key_uses_reference_identity_and_standard_hashing",
         "A lifetime-bound reference address supplies identity equality and hashing without unsafe code or a global registry.",
     ),
@@ -71,8 +71,8 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
-            "test_evidence": f"crates/hitool-core/src/builder.rs::{test}",
+            "hutool_symbol": symbol,
+            "test_evidence": f"crates/hutool-core/src/builder.rs::{test}",
             "notes": notes,
         }
 

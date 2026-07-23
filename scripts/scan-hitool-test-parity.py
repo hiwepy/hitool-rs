@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scan hitool-rs for Hutool test alignment and build test-decisions.csv.
+"""Scan hutool-rs for Hutool test alignment and build test-decisions.csv.
 
 Coverage evidence (any one is enough for status=covered):
 1. Explicit comment: 对齐 Java: `StrUtilTest.isBlankTest()`
@@ -265,7 +265,7 @@ def scan_file(path: Path, repo: Path, inv: dict) -> list[dict[str, str]]:
                 {
                     "test_id": f"UNRESOLVED::{class_simple}::{method}",
                     "status": "unresolved",
-                    "hitool_test": evidence,
+                    "hutool_test": evidence,
                     "notes": f"aligned from {source}: {full}",
                 }
             )
@@ -275,7 +275,7 @@ def scan_file(path: Path, repo: Path, inv: dict) -> list[dict[str, str]]:
                 {
                     "test_id": tid,
                     "status": status,
-                    "hitool_test": evidence,
+                    "hutool_test": evidence,
                     "notes": f"aligned from {source}: {full}",
                 }
             )
@@ -336,7 +336,7 @@ def scan_file(path: Path, repo: Path, inv: dict) -> list[dict[str, str]]:
                             {
                                 "test_id": tid,
                                 "status": status,
-                                "hitool_test": f"{rel}::{fn_name}",
+                                "hutool_test": f"{rel}::{fn_name}",
                                 "notes": (
                                     f"name-mapped {fn_name} → {class_key}.{method}"
                                 ),
@@ -377,7 +377,7 @@ def main() -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(
-            stream, fieldnames=["test_id", "status", "hitool_test", "notes"]
+            stream, fieldnames=["test_id", "status", "hutool_test", "notes"]
         )
         writer.writeheader()
         writer.writerows(rows)

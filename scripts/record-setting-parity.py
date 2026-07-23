@@ -8,7 +8,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 
 def family(qualified_name: str) -> str:
@@ -17,21 +17,21 @@ def family(qualified_name: str) -> str:
 
 def mapping(qualified_name: str) -> tuple[str, str, str]:
     name = family(qualified_name)
-    symbol = f"hitool_setting::{name}"
+    symbol = f"hutool_setting::{name}"
     if name in {"GroupedMap", "GroupedSet"}:
-        test = "crates/hitool-setting/src/grouped.rs::grouped_map_covers_ordered_map_semantics"
+        test = "crates/hutool-setting/src/grouped.rs::grouped_map_covers_ordered_map_semantics"
         note = "IndexMap-backed ordered groups and sets retain Hutool group, mutation, iteration, parsing, and reload behavior."
     elif name in {"Props", "PropsUtil"}:
-        test = "crates/hitool-setting/src/props.rs::properties_parse_convert_mutate_and_round_trip"
+        test = "crates/hutool-setting/src/props.rs::properties_parse_convert_mutate_and_round_trip"
         note = "Java-properties syntax, escapes, typed getters, bean conversion, deterministic storage, lookup, and system snapshots are covered by the Props facade."
     elif name in {"Profile", "GlobalProfile"}:
-        test = "crates/hitool-setting/src/profile.rs::owned_profile_resolves_extensions_and_cache"
+        test = "crates/hutool-setting/src/profile.rs::owned_profile_resolves_extensions_and_cache"
         note = "Owned profiles provide explicit roots and caches; the opt-in compatibility global is resettable and isolated from the primary API."
     elif name == "YamlUtil":
-        test = "crates/hitool-setting/src/yaml.rs::yaml_loads_and_dumps_dynamic_and_typed_values"
+        test = "crates/hutool-setting/src/yaml.rs::yaml_loads_and_dumps_dynamic_and_typed_values"
         note = "Serde YAML provides typed and dynamic path, reader, string, writer, and dump operations with typed errors."
     else:
-        test = "crates/hitool-setting/src/setting.rs::setting_loads_variables_groups_mutations_and_storage"
+        test = "crates/hutool-setting/src/setting.rs::setting_loads_variables_groups_mutations_and_storage"
         note = "The Setting facade and loader preserve grouped syntax, variables, typed conversion, storage, profile lookup, and explicitly owned injectable file watching."
     return symbol, test, note
 
@@ -50,7 +50,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": test,
             "notes": notes,
         }

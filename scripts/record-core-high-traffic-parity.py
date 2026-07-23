@@ -2,7 +2,7 @@
 """Record hutool-core high-traffic util parity (Number/Date/File/Io/PrimitiveArray).
 
 Merges into parity/decisions.csv without wiping other modules.
-Only marks APIs as idiomatic when a clear Rust analog exists in hitool-core.
+Only marks APIs as idiomatic when a clear Rust analog exists in hutool-core.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 NUMBER_ROOT = "cn.hutool.core.util::NumberUtil"
 DATE_ROOT = "cn.hutool.core.date::DateUtil"
@@ -51,16 +51,16 @@ def signature(api_id: str) -> str:
 
 def number_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
     """Return (status, symbol, evidence, notes) or None to skip."""
-    symbol = "hitool_core::NumberUtil"
+    symbol = "hutool_core::NumberUtil"
     notes = (
         "chrono-free rust_decimal / f64 / Option facades preserve Hutool arithmetic, "
         "parse, round, compare, and classification semantics; Java Number/BigInteger "
         "reflection overloads stay planned."
     )
-    evidence = "crates/hitool-core/tests/number_util_parity.rs::number_util_high_traffic_parity"
+    evidence = "crates/hutool-core/tests/number_util_parity.rs::number_util_high_traffic_parity"
 
     if not name:  # class row
-        return ("idiomatic", symbol, "crates/hitool-core/src/number_util.rs::NumberUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/number_util.rs::NumberUtil", notes)
 
     if name in NUMBER_PLANNED:
         return (
@@ -152,15 +152,15 @@ def number_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
 
 
 def date_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
-    symbol = "hitool_core::DateUtil"
+    symbol = "hutool_core::DateUtil"
     notes = (
         "chrono-backed DateUtil with Asia/Shanghai (+08:00) parity zone; "
         "Calendar/StopWatch/rangeFunc Java APIs stay planned."
     )
-    evidence = "crates/hitool-core/tests/date_util_parity.rs::date_util_high_traffic_parity"
+    evidence = "crates/hutool-core/tests/date_util_parity.rs::date_util_high_traffic_parity"
 
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/date/date_util.rs::DateUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/date/date_util.rs::DateUtil", notes)
 
     planned_names = {
         "createStopWatch",
@@ -199,11 +199,11 @@ def date_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
 
 
 def ldt_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
-    symbol = "hitool_core::LocalDateTimeUtil"
+    symbol = "hutool_core::LocalDateTimeUtil"
     notes = "chrono NaiveDateTime facade for LocalDateTimeUtil."
-    evidence = "crates/hitool-core/tests/date_util_parity.rs::local_date_time_same_day_weekend_epoch_test"
+    evidence = "crates/hutool-core/tests/date_util_parity.rs::local_date_time_same_day_weekend_epoch_test"
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/date/local_date_time_util.rs::LocalDateTimeUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/date/local_date_time_util.rs::LocalDateTimeUtil", notes)
     # Instant/ZonedDateTime/TimeZone overloads planned
     if any(x in sig for x in ("Instant", "ZonedDateTime", "ZoneId", "TimeZone", "DateTimeFormatter", "TemporalUnit", "ChronoUnit", "Period", "ChronoLocalDateTime")):
         if name in {"of", "ofUTC", "parse", "format", "offset", "between", "isOverlap", "isIn", "endOfDay"}:
@@ -217,11 +217,11 @@ def ldt_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
 
 
 def datetime_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
-    symbol = "hitool_core::DateTime"
+    symbol = "hutool_core::DateTime"
     notes = "chrono-backed DateTime value with Hutool field accessors and offsets."
-    evidence = "crates/hitool-core/tests/date_util_parity.rs::date_time_compare_am_test"
+    evidence = "crates/hutool-core/tests/date_util_parity.rs::date_time_compare_am_test"
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/date/date_time.rs::DateTime", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/date/date_time.rs::DateTime", notes)
     planned = {
         "getTimeZone",
         "getZoneId",
@@ -294,11 +294,11 @@ def datetime_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
 
 
 def file_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
-    symbol = "hitool_core::FileUtil"
+    symbol = "hutool_core::FileUtil"
     notes = "std::fs PathBuf facade for common FileUtil operations."
-    evidence = "crates/hitool-core/tests/file_util_parity.rs::touch_ext_ls_content_equals_test"
+    evidence = "crates/hutool-core/tests/file_util_parity.rs::touch_ext_ls_content_equals_test"
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/file_util.rs::FileUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/file_util.rs::FileUtil", notes)
     implemented = {
         "isWindows",
         "ls",
@@ -346,11 +346,11 @@ def file_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
 
 
 def io_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
-    symbol = "hitool_core::IoUtil"
+    symbol = "hutool_core::IoUtil"
     notes = "std::io Read/Write facade for IoUtil copy/read/write helpers."
-    evidence = "crates/hitool-core/tests/io_util_parity.rs::read_write_utf8_content_equals_hex_test"
+    evidence = "crates/hutool-core/tests/io_util_parity.rs::read_write_utf8_content_equals_hex_test"
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/io_util.rs::IoUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/io_util.rs::IoUtil", notes)
     implemented = {
         "copy",
         "read",
@@ -381,14 +381,14 @@ def io_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
 
 
 def prim_decision(name: str, sig: str) -> tuple[str, str, str, str] | None:
-    symbol = "hitool_core::PrimitiveArrayUtil"
+    symbol = "hutool_core::PrimitiveArrayUtil"
     notes = (
         "Generic slice facade covers Hutool PrimitiveArrayUtil overloads "
         "(isEmpty/reverse/shuffle/min/max/range/addAll)."
     )
-    evidence = "crates/hitool-core/tests/primitive_array_util_parity.rs::reverse_swap_shuffle_min_max"
+    evidence = "crates/hutool-core/tests/primitive_array_util_parity.rs::reverse_swap_shuffle_min_max"
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/primitive_array_util.rs::PrimitiveArrayUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/primitive_array_util.rs::PrimitiveArrayUtil", notes)
     # All PrimitiveArrayUtil methods map to generic helpers.
     return ("idiomatic", symbol, evidence, notes)
 
@@ -434,7 +434,7 @@ def main() -> None:
             indexed[api_id] = {
                 "api_id": api_id,
                 "status": status,
-                "hitool_symbol": symbol,
+                "hutool_symbol": symbol,
                 "test_evidence": evidence,
                 "notes": notes,
             }
@@ -443,7 +443,7 @@ def main() -> None:
             indexed[api_id] = {
                 "api_id": api_id,
                 "status": status,
-                "hitool_symbol": symbol,
+                "hutool_symbol": symbol,
                 "test_evidence": evidence,
                 "notes": notes,
             }

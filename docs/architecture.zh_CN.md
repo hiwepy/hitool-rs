@@ -1,13 +1,13 @@
-# hitool-rs 架构设计文档
+# hutool-rust 架构设计文档
 
-> **文档目的**：定义 hitool-rs 的架构目标、边界、组件职责、运行主链、数据与协议、安全与可靠性、部署运维及演进约束，使设计、开发、测试、发布和运维使用同一套可验证架构合同。
+> **文档目的**：定义 hutool-rust 的架构目标、边界、组件职责、运行主链、数据与协议、安全与可靠性、部署运维及演进约束，使设计、开发、测试、发布和运维使用同一套可验证架构合同。
 >
 > **架构版本**：V0.1.0<br>
 > **文档状态**：评审中（实验性）<br>
 > **负责人**：hiwepy<br>
 > **最后更新**：2026-07-21
 
-> **文件名约束**：英文或默认语言使用 `hitool-rs-Architecture.md`；中文使用 `hitool-rs-Architecture.zh_CN.md`。
+> **文件名约束**：英文或默认语言使用 `hutool-rust-Architecture.md`；中文使用 `hutool-rust-Architecture.zh_CN.md`。
 
 ## 目录
 
@@ -44,7 +44,7 @@
 
 | 字段 | 内容 |
 |---|---|
-| 系统/项目 | hitool-rs |
+| 系统/项目 | hutool-rust |
 | 架构版本 | V0.1.0 |
 | 适用代码版本 | `v0.1.0` |
 | 适用部署形态 | 本地 / 单机 / 库（被其他 Rust crate 依赖） |
@@ -90,20 +90,20 @@
 
 ### 2.1 一句话架构
 
-**hitool-rs 是一个按 Rust Workspace 组织的多用途工具箱，通过"按 hutool 模块 1:1 镜像 + Rust 习惯封装"的方式，把 Java 端的字符串、集合、加密、数据库、HTTP、缓存、定时任务、设置、JSON、Excel/DOCX/PDF/OFD 解析与生成能力，转换为纯 Rust 安全（`forbid(unsafe_code)`）的公开 API。**
+**hutool-rust 是一个按 Rust Workspace 组织的多用途工具箱，通过"按 hutool 模块 1:1 镜像 + Rust 习惯封装"的方式，把 Java 端的字符串、集合、加密、数据库、HTTP、缓存、定时任务、设置、JSON、Excel/DOCX/PDF/OFD 解析与生成能力，转换为纯 Rust 安全（`forbid(unsafe_code)`）的公开 API。**
 
 ### 2.2 一眼看懂
 
 ```text
 [应用或下游 Rust crate]
-        │ cargo add hitool --features "core,json,crypto,..."
+        │ cargo add hutool --features "core,json,crypto,..."
         ▼
 ┌──────────────────────────────────────────────────────────┐
-│ hitool-rs Cargo Workspace                                │
-│ hitool              Facade，按 feature 重新导出         │
-│ hitool-core         类型、trait、错误、公共契约         │
-│ hitool-compat-hutool Java 风格兼容层                   │
-│ hitool-{json,crypto,db,http,extra,jwt,...} 各领域     │
+│ hutool-rust Cargo Workspace                                │
+│ hutool              Facade，按 feature 重新导出         │
+│ hutool-core         类型、trait、错误、公共契约         │
+│ hutool-compat-hutool Java 风格兼容层                   │
+│ hutool-{json,crypto,db,http,extra,jwt,...} 各领域     │
 └──────────────────────────────────────────────────────────┘
         │
         ▼
@@ -115,7 +115,7 @@
 | 维度 | 架构结论 | 状态 | 证据 |
 |---|---|---|---|
 | 主体 | 23 个按 hutool 模块 1:1 对齐的 crate | 已确认 | `crates/` 目录 |
-| 分层 | hitool-core 是底层，其他是适配层 | 已确认 | `Cargo.toml` workspace |
+| 分层 | hutool-core 是底层，其他是适配层 | 已确认 | `Cargo.toml` workspace |
 | 核心主链 | Facade 重新导出 → 子 crate 公开 API → 标准库/生态 | 已实现 | `cargo build` |
 | 数据 | 无状态（pure functions）为主 | 已确认 | 公共 API |
 | 安全 | `#![forbid(unsafe_code)]` + `secrecy` + `zeroize` | 已确认 | 所有 crate 源码 |
@@ -139,7 +139,7 @@
 | 当前问题 | 影响 | 根因 | 架构需要解决 |
 |---|---|---|---|
 | Java 生态工具库丰富，Rust 生态分散 | Rust 开发者需逐个找库 | 没有 1:1 对标 Java Hutool 的统一入口 | 提供按领域组织的 Rust 工具箱 |
-| Hutool Java 流行度广 | 迁移成本高 | Java API 与 Rust 习惯不兼容 | 提供 `hitool-compat-hutool` Java 风格兼容层 |
+| Hutool Java 流行度广 | 迁移成本高 | Java API 与 Rust 习惯不兼容 | 提供 `hutool-compat-hutool` Java 风格兼容层 |
 | Rust 安全要求高 | 很多库用 FFI 引入 unsafe | 生态选择有限 | 全用纯 Rust 生态 + `forbid(unsafe_code)` |
 
 ### 3.2 架构驱动
@@ -165,7 +165,7 @@
 | ID | 假设/TBD | 影响 | 验证计划 | 截止时间 | 负责人 |
 |---|---|---|---|---|---|
 | `A-001` | RustCrypto sm3 0.4.2 ~ 0.5.0 字节级输出与 GB/T 32905 一致 | 高 | `sm_byte_level_parity` 测试 | 已验证 | hiwepy |
-| `A-002` | hitool-rs API 与 hutool Java 1:1 兼容（仅命名风格差异） | 中 | 视觉对比 | V1.0 | hiwepy |
+| `A-002` | hutool-rust API 与 hutool Java 1:1 兼容（仅命名风格差异） | 中 | 视觉对比 | V1.0 | hiwepy |
 | `A-003` | 51 个 `PendingEngine` stub 可由独立 engine crate 实现 | 中 | 引入 easyexcel-rs 等 | V0.2 | hiwepy |
 
 ## 4. 范围、边界与外部上下文
@@ -183,7 +183,7 @@
 
 ```mermaid
 flowchart LR
-    User["Rust 应用开发者"] --> System["hitool-rs"]
+    User["Rust 应用开发者"] --> System["hutool-rust"]
     App["下游 Rust crate"] --> System
     System --> RustCrypto["RustCrypto"]
     System --> Sqlx["sqlx"]
@@ -218,19 +218,19 @@ flowchart LR
 
 ## 5. 当前态、目标态与差距
 
-### 5.1 当前态（hitool-rs 0.1.0）
+### 5.1 当前态（hutool-rust 0.1.0）
 
 | 维度 | 当前 |
 |---|---|
 | workspace crate 数 | 23 |
 | 测试数 | 2347+（含 364 字节级对比） |
-| `PendingEngine` stub | 51 个（hitool-core 集中在 `dialect/impls.rs`） |
-| 文件数缺口 | hitool-db 缺 75、hitool-extra 缺 170、hitool-cron 缺 37 等 |
+| `PendingEngine` stub | 51 个（hutool-core 集中在 `dialect/impls.rs`） |
+| 文件数缺口 | hutool-db 缺 75、hutool-extra 缺 170、hutool-cron 缺 37 等 |
 | 字节级加密 | ✅ MD5/SHA-1/2/SM3/SM4/AES/ChaCha20/RSA/HMAC 全一致 |
 | unsafe 代码 | 0 |
 | `cargo audit` 漏洞 | 0 |
 
-### 5.2 目标态（hitool-rs 1.0.0）
+### 5.2 目标态（hutool-rust 1.0.0）
 
 | 维度 | 目标 |
 |---|---|
@@ -246,11 +246,11 @@ flowchart LR
 
 | 差距 | 影响 | 优先级 | 路线 |
 |---|---|---|---|
-| hitool-db 缺 75 文件 | 无法对接复杂 SQL | P0 | V0.2 补全 |
-| hitool-extra 缺 170 文件 | 扩展能力薄弱 | P1 | V0.3 补全 |
+| hutool-db 缺 75 文件 | 无法对接复杂 SQL | P0 | V0.2 补全 |
+| hutool-extra 缺 170 文件 | 扩展能力薄弱 | P1 | V0.3 补全 |
 | 51 个 `PendingEngine` stub | 限制 API 完整性 | P0 | V0.2 用 easyexcel-rs 等引擎替换 |
-| hitool-cron 缺 37 文件 | 定时任务能力弱 | P1 | V0.3 |
-| hitool-http 缺 47 文件 | HTTP 客户端能力受限 | P1 | V0.3 |
+| hutool-cron 缺 37 文件 | 定时任务能力弱 | P1 | V0.3 |
+| hutool-http 缺 47 文件 | HTTP 客户端能力受限 | P1 | V0.3 |
 
 详见 [docs/IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)。
 
@@ -263,7 +263,7 @@ flowchart LR
 | **1:1 对齐 hutool** | 所有公共 API 入参/返回与 hutool Java 一致 | 保留 Java 风格命名在 compat-hutool |
 | **纯 Rust 安全** | `#![forbid(unsafe_code)]` + 主流 Rust 生态 | 不依赖 FFI 库（openssl、ring 等） |
 | **依赖而非实现** | 用 RustCrypto 而非自实现 SM3 | 减少维护成本，跟上游审计 |
-| **Facade 模式** | hitool 通过 feature 重新导出 | 用户可选用最小依赖 |
+| **Facade 模式** | hutool 通过 feature 重新导出 | 用户可选用最小依赖 |
 | **零传递依赖** | 每个 crate 可独立编译 | 单 crate 编译 < 30s |
 
 ### 6.2 已记录的关键决策（ADR 摘要）
@@ -271,8 +271,8 @@ flowchart LR
 | ADR | 决策 | 原因 | 替代方案 | 状态 |
 |---|---|---|---|---|
 | ADR-001 | 用 RustCrypto 而非 openssl | 纯 Rust、零 FFI、`#![forbid(unsafe_code)]` 可强制 | openssl FFI + 性能 +30% | ✅ |
-| ADR-002 | 删除 `hitool-poi`，迁移到 `hitool-extra` 子模块 | 避免循环依赖、hitool-poi 仅是 facade | 保留 hitool-poi 与 hutool-poi 镜像 | ✅ |
-| ADR-003 | `hitool-compat-hutool` 用 Java 风格命名 | 兼容 Java 迁移 | 仅 Rust 命名 + Java 风格需用户调整 | ✅ |
+| ADR-002 | 删除 `hutool-poi`，迁移到 `hutool-extra` 子模块 | 避免循环依赖、hutool-poi 仅是 facade | 保留 hutool-poi 与 hutool-poi 镜像 | ✅ |
+| ADR-003 | `hutool-compat-hutool` 用 Java 风格命名 | 兼容 Java 迁移 | 仅 Rust 命名 + Java 风格需用户调整 | ✅ |
 | ADR-004 | workspace resolver = 3 | 解决 v3 features 限制 | 2 | ✅ |
 | ADR-005 | 51 个 `PendingEngine` stub 由独立 engine crate 替代 | 解耦核心与引擎 | 在 core 内实现引擎 | V0.2 |
 
@@ -283,12 +283,12 @@ flowchart LR
 ```text
 ┌──────────────────────────────────────────────────────────┐
 │ 用户 / 应用层                                            │
-│   下游 Rust crate 通过 cargo add hitool 使用            │
+│   下游 Rust crate 通过 cargo add hutool 使用            │
 └──────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌──────────────────────────────────────────────────────────┐
-│ Facade 层：hitool                                        │
+│ Facade 层：hutool                                        │
 │   pub use 子 crate 公共 API                              │
 │   重新导出模块 + prelude                                 │
 └──────────────────────────────────────────────────────────┘
@@ -296,7 +296,7 @@ flowchart LR
         ┌─────────────────┼─────────────────┐
         ▼                 ▼                 ▼
 ┌────────────────┐ ┌────────────────┐ ┌────────────────┐
-│ hitool-core   │ │ hitool-json    │ │ hitool-crypto  │
+│ hutool-core   │ │ hutool-json    │ │ hutool-crypto  │
 │ 公共类型/工具 │ │ JSON 处理     │ │ 加密/哈希/国密  │
 │ 错误/trait    │ │               │ │               │
 └────────────────┘ └────────────────┘ └────────────────┘
@@ -304,7 +304,7 @@ flowchart LR
         └─────────────────┼─────────────────┘
                           ▼
 ┌──────────────────────────────────────────────────────────┐
-│ 适配层：hitool-db, hitool-http, hitool-extra, ...        │
+│ 适配层：hutool-db, hutool-http, hutool-extra, ...        │
 │   集成 sqlx/reqwest/image/lettre/...                    │
 └──────────────────────────────────────────────────────────┘
                           │
@@ -330,57 +330,57 @@ flowchart LR
 
 | Crate | 职责 | 默认 feature | 关键依赖 |
 |---|---|---|---|
-| `hitool` | Facade | core, json | — |
-| `hitool-core` | 公共类型、trait、错误 | core | — |
-| `hitool-json` | JSON 处理 | json | serde_json |
-| `hitool-crypto` | 加密/哈希/国密 | crypto | RustCrypto 生态 |
-| `hitool-db` | 数据库 | db | sqlx |
-| `hitool-http` | HTTP 客户端 | http | reqwest |
-| `hitool-extra` | 扩展（图片/邮件/拼音/QR/...） | extra | image/lettre/pinyin/qrcode |
-| `hitool-jwt` | JWT 鉴权 | jwt | jsonwebtoken |
-| `hitool-cache` | 缓存 | cache | moka |
-| `hitool-setting` | 设置/配置 | setting | config |
-| `hitool-cron` | 定时任务 | cron | cron |
-| `hitool-system` | 系统工具 | system | sysinfo |
-| `hitool-aop` | 代理/拦截器 | aop | — |
-| `hitool-dfa` | DFA 状态机 | dfa | — |
-| `hitool-script` | 脚本执行 | script | rhai |
-| `hitool-captcha` | 验证码 | captcha | — |
-| `hitool-bloom-filter` | 布隆过滤 | bloom-filter | bloomfilter |
-| `hitool-socket` | 套接字 | socket | — |
-| `hitool-ai` | AI 集成 | ai | — |
-| `hitool-compat-hutool` | Java 风格兼容层 | hutool-compat | — |
-| `hitool-macros` | 过程宏工具 | — | syn/quote |
-| `hitool-test-support` | 测试公共工具 | — | — |
-| `hitool-log` | 日志 | log | tracing |
+| `hutool` | Facade | core, json | — |
+| `hutool-core` | 公共类型、trait、错误 | core | — |
+| `hutool-json` | JSON 处理 | json | serde_json |
+| `hutool-crypto` | 加密/哈希/国密 | crypto | RustCrypto 生态 |
+| `hutool-db` | 数据库 | db | sqlx |
+| `hutool-http` | HTTP 客户端 | http | reqwest |
+| `hutool-extra` | 扩展（图片/邮件/拼音/QR/...） | extra | image/lettre/pinyin/qrcode |
+| `hutool-jwt` | JWT 鉴权 | jwt | jsonwebtoken |
+| `hutool-cache` | 缓存 | cache | moka |
+| `hutool-setting` | 设置/配置 | setting | config |
+| `hutool-cron` | 定时任务 | cron | cron |
+| `hutool-system` | 系统工具 | system | sysinfo |
+| `hutool-aop` | 代理/拦截器 | aop | — |
+| `hutool-dfa` | DFA 状态机 | dfa | — |
+| `hutool-script` | 脚本执行 | script | rhai |
+| `hutool-captcha` | 验证码 | captcha | — |
+| `hutool-bloom-filter` | 布隆过滤 | bloom-filter | bloomfilter |
+| `hutool-socket` | 套接字 | socket | — |
+| `hutool-ai` | AI 集成 | ai | — |
+| `hutool-compat-hutool` | Java 风格兼容层 | hutool-compat | — |
+| `hutool-macros` | 过程宏工具 | — | syn/quote |
+| `hutool-test-support` | 测试公共工具 | — | — |
+| `hutool-log` | 日志 | log | tracing |
 
 ### 8.2 依赖关系
 
 ```mermaid
 flowchart TB
-    USER["应用"] --> FACADE["hitool facade"]
-    FACADE --> CORE["hitool-core"]
-    FACADE --> JSON["hitool-json"]
-    FACADE --> CRYPTO["hitool-crypto"]
-    FACADE --> DB["hitool-db"]
-    FACADE --> HTTP["hitool-http"]
-    FACADE --> EXTRA["hitool-extra"]
-    FACADE --> JWT["hitool-jwt"]
-    FACADE --> SETTING["hitool-setting"]
-    FACADE --> CRON["hitool-cron"]
-    FACADE --> SYSTEM["hitool-system"]
-    FACADE --> AOP["hitool-aop"]
-    FACADE --> CACHE["hitool-cache"]
-    FACADE --> CAPTCH["hitool-captcha"]
-    FACADE --> LOG["hitool-log"]
-    FACADE --> SOCKET["hitool-socket"]
-    FACADE --> SCRIPT["hitool-script"]
-    FACADE --> BLOOM["hitool-bloom-filter"]
-    FACADE --> DFA["hitool-dfa"]
-    FACADE --> AI["hitool-ai"]
-    FACADE --> COMPAT["hitool-compat-hutool"]
-    CORE --> MACROS["hitool-macros"]
-    CORE --> TEST["hitool-test-support"]
+    USER["应用"] --> FACADE["hutool facade"]
+    FACADE --> CORE["hutool-core"]
+    FACADE --> JSON["hutool-json"]
+    FACADE --> CRYPTO["hutool-crypto"]
+    FACADE --> DB["hutool-db"]
+    FACADE --> HTTP["hutool-http"]
+    FACADE --> EXTRA["hutool-extra"]
+    FACADE --> JWT["hutool-jwt"]
+    FACADE --> SETTING["hutool-setting"]
+    FACADE --> CRON["hutool-cron"]
+    FACADE --> SYSTEM["hutool-system"]
+    FACADE --> AOP["hutool-aop"]
+    FACADE --> CACHE["hutool-cache"]
+    FACADE --> CAPTCH["hutool-captcha"]
+    FACADE --> LOG["hutool-log"]
+    FACADE --> SOCKET["hutool-socket"]
+    FACADE --> SCRIPT["hutool-script"]
+    FACADE --> BLOOM["hutool-bloom-filter"]
+    FACADE --> DFA["hutool-dfa"]
+    FACADE --> AI["hutool-ai"]
+    FACADE --> COMPAT["hutool-compat-hutool"]
+    CORE --> MACROS["hutool-macros"]
+    CORE --> TEST["hutool-test-support"]
 ```
 
 ### 8.3 依赖约束
@@ -402,10 +402,10 @@ flowchart TB
 
 | Crate | 模型 |
 |---|---|
-| `hitool-crypto` | sync（无 IO） |
-| `hitool-db` | async（sqlx 连接池） |
-| `hitool-http` | async（reqwest） |
-| `hitool-extra` (mail) | async（lettre） |
+| `hutool-crypto` | sync（无 IO） |
+| `hutool-db` | async（sqlx 连接池） |
+| `hutool-http` | async（reqwest） |
+| `hutool-extra` (mail) | async（lettre） |
 | 其他 | sync |
 
 ### 9.3 进程模型
@@ -418,7 +418,7 @@ flowchart TB
 ### 10.1 主链
 
 ```
-用户调用 → hitool facade
+用户调用 → hutool facade
     → feature 重新导出 → 目标子 crate
         → 内部公共 API → Rust 生态实现
             → 返回结果（Result<T, E> 或裸值）
@@ -439,15 +439,15 @@ flowchart TB
 
 ### 11.1 状态机
 
-- 主要状态在用户应用层（hitool-rs 是无状态工具库）
-- `hitool-dfa` 提供 DFA 状态机工具
-- `hitool-jwt` 内部有 Token 生命周期
+- 主要状态在用户应用层（hutool-rust 是无状态工具库）
+- `hutool-dfa` 提供 DFA 状态机工具
+- `hutool-jwt` 内部有 Token 生命周期
 
 ### 11.2 任务模型
 
-- `hitool-cron` 提供定时任务
-- `hitool-script` 提供脚本执行
-- `hitool-cache` 提供缓存过期策略
+- `hutool-cron` 提供定时任务
+- `hutool-script` 提供脚本执行
+- `hutool-cache` 提供缓存过期策略
 
 ## 12. 数据、状态与一致性
 
@@ -468,10 +468,10 @@ flowchart TB
 
 | Crate | API 风格 |
 |---|---|
-| `hitool-core` | 函数式 + 静态方法 + 类型 |
-| `hitool-json` | 类似 serde_json |
-| `hitool-crypto` | `DigestUtil`/`Aes`/`HMac` 静态类 + RustCrypto 实现 |
-| `hitool-db` | async + 同步双 API |
+| `hutool-core` | 函数式 + 静态方法 + 类型 |
+| `hutool-json` | 类似 serde_json |
+| `hutool-crypto` | `DigestUtil`/`Aes`/`HMac` 静态类 + RustCrypto 实现 |
+| `hutool-db` | async + 同步双 API |
 
 ### 13.2 协议
 
@@ -480,7 +480,7 @@ flowchart TB
 | HTTP/HTTPS | ✅ | reqwest + rustls |
 | JSON | ✅ | serde_json |
 | YAML | ✅ | serde_yaml_ng |
-| HiTool 二进制信封 | ✅，可选 | schema/version/length/CRC32 校验 |
+| Hutool-Rust 二进制信封 | ✅，可选 | schema/version/length/CRC32 校验 |
 | 可升级二进制通信 | ✅，可选 | Müsli wire |
 | 可演进二进制存储 | ✅，可选 | Müsli storage |
 | 同版本紧凑二进制 | ✅，可选 | Müsli packed |
@@ -497,15 +497,15 @@ flowchart TB
 ```toml
 [features]
 default = ["core", "json"]
-core = ["dep:hitool-core"]
-json = ["dep:hitool-json"]
-crypto = ["dep:hitool-crypto"]
-serialization = ["core", "hitool-core/serialization"]
-serialization-musli = ["serialization", "hitool-core/serialization-musli"]
-musli-wire = ["serialization-musli", "hitool-core/musli-wire"]
-musli-storage = ["serialization-musli", "hitool-core/musli-storage"]
-musli-packed = ["serialization-musli", "hitool-core/musli-packed"]
-musli-descriptive = ["serialization-musli", "hitool-core/musli-descriptive"]
+core = ["dep:hutool-core"]
+json = ["dep:hutool-json"]
+crypto = ["dep:hutool-crypto"]
+serialization = ["core", "hutool-core/serialization"]
+serialization-musli = ["serialization", "hutool-core/serialization-musli"]
+musli-wire = ["serialization-musli", "hutool-core/musli-wire"]
+musli-storage = ["serialization-musli", "hutool-core/musli-storage"]
+musli-packed = ["serialization-musli", "hutool-core/musli-packed"]
+musli-descriptive = ["serialization-musli", "hutool-core/musli-descriptive"]
 # ...
 ```
 
@@ -529,7 +529,7 @@ schema_id(4) | schema_version(2) | reserved(2)
 payload_length(8) | crc32(4) | payload(N)
 ```
 
-解码器返回值前必须验证精确帧长度、负载上限、schema 标识、兼容版本范围、codec、受支持 flags、CRC32，以及负载尾随字节。底层引擎错误统一转换为 HiTool 自有的 `SerializeError`，避免公共错误契约绑定 Müsli 的 pre-1.0 API。
+解码器返回值前必须验证精确帧长度、负载上限、schema 标识、兼容版本范围、codec、受支持 flags、CRC32，以及负载尾随字节。底层引擎错误统一转换为 Hutool-Rust 自有的 `SerializeError`，避免公共错误契约绑定 Müsli 的 pre-1.0 API。
 
 ### 14.2 秘密管理
 
@@ -549,7 +549,7 @@ payload_length(8) | crc32(4) | payload(N)
 
 ```
 用户输入
-  → hitool-rs 公共 API
+  → hutool-rust 公共 API
     → 内部实现
       → RustCrypto / sqlx / reqwest
         → 系统调用
@@ -578,8 +578,8 @@ payload_length(8) | crc32(4) | payload(N)
 
 ### 16.2 恢复策略
 
-- `hitool-cache` 支持 TTL + 自动失效
-- `hitool-http` 支持 retry policy
+- `hutool-cache` 支持 TTL + 自动失效
+- `hutool-http` 支持 retry policy
 - 加密函数无状态，无需持久恢复
 
 ## 17. 性能、容量与资源预算
@@ -612,7 +612,7 @@ payload_length(8) | crc32(4) | payload(N)
 
 - SemVer 严格遵守
 - API 破坏性变更仅在 major 版本
-- 保留 `hitool-compat-hutool` 兼容层
+- 保留 `hutool-compat-hutool` 兼容层
 
 ### 18.3 回滚
 
@@ -623,13 +623,13 @@ payload_length(8) | crc32(4) | payload(N)
 
 ### 19.1 日志
 
-- `hitool-log` 基于 `tracing` crate
+- `hutool-log` 基于 `tracing` crate
 - 结构化日志（JSON 输出）
 - 通过 `tracing-subscriber` 集成
 
 ### 19.2 指标
 
-- `hitool-core` 通过 `metrics` crate 暴露关键指标
+- `hutool-core` 通过 `metrics` crate 暴露关键指标
 - 加密调用计数、缓存命中率、HTTP 延迟
 
 ### 19.3 链路追踪
@@ -641,8 +641,8 @@ payload_length(8) | crc32(4) | payload(N)
 
 ### 20.1 扩展点
 
-- `hitool-aop` 提供拦截器接口
-- 用户可通过 `hitool-macros` 自定义宏
+- `hutool-aop` 提供拦截器接口
+- 用户可通过 `hutool-macros` 自定义宏
 
 ### 20.2 生态边界
 
@@ -660,8 +660,8 @@ payload_length(8) | crc32(4) | payload(N)
 
 ### 21.1 兼容策略
 
-- hitool-rs 0.1.x 与 hutool 5.8.46 1:1 对齐
-- `hitool-compat-hutool` 提供 Java 风格 API
+- hutool-rust 0.1.x 与 hutool 5.8.46 1:1 对齐
+- `hutool-compat-hutool` 提供 Java 风格 API
 - 字节级加密输出与 hutool Java 实现一致
 
 ### 21.2 迁移路径
@@ -671,8 +671,8 @@ flowchart LR
     JavaHutool["Java Hutool"] --> JavaApp["Java App"]
     JavaApp --> Bytecode["字节码迁移"]
     Bytecode --> RustApp["Rust App"]
-    RustApp --> hitoolCompat["hitool-compat-hutool"]
-    hitoolCompat --> hitoolCore["hitool-core (snake_case)"]
+    RustApp --> hutoolCompat["hutool-compat-hutool"]
+    hutoolCompat --> hutoolCore["hutool-core (snake_case)"]
 ```
 
 ### 21.3 演进原则
@@ -714,15 +714,15 @@ flowchart LR
 | 风险 | 影响 | 缓解 | 状态 |
 |---|---|---|---|
 | 51 个 `PendingEngine` stub | API 完整性受损 | V0.2 用独立 engine crate 替代 | 处理中 |
-| hitool-db 缺 75 文件 | SQL 能力薄弱 | V0.2 补全 | 待处理 |
-| hitool-extra 缺 170 文件 | 扩展能力受限 | V0.3 补全 | 待处理 |
-| hitool-cron 缺 37 文件 | 定时任务能力弱 | V0.3 补全 | 待处理 |
+| hutool-db 缺 75 文件 | SQL 能力薄弱 | V0.2 补全 | 待处理 |
+| hutool-extra 缺 170 文件 | 扩展能力受限 | V0.3 补全 | 待处理 |
+| hutool-cron 缺 37 文件 | 定时任务能力弱 | V0.3 补全 | 待处理 |
 | 字节级 vs hutool Java | 未做 1:1 比对 | 已做 SM/SHA/AES 比对 | 部分验证 |
 
 ### 23.2 技术债
 
 - 部分模块未实现（如 SM2 签名验证的完整测试）
-- 部分 facade 命名不一致（hitool-compat-hutool 故意用 Java 风格）
+- 部分 facade 命名不一致（hutool-compat-hutool 故意用 Java 风格）
 - `cargo bench` 尚未建立完整基准
 
 ### 23.3 实施路线
@@ -730,8 +730,8 @@ flowchart LR
 | 版本 | 重点 | 状态 |
 |---|---|---|
 | V0.1（当前） | 23 crate 骨架 + 2347+ 测试 | ✅ 已发布 |
-| V0.2 | 补全 hitool-db + 51 个 stub 用 engine crate 替代 | 进行中 |
-| V0.3 | 补全 hitool-extra + hitool-cron | 待处理 |
+| V0.2 | 补全 hutool-db + 51 个 stub 用 engine crate 替代 | 进行中 |
+| V0.3 | 补全 hutool-extra + hutool-cron | 待处理 |
 | V0.4 | 发布到 crates.io，添加完整 rustdoc | 待处理 |
 | V1.0 | 全部 23 crate 全部稳定，1:1 对齐 hutool Java 字节级 | 目标 |
 
@@ -741,9 +741,9 @@ flowchart LR
 
 | 术语 | 解释 |
 |---|---|
-| hitool | hiwepy 工具箱（hi + tool 的缩写） |
+| hutool | hiwepy 工具箱（hi + tool 的缩写） |
 | hutool | Apache Dubbo 工具库（Java） |
-| hitool-compat-hutool | Java 风格兼容层 |
+| hutool-compat-hutool | Java 风格兼容层 |
 | PendingEngine | 待独立 engine crate 实现的占位 |
 
 ### 24.2 参考文档

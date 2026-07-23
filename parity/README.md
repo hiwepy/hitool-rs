@@ -8,7 +8,7 @@ The source baseline is Hutool `v5.8.46`, commit
 `hutool-v5.8.46-api.csv` is a generated inventory of public production types
 and methods. Each record needs one row in `decisions.csv` before parity can be
 claimed. A decision counts only when it names an implemented/native/idiomatic
-HiTool symbol and concrete test evidence.
+Hutool-Rust symbol and concrete test evidence.
 
 Regenerate and verify with:
 
@@ -23,7 +23,7 @@ The strict command intentionally fails while any API is unaccounted for.
 
 ## TEST method parity (two bars)
 
-Goal: every Hutool `@Test` / `@ParameterizedTest` method has a hitool-rs
+Goal: every Hutool `@Test` / `@ParameterizedTest` method has a hutool-rust
 counterpart with **identical inputs, fixtures, assertions, and observable
 outputs** (language/runtime differences aside).
 
@@ -35,7 +35,7 @@ outputs** (language/runtime differences aside).
 `#[ignore]` alignment stubs **do not** satisfy behavioral parity. They only keep
 the inventory id registered while APIs are still being ported.
 
-`hitool-poi` may keep signature-only empty bodies until easyexcel-rs /
+`hutool-poi` may keep signature-only empty bodies until easyexcel-rs /
 easydoc-rs / easyofd-rs / easypdf-rs land, but those tests must still become
 real asserts once the engines exist — empty/`ignore` is temporary, not the
 end state.
@@ -45,12 +45,12 @@ end state.
 | `hutool-v5.8.46-tests.csv` | Inventory of Hutool test methods |
 | `test-decisions.csv` | Coverage ledger (`covered` / `ignored` / `planned` / `unresolved`) |
 | `scripts/generate-hutool-test-inventory.py` | Build the inventory from a Hutool checkout |
-| `scripts/scan-hitool-test-parity.py` | Scan Rust `对齐 Java:` comments; marks `ignored` when `#[ignore]` |
+| `scripts/scan-hutool-test-parity.py` | Scan Rust `对齐 Java:` comments; marks `ignored` when `#[ignore]` |
 | `scripts/verify-test-parity.py` | Report registration + behavioral coverage |
 
 ```shell
 python3 scripts/generate-hutool-test-inventory.py ../hutool
-python3 scripts/scan-hitool-test-parity.py
+python3 scripts/scan-hutool-test-parity.py
 python3 scripts/verify-test-parity.py --by-module
 python3 scripts/verify-test-parity.py --require-complete      # inventory registered
 python3 scripts/verify-test-parity.py --require-behavioral    # true Hutool equivalence

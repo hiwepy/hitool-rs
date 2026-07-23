@@ -1,0 +1,54 @@
+[package]
+name = "hutool-crypto"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+description = "High-level, secure-by-default cryptographic utilities for HiTool."
+
+[lints]
+workspace = true
+
+[features]
+default = []
+## Opt-in surface for explicitly rejected legacy algorithms (DES/RC4 still return Err).
+legacy = []
+
+[dependencies]
+aes.workspace = true
+aes-gcm.workspace = true
+argon2.workspace = true
+base64.workspace = true
+block-padding.workspace = true
+cbc.workspace = true
+chacha20.workspace = true
+ecb.workspace = true
+hex.workspace = true
+hmac.workspace = true
+md-5.workspace = true
+p256.workspace = true
+pbkdf2.workspace = true
+signature.workspace = true
+rand_core06.workspace = true
+rsa.workspace = true
+secrecy.workspace = true
+sha1.workspace = true
+sha2.workspace = true
+cmac.workspace = true
+des.workspace = true
+rc4.workspace = true
+sm2.workspace = true
+sm3.workspace = true
+sm4.workspace = true
+rand.workspace = true
+num-bigint.workspace = true
+data-encoding.workspace = true
+x509-cert.workspace = true
+der.workspace = true
+generic-array.workspace = true
+thiserror.workspace = true
+zeroize.workspace = true

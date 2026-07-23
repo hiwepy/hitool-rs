@@ -10,20 +10,20 @@ from pathlib import Path
 ROOT = "cn.hutool.core.getter::"
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 FAMILIES = {
-    "ArrayTypeGetter": "hitool_core::ArrayTypeGetter",
-    "BasicTypeGetter": "hitool_core::BasicTypeGetter",
-    "GroupedTypeGetter": "hitool_core::GroupedTypeGetter",
-    "ListTypeGetter": "hitool_core::ListTypeGetter",
-    "OptArrayTypeGetter": "hitool_core::OptArrayTypeGetter",
-    "OptBasicTypeGetter": "hitool_core::OptBasicTypeGetter",
-    "OptNullBasicTypeFromObjectGetter": "hitool_core::OptNullBasicTypeFromObjectGetter",
-    "OptNullBasicTypeFromStringGetter": "hitool_core::OptNullBasicTypeFromStringGetter",
-    "OptNullBasicTypeGetter": "hitool_core::OptNullBasicTypeGetter",
+    "ArrayTypeGetter": "hutool_core::ArrayTypeGetter",
+    "BasicTypeGetter": "hutool_core::BasicTypeGetter",
+    "GroupedTypeGetter": "hutool_core::GroupedTypeGetter",
+    "ListTypeGetter": "hutool_core::ListTypeGetter",
+    "OptArrayTypeGetter": "hutool_core::OptArrayTypeGetter",
+    "OptBasicTypeGetter": "hutool_core::OptBasicTypeGetter",
+    "OptNullBasicTypeFromObjectGetter": "hutool_core::OptNullBasicTypeFromObjectGetter",
+    "OptNullBasicTypeFromStringGetter": "hutool_core::OptNullBasicTypeFromStringGetter",
+    "OptNullBasicTypeGetter": "hutool_core::OptNullBasicTypeGetter",
 }
 EVIDENCE = (
-    "crates/hitool-core/src/getter.rs::"
+    "crates/hutool-core/src/getter.rs::"
     "getter_traits_cover_scalars_defaults_arrays_lists_groups_and_objects"
 )
 
@@ -50,7 +50,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": FAMILIES[getter_family],
+            "hutool_symbol": FAMILIES[getter_family],
             "test_evidence": EVIDENCE,
             "notes": (
                 "Java typed getter overloads are consolidated into FromStr/Any "

@@ -9,10 +9,10 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
-COMPAT = "crates/hitool-cron/src/compat.rs::"
-PATTERN = "crates/hitool-cron/src/pattern.rs::"
-WHEEL = "crates/hitool-cron/src/timingwheel.rs::"
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
+COMPAT = "crates/hutool-cron/src/compat.rs::"
+PATTERN = "crates/hutool-cron/src/pattern.rs::"
+WHEEL = "crates/hutool-cron/src/timingwheel.rs::"
 
 
 def family(qualified_name: str) -> str:
@@ -21,7 +21,7 @@ def family(qualified_name: str) -> str:
 
 def mapping(qualified_name: str) -> tuple[str, str, str]:
     name = family(qualified_name)
-    symbol = f"hitool_cron::{name}"
+    symbol = f"hutool_cron::{name}"
 
     if ".timingwheel::" in qualified_name:
         if name in {"TimerTask", "TimerTaskList"}:
@@ -82,7 +82,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": test,
             "notes": notes,
         }

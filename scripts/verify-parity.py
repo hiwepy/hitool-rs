@@ -78,7 +78,7 @@ def main() -> int:
             invalid.append(api_id)
             continue
         if status in COUNTED_STATUSES:
-            if not row.get("hitool_symbol") or not row.get("test_evidence"):
+            if not row.get("hutool_symbol") or not row.get("test_evidence"):
                 invalid.append(api_id)
                 continue
             counted[api_id] = row

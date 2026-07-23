@@ -8,40 +8,40 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 MULTIPART = {
     "MultipartBody": (
-        "hitool_http::MultipartBody",
-        "crates/hitool-http/tests/http_util_offline_parity.rs::multipart_body_test_build_test",
+        "hutool_http::MultipartBody",
+        "crates/hutool-http/tests/http_util_offline_parity.rs::multipart_body_test_build_test",
         "RFC2388 multipart/form-data builder for string form fields.",
     ),
     "create": (
-        "hitool_http::MultipartBody::create",
-        "crates/hitool-http/tests/http_util_offline_parity.rs::multipart_body_test_build_test",
+        "hutool_http::MultipartBody::create",
+        "crates/hutool-http/tests/http_util_offline_parity.rs::multipart_body_test_build_test",
         "Factory matching Hutool MultipartBody.create.",
     ),
     "getContentType": (
-        "hitool_http::MultipartBody::content_type",
-        "crates/hitool-http/tests/http_util_offline_parity.rs::multipart_body_test_build_test",
+        "hutool_http::MultipartBody::content_type",
+        "crates/hutool-http/tests/http_util_offline_parity.rs::multipart_body_test_build_test",
         "Returns multipart Content-Type with boundary.",
     ),
     "write": (
-        "hitool_http::MultipartBody::write",
-        "crates/hitool-http/tests/http_util_offline_parity.rs::multipart_body_test_build_test",
+        "hutool_http::MultipartBody::write",
+        "crates/hutool-http/tests/http_util_offline_parity.rs::multipart_body_test_build_test",
         "Writes serialized multipart bytes to a Write sink.",
     ),
     "toString": (
-        "hitool_http::MultipartBody",
-        "crates/hitool-http/tests/http_util_offline_parity.rs::multipart_body_test_build_test",
+        "hutool_http::MultipartBody",
+        "crates/hutool-http/tests/http_util_offline_parity.rs::multipart_body_test_build_test",
         "Display summary of charset and field count.",
     ),
 }
 
 EXCEPTION = {
     "HttpException": (
-        "hitool_http::HttpException",
-        "crates/hitool-http/src/exception.rs::constructors_match_hutool_message_shapes",
+        "hutool_http::HttpException",
+        "crates/hutool-http/src/exception.rs::constructors_match_hutool_message_shapes",
         "Owned message exception mirroring Hutool constructors; transport uses HttpError.",
     ),
 }
@@ -74,7 +74,7 @@ def record_prefix(indexed: dict, inventory: list, prefix: str, type_name: str, t
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": evidence,
             "notes": notes,
         }

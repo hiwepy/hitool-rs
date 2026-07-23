@@ -8,7 +8,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 PREFIX = "cn.hutool.http::HttpResponse"
 
 SIMPLE_MEMBERS = {
@@ -50,14 +50,14 @@ def is_verified(row: dict[str, str]) -> bool:
 def evidence(member: str) -> tuple[str, str, str]:
     if member in {"getStatus", "isOk", "getCookieStr"}:
         return (
-            "hitool_http::HttpResponse",
-            "crates/hitool-http/src/coverage_tests.rs::response_facade_preserves_non_success_status_and_bounded_body",
+            "hutool_http::HttpResponse",
+            "crates/hutool-http/src/coverage_tests.rs::response_facade_preserves_non_success_status_and_bounded_body",
             "A real socket response proves non-success status, raw Set-Cookie and bounded response-body preservation.",
         )
     if member in {"getCookies", "getCookie", "getCookieValue"}:
         return (
-            "hitool_http::HttpResponse::get_cookies",
-            "crates/hitool-http/src/response.rs::status_headers_encodings_and_lengths_match_hutool_semantics",
+            "hutool_http::HttpResponse::get_cookies",
+            "crates/hutool-http/src/response.rs::status_headers_encodings_and_lengths_match_hutool_semantics",
             "Set-Cookie headers are parsed into name/value HttpCookie values (Java HttpCookie subset).",
         )
     if member in {
@@ -71,8 +71,8 @@ def evidence(member: str) -> tuple[str, str, str]:
         "toString",
     }:
         return (
-            "hitool_http::HttpResponse",
-            "crates/hitool-http/src/response.rs::body_decoding_stream_replacement_and_writes_are_real",
+            "hutool_http::HttpResponse",
+            "crates/hutool-http/src/response.rs::body_decoding_stream_replacement_and_writes_are_real",
             "Executable tests prove charset decoding, repeatable byte/stream access, sync/close, Display, and writer paths.",
         )
     if member in {
@@ -80,13 +80,13 @@ def evidence(member: str) -> tuple[str, str, str]:
         "getFileNameFromDisposition",
     }:
         return (
-            "hitool_http::HttpResponse::get_file_name_from_disposition",
-            "crates/hitool-http/src/response.rs::disposition_and_path_write_export_apis",
+            "hutool_http::HttpResponse::get_file_name_from_disposition",
+            "crates/hutool-http/src/response.rs::disposition_and_path_write_export_apis",
             "Content-Disposition filename/filename* and URL path fallbacks complete download targets.",
         )
     return (
-        "hitool_http::HttpResponse",
-        "crates/hitool-http/src/response.rs::status_headers_encodings_and_lengths_match_hutool_semantics",
+        "hutool_http::HttpResponse",
+        "crates/hutool-http/src/response.rs::status_headers_encodings_and_lengths_match_hutool_semantics",
         "Header-driven length, transfer-encoding and content-encoding behavior is verified for valid, absent and invalid wire values.",
     )
 
@@ -111,7 +111,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": test,
             "notes": notes,
         }

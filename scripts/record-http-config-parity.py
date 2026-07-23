@@ -8,7 +8,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 PREFIX = "cn.hutool.http::HttpConfig"
 VERIFIED_MEMBERS = {
     "HttpConfig",
@@ -38,12 +38,12 @@ VERIFIED_MEMBERS = {
 def evidence(member: str) -> tuple[str, str]:
     if member == "setProxy":
         return (
-            "crates/hitool-http/src/coverage_tests.rs::configured_proxy_is_the_real_transport_destination",
+            "crates/hutool-http/src/coverage_tests.rs::configured_proxy_is_the_real_transport_destination",
             "The Reqwest proxy engine receives the configuration and a real request reaches the configured proxy endpoint.",
         )
     if member in {"disableCache", "addRequestInterceptor", "addResponseInterceptor"}:
         return (
-            "crates/hitool-http/src/coverage_tests.rs::runtime_config_changes_real_requests_responses_and_errors",
+            "crates/hutool-http/src/coverage_tests.rs::runtime_config_changes_real_requests_responses_and_errors",
             "End-to-end transport tests observe cache headers and request/response interceptor mutations and failures.",
         )
     if member in {
@@ -56,11 +56,11 @@ def evidence(member: str) -> tuple[str, str]:
         "setIgnoreContentLength",
     }:
         return (
-            "crates/hitool-http/src/request.rs::request_config_and_callback_helpers",
+            "crates/hutool-http/src/request.rs::request_config_and_callback_helpers",
             "Hutool compatibility flags are stored on HttpConfig and exercised via request overlay helpers.",
         )
     return (
-        "crates/hitool-http/src/config.rs::configuration_setters_validate_every_hutool_shape_and_redact_secrets",
+        "crates/hutool-http/src/config.rs::configuration_setters_validate_every_hutool_shape_and_redact_secrets",
         "Hutool configuration is translated into validated Reqwest/Rustls timeouts, redirect, hostname, proxy and TLS settings for async and blocking clients.",
     )
 
@@ -84,7 +84,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": "hitool_http::HttpConfig",
+            "hutool_symbol": "hutool_http::HttpConfig",
             "test_evidence": test,
             "notes": notes,
         }

@@ -8,7 +8,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 
 def family(qualified_name: str) -> str:
@@ -19,31 +19,31 @@ def mapping(qualified_name: str) -> tuple[str, str, str]:
     name = family(qualified_name)
     if name in {"ModelName", "Models"} or "Common" in qualified_name:
         return (
-            "hitool_ai::ModelName",
-            "crates/hitool-ai/src/models.rs::model_and_common_wire_values_match_hutool",
+            "hutool_ai::ModelName",
+            "crates/hutool-ai/src/models.rs::model_and_common_wire_values_match_hutool",
             "Typed provider, model, vision, speech, reasoning, video, Gemini, and Ollama values preserve Hutool wire semantics.",
         )
     if "Config" in qualified_name or name == "Message":
         return (
-            "hitool_ai::BaseConfig",
-            "crates/hitool-ai/src/compat.rs::configuration_builder_covers_validation_mutation_and_redaction",
+            "hutool_ai::BaseConfig",
+            "crates/hutool-ai/src/compat.rs::configuration_builder_covers_validation_mutation_and_redaction",
             "Owned validated configuration, dynamic fields, timeouts, proxies, redacted secrets, and typed messages replace mutable Java beans.",
         )
     if name == "AIException":
         return (
-            "hitool_ai::ProviderError",
-            "crates/hitool-ai/src/lib.rs::response_types_and_errors_round_trip",
+            "hutool_ai::ProviderError",
+            "crates/hutool-ai/src/lib.rs::response_types_and_errors_round_trip",
             "Typed non-exhaustive errors preserve transport, URL, JSON, provider, streaming, and defensive-limit failures.",
         )
     if "ServiceImpl" in qualified_name or "Service" in qualified_name:
         return (
-            "hitool_ai::Operation",
-            "crates/hitool-ai/src/operations.rs::every_operation_builds_a_bounded_explicit_request",
+            "hutool_ai::Operation",
+            "crates/hutool-ai/src/operations.rs::every_operation_builds_a_bounded_explicit_request",
             "One exhaustive operation model covers Hutool chat, stream, vision, image, audio, video, embedding, moderation, context, file, and model-management calls.",
         )
     return (
-        "hitool_ai::AIServiceFactory",
-        "crates/hitool-ai/src/compat.rs::service_trait_factory_and_util_facades_are_usable",
+        "hutool_ai::AIServiceFactory",
+        "crates/hutool-ai/src/compat.rs::service_trait_factory_and_util_facades_are_usable",
         "Provider-neutral async traits, a built-in factory, pooled Rustls HTTP, bounded bodies, SSE, and injectable clients replace Java SPI wiring.",
     )
 
@@ -62,7 +62,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": test,
             "notes": notes,
         }

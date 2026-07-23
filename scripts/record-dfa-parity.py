@@ -9,27 +9,27 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 FAMILIES = {
     "FoundWord": (
-        "hitool_dfa::FoundWord",
-        "crates/hitool-dfa/src/word_tree.rs::found_word_exposes_effective_and_source_forms",
+        "hutool_dfa::FoundWord",
+        "crates/hutool-dfa/src/word_tree.rs::found_word_exposes_effective_and_source_forms",
     ),
     "SensitiveProcessor": (
-        "hitool_dfa::{SensitiveProcessor,DefaultSensitiveProcessor}",
-        "crates/hitool-dfa/src/sensitive.rs::filtering_supports_default_custom_and_serialized_processors",
+        "hutool_dfa::{SensitiveProcessor,DefaultSensitiveProcessor}",
+        "crates/hutool-dfa/src/sensitive.rs::filtering_supports_default_custom_and_serialized_processors",
     ),
     "SensitiveUtil": (
-        "hitool_dfa::SensitiveUtil",
-        "crates/hitool-dfa/src/sensitive.rs::initialization_search_and_async_replacement_are_thread_safe",
+        "hutool_dfa::SensitiveUtil",
+        "crates/hutool-dfa/src/sensitive.rs::initialization_search_and_async_replacement_are_thread_safe",
     ),
     "StopChar": (
-        "hitool_dfa::StopChar",
-        "crates/hitool-dfa/src/stop_char.rs::classifies_whitespace_hutool_symbols_and_normal_text",
+        "hutool_dfa::StopChar",
+        "crates/hutool-dfa/src/stop_char.rs::classifies_whitespace_hutool_symbols_and_normal_text",
     ),
     "WordTree": (
-        "hitool_dfa::{WordTree,MatchOptions}",
-        "crates/hitool-dfa/src/word_tree.rs::density_and_greed_modes_match_hutool_ordering",
+        "hutool_dfa::{WordTree,MatchOptions}",
+        "crates/hutool-dfa/src/word_tree.rs::density_and_greed_modes_match_hutool_ordering",
     ),
 }
 
@@ -59,7 +59,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": test,
             "notes": (
                 "Aho-Corasick remains the immutable high-throughput engine; the mutable Rust "

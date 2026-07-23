@@ -1,4 +1,4 @@
-# hitool-rs 迁移基线（Baseline）
+# hutool-rust 迁移基线（Baseline）
 
 > **生成时间**：2026-07-21
 > **基线来源**：`scripts/verify-parity.py` + `scripts/verify-test-parity.py`
@@ -72,7 +72,7 @@ Hutool TEST behavioral:   3266/3292 (99.21%), ignored_stubs=0, planned=26
 
 ---
 
-## 四、按 hutool 子包细分（hitool-core）
+## 四、按 hutool 子包细分（hutool-core）
 
 | 子包 | 覆盖 | 缺口 |
 |---|---:|---:|
@@ -92,7 +92,7 @@ Hutool TEST behavioral:   3266/3292 (99.21%), ignored_stubs=0, planned=26
 
 ### 5.1 评估结论
 
-hitool-rs 已经拥有**完整的迁移验证体系**：
+hutool-rust 已经拥有**完整的迁移验证体系**：
 - `parity/hutool-v5.8.46-api.csv`：14 082 行 API 清单（每个公开方法 1 行）
 - `parity/decisions.csv`：13 871 行决策记录（每个 API 1 行决策 + Rust 符号 + 测试证据）
 - `parity/hutool-v5.8.46-tests.csv`：3 293 行测试方法清单
@@ -118,16 +118,16 @@ hitool-rs 已经拥有**完整的迁移验证体系**：
 
 | Phase | 已覆盖 | 剩余缺口 | 估算工作量 |
 |---|---|---|---|
-| Phase 1（hitool-extra） | 388/1082 (36%) | 694 API | 4~6 周 |
-| Phase 2（hitool-db） | 831/1041 (80%) | 210 API | 2~3 周 |
-| Phase 2（hitool-core 收尾） | 7027/7605 (92%) | 578 API | 3~4 周 |
-| Phase 3（hitool-http） | 458/695 (66%) | 237 API | 2~3 周 |
-| Phase 3（hitool-crypto） | 735/745 (99%) | 10 API | 0.5 周 |
-| Phase 4（hitool-ai provider） | 281/281 (100%) | ✅ 已完成 |
-| Phase 4（hitool-poi 占位） | 0/555 (0%) | 555 API（**用户豁免**） | 不做 |
+| Phase 1（hutool-extra） | 388/1082 (36%) | 694 API | 4~6 周 |
+| Phase 2（hutool-db） | 831/1041 (80%) | 210 API | 2~3 周 |
+| Phase 2（hutool-core 收尾） | 7027/7605 (92%) | 578 API | 3~4 周 |
+| Phase 3（hutool-http） | 458/695 (66%) | 237 API | 2~3 周 |
+| Phase 3（hutool-crypto） | 735/745 (99%) | 10 API | 0.5 周 |
+| Phase 4（hutool-ai provider） | 281/281 (100%) | ✅ 已完成 |
+| Phase 4（hutool-poi 占位） | 0/555 (0%) | 555 API（**用户豁免**） | 不做 |
 | Phase 5（命名收尾） | — | — | 1~2 周 |
 
-**总剩余工作量估算**：**8~12 周**（hitool-poi 豁免后）
+**总剩余工作量估算**：**8~12 周**（hutool-poi 豁免后）
 
 ---
 

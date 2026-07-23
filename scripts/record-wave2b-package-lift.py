@@ -21,8 +21,8 @@ classify_row = _mod.classify_row
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
-CORE_SRC = Path("crates/hitool-core/src")
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
+CORE_SRC = Path("crates/hutool-core/src")
 
 PACKAGES = {
     "exceptions",
@@ -132,7 +132,7 @@ def main() -> None:
         if not str(path):
             continue
         row["status"] = "idiomatic"
-        row["hitool_symbol"] = f"hitool_core::{pkg}::{typ}"
+        row["hutool_symbol"] = f"hutool_core::{pkg}::{typ}"
         row["test_evidence"] = f"wave2b_lift:{path.as_posix()}"
         row["notes"] = f"wave2b package lift; source {path.as_posix()}"
         lifted += 1

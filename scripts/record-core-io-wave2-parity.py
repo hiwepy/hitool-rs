@@ -16,84 +16,84 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 ROOT = "cn.hutool.core.io"
 
 # Families lifted to idiomatic in Wave2 (NIO-free).
 IDIOMATIC_FAMILIES: dict[str, tuple[str, str, str]] = {
     "FileUtil": (
-        "hitool_core::FileUtil",
-        "crates/hitool-core/tests/io_wave2_parity.rs::file_util_wave2_portable",
+        "hutool_core::FileUtil",
+        "crates/hutool-core/tests/io_wave2_parity.rs::file_util_wave2_portable",
         "std::fs PathBuf facade; Wave2 adds loop/walk/copyContent/moveContent/isSub/stream/map helpers.",
     ),
     "IoUtil": (
-        "hitool_core::IoUtil",
-        "crates/hitool-core/tests/io_util_parity.rs::read_write_utf8_content_equals_hex_test",
+        "hutool_core::IoUtil",
+        "crates/hutool-core/tests/io_util_parity.rs::read_write_utf8_content_equals_hex_test",
         "std::io Read/Write facade; ObjectStream/PushBack JVM overloads stay planned.",
     ),
     "PathUtil": (
-        "hitool_core::PathUtil",
-        "crates/hitool-core/tests/io_wave2_parity.rs::path_util_normalize_copy_walk",
+        "hutool_core::PathUtil",
+        "crates/hutool-core/tests/io_wave2_parity.rs::path_util_normalize_copy_walk",
         "std::path PathBuf normalize/copy/walk/move; LinkOptions/FileVisitOption NIO stay planned.",
     ),
     "FileNameUtil": (
-        "hitool_core::FileNameUtil",
-        "crates/hitool-core/tests/io_wave2_parity.rs::file_name_util_ext_and_invalid",
+        "hutool_core::FileNameUtil",
+        "crates/hutool-core/tests/io_wave2_parity.rs::file_name_util_ext_and_invalid",
         "Owned filename split/clean/isType; delegates suffix/mainName to FileUtil.",
     ),
     "DataSize": (
-        "hitool_core::DataSize",
-        "crates/hitool-core/tests/io_wave2_parity.rs::data_size_parse_and_units",
+        "hutool_core::DataSize",
+        "crates/hutool-core/tests/io_wave2_parity.rs::data_size_parse_and_units",
         "i64 byte value object with of*/to*/parse; mirrors Spring DataSize.",
     ),
     "DataSizeUtil": (
-        "hitool_core::DataSizeUtil",
-        "crates/hitool-core/tests/io_wave2_parity.rs::data_size_parse_and_units",
+        "hutool_core::DataSizeUtil",
+        "crates/hutool-core/tests/io_wave2_parity.rs::data_size_parse_and_units",
         "parse/format helpers for human-readable sizes.",
     ),
     "DataUnit": (
-        "hitool_core::DataUnit",
-        "crates/hitool-core/tests/io_wave2_parity.rs::data_size_parse_and_units",
+        "hutool_core::DataUnit",
+        "crates/hutool-core/tests/io_wave2_parity.rs::data_size_parse_and_units",
         "B/KB/MB/GB/TB enum with suffix/fromSuffix.",
     ),
     "BufferUtil": (
-        "hitool_core::BufferUtil",
-        "crates/hitool-core/tests/io_wave2_parity.rs::buffer_util_copy_and_line",
+        "hutool_core::BufferUtil",
+        "crates/hutool-core/tests/io_wave2_parity.rs::buffer_util_copy_and_line",
         "Slice/Vec ByteBuffer analogue: copy/readUtf8/lineEnd/create without JVM NIO.",
     ),
     "FastByteBuffer": (
-        "hitool_core::FastByteBuffer",
-        "crates/hitool-core/tests/io_wave2_parity.rs::fast_byte_buffer_append",
+        "hutool_core::FastByteBuffer",
+        "crates/hutool-core/tests/io_wave2_parity.rs::fast_byte_buffer_append",
         "Growable byte buffer append/size/toArray (Vec-backed).",
     ),
     "FastByteArrayOutputStream": (
-        "hitool_core::FastByteArrayOutputStream",
-        "crates/hitool-core/tests/io_wave2_parity.rs::fast_byte_array_output_stream",
+        "hutool_core::FastByteArrayOutputStream",
+        "crates/hutool-core/tests/io_wave2_parity.rs::fast_byte_array_output_stream",
         "Write trait + FastByteBuffer backed output stream.",
     ),
     "FileReader": (
-        "hitool_core::FileReader",
-        "crates/hitool-core/tests/io_wave2_parity.rs::file_reader_writer_roundtrip",
+        "hutool_core::FileReader",
+        "crates/hutool-core/tests/io_wave2_parity.rs::file_reader_writer_roundtrip",
         "Owned path reader delegating to FileUtil/IoUtil.",
     ),
     "FileWriter": (
-        "hitool_core::FileWriter",
-        "crates/hitool-core/tests/io_wave2_parity.rs::file_reader_writer_roundtrip",
+        "hutool_core::FileWriter",
+        "crates/hutool-core/tests/io_wave2_parity.rs::file_reader_writer_roundtrip",
         "Owned path writer delegating to FileUtil/IoUtil.",
     ),
     "NullOutputStream": (
-        "hitool_core::NullOutputStream",
-        "crates/hitool-core/tests/io_wave2_parity.rs::null_output_stream_discards",
+        "hutool_core::NullOutputStream",
+        "crates/hutool-core/tests/io_wave2_parity.rs::null_output_stream_discards",
         "/dev/null Write sink.",
     ),
     "LineSeparator": (
-        "hitool_core::LineSeparator",
-        "crates/hitool-core/tests/io_wave2_parity.rs::line_separator_values",
+        "hutool_core::LineSeparator",
+        "crates/hutool-core/tests/io_wave2_parity.rs::line_separator_values",
         "MAC/LINUX/WINDOWS line ending enum.",
     ),
     "IORuntimeException": (
-        "hitool_core::IORuntimeException",
-        "crates/hitool-core/tests/io_wave2_parity.rs::io_runtime_exception_wraps",
+        "hutool_core::IORuntimeException",
+        "crates/hutool-core/tests/io_wave2_parity.rs::io_runtime_exception_wraps",
         "thiserror-style IO runtime error with optional io::Error cause.",
     ),
 }
@@ -214,7 +214,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": status,
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": evidence,
             "notes": notes,
         }

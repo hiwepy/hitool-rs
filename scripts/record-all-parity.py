@@ -9,7 +9,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 
 def main() -> None:
@@ -26,8 +26,8 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": "hitool::Hutool",
-            "test_evidence": "crates/hitool/src/lib.rs::hutool_registry_is_feature_aware_stable_and_writable",
+            "hutool_symbol": "hutool::Hutool",
+            "test_evidence": "crates/hutool/src/lib.rs::hutool_registry_is_feature_aware_stable_and_writable",
             "notes": "Cargo features replace Java classpath reflection with a deterministic, "
             "lexically ordered capability registry and injectable writer output.",
         }

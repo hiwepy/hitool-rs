@@ -1,6 +1,6 @@
 #![no_main]
 
-use hitool_core::{
+use hutool_core::{
     Base16Codec, Base32Decoder, Base32Encoder, Base58Decoder, Base58Encoder, Base62Decoder,
     Base62Encoder, base32_decode, base32_encode, base32_hex_decode, base32_hex_encode,
     base58_decode, base58_decode_checked, base58_encode, base58_encode_checked, base62_decode,

@@ -2,12 +2,12 @@
 
 <div align="center">
 
-# hitool-rs
+# hutool-rust
 
 **Rust multi-purpose utility toolkit, 1:1 aligned with Apache Dubbo Hutool 5.8.46 API and behavior**
 
-[![Crates.io](https://img.shields.io/crates/v/hitool)](https://crates.io/crates/hitool)
-[![docs.rs](https://img.shields.io/docsrs/hitool)](https://docs.rs/hitool)
+[![Crates.io](https://img.shields.io/crates/v/hutool)](https://crates.io/crates/hutool)
+[![docs.rs](https://img.shields.io/docsrs/hutool)](https://docs.rs/hutool)
 [![MSRV](https://img.shields.io/badge/MSRV-1.85-orange)](#3-rust-基线与平台支持)
 [![License](https://img.shields.io/badge/license-Apache_2.0-green)](LICENSE)
 
@@ -29,21 +29,21 @@
 > **Maturity**: Experimental — most core crates 1:1 aligned with Hutool; a few `PendingEngine` stubs await upper-layer engines
 > **Last verified**: 2026-07-21
 
-> hitool-rs at most promises 1:1 API/behavior equivalence with upstream Hutool; **no** byte-for-byte binary compatibility with the Java implementation. All implementations use pure Rust std + mainstream Rust ecosystem, no FFI, and no `unsafe` code.
+> hutool-rust at most promises 1:1 API/behavior equivalence with upstream Hutool; **no** byte-for-byte binary compatibility with the Java implementation. All implementations use pure Rust std + mainstream Rust ecosystem, no FFI, and no `unsafe` code.
 
 > **Template combination hint**: This README is an integration of the Rust project master template with four profiles (Large Toolbox Workspace, Upstream Compatibility & Migration, Document & File Format Processing, Multilingual README Layout). README sections cross-reference each other and share unified numbering.
 
 ## 1. Project Position and Status
 
-`hitool-rs` is a Rust multi-purpose utility toolkit, **1:1 aligned with Apache Dubbo Hutool 5.8.46 API and usage conventions**, providing string, collection, crypto, database, HTTP, cache, scheduling, settings, JSON, Excel/DOCX/PDF/OFD parsing and generation capabilities.
+`hutool-rust` is a Rust multi-purpose utility toolkit, **1:1 aligned with Apache Dubbo Hutool 5.8.46 API and usage conventions**, providing string, collection, crypto, database, HTTP, cache, scheduling, settings, JSON, Excel/DOCX/PDF/OFD parsing and generation capabilities.
 
 ### 1.1 What It Is
 
-`hitool-rs` is a Cargo workspace organized by Hutool module, where each `hutool-*` module corresponds to a `hitool-*` crate. **All public API parameter types, return types, and behavior are aligned with the Hutool Java version.**
+`hutool-rust` is a Cargo workspace organized by Hutool module, where each `hutool-*` module corresponds to a `hutool-*` crate. **All public API parameter types, return types, and behavior are aligned with the Hutool Java version.**
 
 | Dimension | Content |
 |---|---|
-| Root crate | `hitool` (Facade, re-exports `hitool-*` sub-crates via features) |
+| Root crate | `hutool` (Facade, re-exports `hutool-*` sub-crates via features) |
 | Current version | `0.1.0` |
 | MSRV / Edition | `1.85` / `2024` |
 | Default features | `core`, `json` |
@@ -64,8 +64,8 @@
 |---|---|---|
 | workspace builds | ✅ | `cargo check` |
 | Unit tests | ✅ 2000+ | `cargo test --tests` 2347 passed / 0 failed |
-| hitool-crypto byte-level parity | ✅ 364 tests | `crypto_byte_level_parity.rs` + `sm_byte_level_parity.rs` |
-| 1:1 facade alignment | ✅ hitool-poi removed | `crates/hitool-compat-hutool/` provides Java-style compat layer |
+| hutool-crypto byte-level parity | ✅ 364 tests | `crypto_byte_level_parity.rs` + `sm_byte_level_parity.rs` |
+| 1:1 facade alignment | ✅ hutool-poi removed | `crates/hutool-compat-hutool/` provides Java-style compat layer |
 | MSRV CI | `1.85` | `rust-version = "1.85"` |
 
 ## 2. Features and Maturity
@@ -74,26 +74,26 @@
 
 | Module | Crate | Status | Representative capabilities | Key dependencies |
 |---|:---:|---|---|---|
-| Core | `hitool-core` | ✅ Stable | StrUtil/CollUtil/DateUtil/BeanUtil | none |
-| JSON | `hitool-json` | ✅ Stable | JSONUtil/parse/toJsonStr | serde_json |
-| Crypto | `hitool-crypto` | ✅ Stable | DigestUtil/Aes/HMac/Sm2Util | RustCrypto (no BouncyCastle) |
-| DB | `hitool-db` | 🧪 Experimental | Db/Page/Condition | sqlx |
-| HTTP | `hitool-http` | 🧪 Preview | HttpUtil/HttpClient | reqwest |
-| Extra | `hitool-extra` | 🧪 Preview | ImgUtil/MailUtil/PinyinUtil | image/lettre/pinyin |
-| JWT | `hitool-jwt` | 🧪 Preview | JWT HS256/RS256 sign & verify | jsonwebtoken |
-| Cache | `hitool-cache` | 🧪 Preview | Cache interface, expiration strategy | moka |
-| Setting | `hitool-setting` | ✅ Stable | Setting/Props multi-source merge | config |
-| Cron | `hitool-cron` | ✅ Stable | CronSchedule parsing | cron |
-| System | `hitool-system` | ✅ Stable | SystemUtil/OsInfo | sysinfo |
-| AOP | `hitool-aop` | 🧪 Experimental | Proxy/interceptor | — |
-| DFA | `hitool-dfa` | ✅ Stable | DFA state machine | — |
-| Script | `hitool-script` | ✅ Stable | ScriptUtil script execution | rhai |
-| Captcha | `hitool-captcha` | 🧪 Preview | Captcha generation | — |
-| BloomFilter | `hitool-bloom-filter` | ✅ Stable | BloomFilter | bloomfilter |
-| Socket | `hitool-socket` | 🧪 Experimental | SocketUtil | — |
-| AI | `hitool-ai` | 🚧 Partial | OpenAI-compatible proxy | — |
-| Compat | `hitool-compat-hutool` | ✅ Stable | Hutool Java API compat layer | — |
-| Macros | `hitool-macros` | 🧪 Experimental | Procedural macro utilities | — |
+| Core | `hutool-core` | ✅ Stable | StrUtil/CollUtil/DateUtil/BeanUtil | none |
+| JSON | `hutool-json` | ✅ Stable | JSONUtil/parse/toJsonStr | serde_json |
+| Crypto | `hutool-crypto` | ✅ Stable | DigestUtil/Aes/HMac/Sm2Util | RustCrypto (no BouncyCastle) |
+| DB | `hutool-db` | 🧪 Experimental | Db/Page/Condition | sqlx |
+| HTTP | `hutool-http` | 🧪 Preview | HttpUtil/HttpClient | reqwest |
+| Extra | `hutool-extra` | 🧪 Preview | ImgUtil/MailUtil/PinyinUtil | image/lettre/pinyin |
+| JWT | `hutool-jwt` | 🧪 Preview | JWT HS256/RS256 sign & verify | jsonwebtoken |
+| Cache | `hutool-cache` | 🧪 Preview | Cache interface, expiration strategy | moka |
+| Setting | `hutool-setting` | ✅ Stable | Setting/Props multi-source merge | config |
+| Cron | `hutool-cron` | ✅ Stable | CronSchedule parsing | cron |
+| System | `hutool-system` | ✅ Stable | SystemUtil/OsInfo | sysinfo |
+| AOP | `hutool-aop` | 🧪 Experimental | Proxy/interceptor | — |
+| DFA | `hutool-dfa` | ✅ Stable | DFA state machine | — |
+| Script | `hutool-script` | ✅ Stable | ScriptUtil script execution | rhai |
+| Captcha | `hutool-captcha` | 🧪 Preview | Captcha generation | — |
+| BloomFilter | `hutool-bloom-filter` | ✅ Stable | BloomFilter | bloomfilter |
+| Socket | `hutool-socket` | 🧪 Experimental | SocketUtil | — |
+| AI | `hutool-ai` | 🚧 Partial | OpenAI-compatible proxy | — |
+| Compat | `hutool-compat-hutool` | ✅ Stable | Hutool Java API compat layer | — |
+| Macros | `hutool-macros` | 🧪 Experimental | Procedural macro utilities | — |
 
 ### 2.2 Status Definitions
 
@@ -107,7 +107,7 @@
 
 ### 2.3 Hutool Upstream Compatibility & Migration Matrix
 
-hitool-rs's design goal is **1:1 alignment with Hutool Java's API and usage conventions**: same facade class names, same method names, same parameter and return types. **Byte-level encrypted output** is verified through RustCrypto itself (matching Python `hashlib`/`hmac`), not depending on any Java implementation.
+hutool-rust's design goal is **1:1 alignment with Hutool Java's API and usage conventions**: same facade class names, same method names, same parameter and return types. **Byte-level encrypted output** is verified through RustCrypto itself (matching Python `hashlib`/`hmac`), not depending on any Java implementation.
 
 | Upstream capability | Rust equivalent | Compatibility level | Evidence | Differences |
 |---|---|---|---|---|
@@ -120,7 +120,7 @@ hitool-rs's design goal is **1:1 alignment with Hutool Java's API and usage conv
 
 ### 2.4 Not Ported Hutool Capabilities (Explicit Declaration)
 
-Based on the DDD4J 650-component mapping analysis, hitool-rs **explicitly does not port** the following Hutool capabilities:
+Based on the DDD4J 650-component mapping analysis, hutool-rust **explicitly does not port** the following Hutool capabilities:
 
 - **Domestic commercial SDKs**: Alipay/WeChat Pay/DingTalk/Aliyun/Tencent Cloud/JPush (no official Rust SDK)
 - **SOAP/XML enterprise stack**: Axis2/CXF/JAX-WS (Rust SOAP ecosystem is empty)
@@ -129,7 +129,7 @@ Based on the DDD4J 650-component mapping analysis, hitool-rs **explicitly does n
 - **Workflow engines**: Flowable/Apache Camel (no Rust equivalent)
 - **Big-data drivers**: Hive/HBase/Impala (ODBC only)
 
-If you need these capabilities, use dedicated Rust crates (e.g., `redis-rs`, `lapin`, `rdkafka`) instead of hitool-rs.
+If you need these capabilities, use dedicated Rust crates (e.g., `redis-rs`, `lapin`, `rdkafka`) instead of hutool-rust.
 
 ## 3. Rust Baseline & Platform Support
 
@@ -164,16 +164,16 @@ If you need these capabilities, use dedicated Rust crates (e.g., `redis-rs`, `la
 
 ```text
 [Application or downstream crate]
-        │ cargo add hitool --features "core,json,crypto,..."
+        │ cargo add hutool --features "core,json,crypto,..."
         ▼
 ┌──────────────────────────────────────────────────────────┐
-│ hitool-rs Cargo Workspace                                │
-│ hitool              Facade, re-exports sub-crates by feature │
-│ hitool-core         Types, traits, errors, public contracts │
-│ hitool-compat-hutool Java-style compat layer              │
-│ hitool-macros       Procedural macro utility set            │
-│ hitool-test-support Common test utilities                 │
-│ hitool-{aop,bloom-filter,cache,...}  Each domain capability │
+│ hutool-rust Cargo Workspace                                │
+│ hutool              Facade, re-exports sub-crates by feature │
+│ hutool-core         Types, traits, errors, public contracts │
+│ hutool-compat-hutool Java-style compat layer              │
+│ hutool-macros       Procedural macro utility set            │
+│ hutool-test-support Common test utilities                 │
+│ hutool-{aop,bloom-filter,cache,...}  Each domain capability │
 └──────────────────────────────────────────────────────────┘
         │
         ▼
@@ -184,57 +184,57 @@ If you need these capabilities, use dedicated Rust crates (e.g., `redis-rs`, `la
 
 ```mermaid
 flowchart TB
-    USER["Application"] --> FACADE["hitool facade"]
-    FACADE --> CORE["hitool-core"]
-    FACADE --> JSON["hitool-json"]
-    FACADE --> CRYPTO["hitool-crypto"]
-    FACADE --> DB["hitool-db"]
-    FACADE --> HTTP["hitool-http"]
-    FACADE --> EXTRA["hitool-extra"]
-    FACADE --> JWT["hitool-jwt"]
-    FACADE --> SETTING["hitool-setting"]
-    FACADE --> CRON["hitool-cron"]
-    FACADE --> SYSTEM["hitool-system"]
-    FACADE --> AOP["hitool-aop"]
-    FACADE --> CACHE["hitool-cache"]
-    FACADE --> CAPTCH["hitool-captcha"]
-    FACADE --> LOG["hitool-log"]
-    FACADE --> SOCKET["hitool-socket"]
-    FACADE --> SCRIPT["hitool-script"]
-    FACADE --> BLOOM["hitool-bloom-filter"]
-    FACADE --> DFA["hitool-dfa"]
-    FACADE --> AI["hitool-ai"]
-    FACADE --> COMPAT["hitool-compat-hutool"]
-    CORE --> MACROS["hitool-macros"]
-    CORE --> TEST["hitool-test-support"]
+    USER["Application"] --> FACADE["hutool facade"]
+    FACADE --> CORE["hutool-core"]
+    FACADE --> JSON["hutool-json"]
+    FACADE --> CRYPTO["hutool-crypto"]
+    FACADE --> DB["hutool-db"]
+    FACADE --> HTTP["hutool-http"]
+    FACADE --> EXTRA["hutool-extra"]
+    FACADE --> JWT["hutool-jwt"]
+    FACADE --> SETTING["hutool-setting"]
+    FACADE --> CRON["hutool-cron"]
+    FACADE --> SYSTEM["hutool-system"]
+    FACADE --> AOP["hutool-aop"]
+    FACADE --> CACHE["hutool-cache"]
+    FACADE --> CAPTCH["hutool-captcha"]
+    FACADE --> LOG["hutool-log"]
+    FACADE --> SOCKET["hutool-socket"]
+    FACADE --> SCRIPT["hutool-script"]
+    FACADE --> BLOOM["hutool-bloom-filter"]
+    FACADE --> DFA["hutool-dfa"]
+    FACADE --> AI["hutool-ai"]
+    FACADE --> COMPAT["hutool-compat-hutool"]
+    CORE --> MACROS["hutool-macros"]
+    CORE --> TEST["hutool-test-support"]
 ```
 
 ### 4.3 Crate Map (23 crates)
 
 | Crate | Path | Status | Responsibility |
 |---|---|---|---|
-| `hitool` | `crates/hitool` | ✅ | Facade, re-exports by feature |
-| `hitool-core` | `crates/hitool-core` | ✅ | Public types, traits, errors, cipher, hash, compression, JSON, HTTP, cache, etc. core |
-| `hitool-compat-hutool` | `crates/hitool-compat-hutool` | ✅ | Hutool Java-style compat layer |
-| `hitool-macros` | `crates/hitool-macros` | 🧪 | Procedural macro utility set |
-| `hitool-test-support` | `crates/hitool-test-support` | ✅ | Common test utilities |
-| `hitool-aop` | `crates/hitool-aop` | 🧪 | Proxy/interceptor |
-| `hitool-bloom-filter` | `crates/hitool-bloom-filter` | ✅ | Bloom filter |
-| `hitool-cache` | `crates/hitool-cache` | 🧪 | Cache interface |
-| `hitool-captcha` | `crates/hitool-captcha` | 🧪 | Captcha |
-| `hitool-cron` | `crates/hitool-cron` | ✅ | Cron scheduling |
-| `hitool-crypto` | `crates/hitool-crypto` | ✅ | National crypto + RustCrypto |
-| `hitool-db` | `crates/hitool-db` | 🧪 | Database |
-| `hitool-dfa` | `crates/hitool-dfa` | ✅ | DFA state machine |
-| `hitool-extra` | `crates/hitool-extra` | 🧪 | Extensions (image/mail/pinyin) |
-| `hitool-http` | `crates/hitool-http` | 🧪 | HTTP client |
-| `hitool-json` | `crates/hitool-json` | ✅ | JSON processing |
-| `hitool-jwt` | `crates/hitool-jwt` | 🧪 | JWT auth |
-| `hitool-log` | `crates/hitool-log` | 🧪 | Logging |
-| `hitool-script` | `crates/hitool-script` | ✅ | Script execution |
-| `hitool-setting` | `crates/hitool-setting` | ✅ | Settings/config |
-| `hitool-socket` | `crates/hitool-socket` | 🧪 | Socket |
-| `hitool-system` | `crates/hitool-system` | ✅ | System utilities |
+| `hutool` | `crates/hutool` | ✅ | Facade, re-exports by feature |
+| `hutool-core` | `crates/hutool-core` | ✅ | Public types, traits, errors, cipher, hash, compression, JSON, HTTP, cache, etc. core |
+| `hutool-compat-hutool` | `crates/hutool-compat-hutool` | ✅ | Hutool Java-style compat layer |
+| `hutool-macros` | `crates/hutool-macros` | 🧪 | Procedural macro utility set |
+| `hutool-test-support` | `crates/hutool-test-support` | ✅ | Common test utilities |
+| `hutool-aop` | `crates/hutool-aop` | 🧪 | Proxy/interceptor |
+| `hutool-bloom-filter` | `crates/hutool-bloom-filter` | ✅ | Bloom filter |
+| `hutool-cache` | `crates/hutool-cache` | 🧪 | Cache interface |
+| `hutool-captcha` | `crates/hutool-captcha` | 🧪 | Captcha |
+| `hutool-cron` | `crates/hutool-cron` | ✅ | Cron scheduling |
+| `hutool-crypto` | `crates/hutool-crypto` | ✅ | National crypto + RustCrypto |
+| `hutool-db` | `crates/hutool-db` | 🧪 | Database |
+| `hutool-dfa` | `crates/hutool-dfa` | ✅ | DFA state machine |
+| `hutool-extra` | `crates/hutool-extra` | 🧪 | Extensions (image/mail/pinyin) |
+| `hutool-http` | `crates/hutool-http` | 🧪 | HTTP client |
+| `hutool-json` | `crates/hutool-json` | ✅ | JSON processing |
+| `hutool-jwt` | `crates/hutool-jwt` | 🧪 | JWT auth |
+| `hutool-log` | `crates/hutool-log` | 🧪 | Logging |
+| `hutool-script` | `crates/hutool-script` | ✅ | Script execution |
+| `hutool-setting` | `crates/hutool-setting` | ✅ | Settings/config |
+| `hutool-socket` | `crates/hutool-socket` | 🧪 | Socket |
+| `hutool-system` | `crates/hutool-system` | ✅ | System utilities |
 
 ### 4.4 Dependency and Visibility Rules
 
@@ -248,7 +248,7 @@ flowchart TB
 
 ### 5.1 1:1 Alignment with Hutool
 
-hitool-rs's core principle is **1:1 alignment with the Hutool Java version's API, behavior, parameter types**:
+hutool-rust's core principle is **1:1 alignment with the Hutool Java version's API, behavior, parameter types**:
 
 | Dimension | Strategy |
 |---|---|
@@ -293,8 +293,8 @@ hitool-rs's core principle is **1:1 alignment with the Hutool Java version's API
 
 Only self-implemented parts:
 - Hutool convenience facade (Rust naming: `StrUtil::is_empty`)
-- `hitool-compat-hutool` Java-style compat layer
-- `hitool-macros` utility macros
+- `hutool-compat-hutool` Java-style compat layer
+- `hutool-macros` utility macros
 
 ## 6. Quick Start
 
@@ -302,18 +302,18 @@ Only self-implemented parts:
 
 ```bash
 # Add core features
-cargo add hitool
+cargo add hutool
 
 # Enable features as needed
-cargo add hitool --features "json,crypto,http"
+cargo add hutool --features "json,crypto,http"
 ```
 
 ### 6.2 Simple Usage
 
 ```rust
-use hitool::core::StrUtil;
-use hitool::crypto::md5_hex;
-use hitool::json::parse;
+use hutool::core::StrUtil;
+use hutool::crypto::md5_hex;
+use hutool::json::parse;
 
 fn main() {
     // String utilities
@@ -334,56 +334,56 @@ fn main() {
 
 ```toml
 [dependencies]
-hitool-core = "0.1"
-hitool-crypto = "0.1"
-hitool-json = "0.1"
-hitool-db = { version = "0.1", features = ["postgres"] }
+hutool-core = "0.1"
+hutool-crypto = "0.1"
+hutool-json = "0.1"
+hutool-db = { version = "0.1", features = ["postgres"] }
 ```
 
 ```rust
-use hitool_core::StrUtil;
-use hitool_crypto::sha256_hex;
-use hitool_json::{parse, to_string_pretty};
+use hutool_core::StrUtil;
+use hutool_crypto::sha256_hex;
+use hutool_json::{parse, to_string_pretty};
 ```
 
 ## 7. Cargo Features
 
-Features of the `hitool` Facade crate:
+Features of the `hutool` Facade crate:
 
 | Feature | Enables crate | Purpose |
 |---|---|---|
-| `core` | hitool-core | Basic utilities (default) |
-| `json` | hitool-json | JSON processing (default) |
-| `aop` | hitool-aop | Proxy/interceptor |
-| `bloom-filter` | hitool-bloom-filter | Bloom filter |
-| `cache` | hitool-cache | Caching |
-| `captcha` | hitool-captcha | Captcha |
-| `cron` | hitool-cron | Cron scheduling |
-| `crypto` | hitool-crypto | Crypto/hash/national crypto |
-| `db` | hitool-db | Database |
-| `dfa` | hitool-dfa | State machine |
-| `extra` | hitool-extra | Extensions (image/mail/pinyin) |
-| `http` | hitool-http | HTTP client |
-| `hutool-compat` | hitool-compat-hutool | Java-style compat layer |
-| `jwt` | hitool-jwt | JWT |
-| `log` | hitool-log | Logging |
-| `script` | hitool-script | Script execution |
-| `setting` | hitool-setting | Settings/config |
-| `socket` | hitool-socket | Socket |
-| `system` | hitool-system | System utilities |
-| `ai` | hitool-ai | AI integration |
+| `core` | hutool-core | Basic utilities (default) |
+| `json` | hutool-json | JSON processing (default) |
+| `aop` | hutool-aop | Proxy/interceptor |
+| `bloom-filter` | hutool-bloom-filter | Bloom filter |
+| `cache` | hutool-cache | Caching |
+| `captcha` | hutool-captcha | Captcha |
+| `cron` | hutool-cron | Cron scheduling |
+| `crypto` | hutool-crypto | Crypto/hash/national crypto |
+| `db` | hutool-db | Database |
+| `dfa` | hutool-dfa | State machine |
+| `extra` | hutool-extra | Extensions (image/mail/pinyin) |
+| `http` | hutool-http | HTTP client |
+| `hutool-compat` | hutool-compat-hutool | Java-style compat layer |
+| `jwt` | hutool-jwt | JWT |
+| `log` | hutool-log | Logging |
+| `script` | hutool-script | Script execution |
+| `setting` | hutool-setting | Settings/config |
+| `socket` | hutool-socket | Socket |
+| `system` | hutool-system | System utilities |
+| `ai` | hutool-ai | AI integration |
 
-## 8. hitool-compat-hutool Compat Layer
+## 8. hutool-compat-hutool Compat Layer
 
-`hitool-compat-hutool` is a special crate in hitool-rs that provides a Rust facade 1:1 aligned with the Hutool Java API:
+`hutool-compat-hutool` is a special crate in hutool-rust that provides a Rust facade 1:1 aligned with the Hutool Java API:
 
 ```rust
-use hitool_compat_hutool::core::StrUtil;
+use hutool_compat_hutool::core::StrUtil;
 
 let is_empty = StrUtil::isEmpty(""); // 1:1 aligned with Hutool Java API
 ```
 
-This crate's naming style (`isEmpty`/`md5Hex`) is **not** Rust idiomatic; it's only for Java code migration scenarios. **New projects should use `hitool_core::StrUtil` (snake_case).**
+This crate's naming style (`isEmpty`/`md5Hex`) is **not** Rust idiomatic; it's only for Java code migration scenarios. **New projects should use `hutool_core::StrUtil` (snake_case).**
 
 ## 9. Crypto Algorithm Detailed Support
 
@@ -408,19 +408,19 @@ See [docs/architecture.md §3 Crypto & National Crypto](docs/architecture.md).
 
 > This section is experimental data. Final benchmarks please run `cargo bench`.
 
-hitool-rs crypto performance (1000 SHA-256 short inputs):
+hutool-rust crypto performance (1000 SHA-256 short inputs):
 
 | Implementation | Average latency |
 |---|---|
-| RustCrypto `sha2` (hitool-rs uses) | ~12 µs |
+| RustCrypto `sha2` (hutool-rust uses) | ~12 µs |
 | `openssl` (C bindings) | ~8 µs |
 | BouncyCastle (JVM JIT) | ~25 µs |
 
-Why hitool-rs chooses RustCrypto over openssl: pure Rust, zero FFI, `#![forbid(unsafe_code)]`.
+Why hutool-rust chooses RustCrypto over openssl: pure Rust, zero FFI, `#![forbid(unsafe_code)]`.
 
 ## 11. Security Notes
 
-- hitool-rs is **not** a cryptography library; it's a **wrapper** over cryptography libraries. All underlying algorithms are implemented by audited libraries like RustCrypto.
+- hutool-rust is **not** a cryptography library; it's a **wrapper** over cryptography libraries. All underlying algorithms are implemented by audited libraries like RustCrypto.
 - Encryption keys use the `secrecy` crate wrapper, Debug output is auto-redacted
 - Sensitive data uses the `zeroize` crate to clear memory on drop
 - Does not implement its own random number generator; uses `getrandom` exclusively
@@ -428,7 +428,7 @@ Why hitool-rs chooses RustCrypto over openssl: pure Rust, zero FFI, `#![forbid(u
 
 ## 12. Roadmap
 
-- **V0.2**: Fill in hitool-db (missing 75 files), hitool-extra (missing 170 files)
+- **V0.2**: Fill in hutool-db (missing 75 files), hutool-extra (missing 170 files)
 - **V0.3**: Implement SM2/SM3/SM4 in-house (without depending on RustCrypto to reduce compile time)
 - **V0.4**: Publish to crates.io, add complete rustdoc
 - **V1.0**: All 23 crates stable, 1:1 aligned with Hutool
@@ -442,9 +442,9 @@ cargo build --all-features
 # Test
 cargo test --all-features
 
-# Byte-level parity (hitool-crypto vs standard vectors)
-cargo test -p hitool-crypto --test crypto_byte_level_parity
-cargo test -p hitool-crypto --test sm_byte_level_parity
+# Byte-level parity (hutool-crypto vs standard vectors)
+cargo test -p hutool-crypto --test crypto_byte_level_parity
+cargo test -p hutool-crypto --test sm_byte_level_parity
 
 # Code quality
 cargo fmt --check
@@ -467,7 +467,7 @@ CI gates:
 
 ## 14. Known Issues
 
-- `hitool-poi` has been removed as required; document format handling migrated to submodules under `hitool-extra`
+- `hutool-poi` has been removed as required; document format handling migrated to submodules under `hutool-extra`
 - Some Hutool APIs are not ported due to Rust semantic differences (e.g. `RuntimeException` → `Result<T, E>`)
 - Some stub functions use `PendingEngine` error placeholders, awaiting upper-layer engine completion
 
@@ -491,7 +491,7 @@ CI gates:
 
 ## 16. Cross-Version Compatibility
 
-- hitool-rs 0.1.x is 1:1 aligned with Hutool 5.8.46
+- hutool-rust 0.1.x is 1:1 aligned with Hutool 5.8.46
 - Not compatible with early Hutool versions
 - Not compatible with Hutool 6.x (API may change)
 
@@ -504,8 +504,8 @@ Release process (after V1.0 stable):
 ```bash
 cargo publish --dry-run
 cargo login
-cargo publish -p hitool-core
-cargo publish -p hitool-json
+cargo publish -p hutool-core
+cargo publish -p hutool-json
 # ... publish crate by crate
 ```
 
@@ -538,8 +538,8 @@ Contributed code is under Apache-2.0, consistent with upstream Hutool.
 
 <div align="center">
 
-**hitool-rs** — Rust multi-purpose utility toolkit · 1:1 aligned with [Apache Dubbo Hutool 5.8.46](https://github.com/chinabugotech/hutool)
+**hutool-rust** — Rust multi-purpose utility toolkit · 1:1 aligned with [Apache Dubbo Hutool 5.8.46](https://github.com/chinabugotech/hutool)
 
-[🏠 Home](#readme-top) · [📖 Documentation](docs/) · [🐛 Bug Reports](https://github.com/hiwepy/hitool-rs/issues) · [💬 Discussions](https://github.com/hiwepy/hitool-rs/discussions)
+[🏠 Home](#readme-top) · [📖 Documentation](docs/) · [🐛 Bug Reports](https://github.com/hiwepy/hutool-rust/issues) · [💬 Discussions](https://github.com/hiwepy/hutool-rust/discussions)
 
 </div>

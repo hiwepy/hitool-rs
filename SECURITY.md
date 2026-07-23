@@ -5,7 +5,7 @@ Please report vulnerabilities privately to `hiwepy@gmail.com`.
 Supported pre-1.0 code is the latest release line only. Security fixes may
 include API changes when preserving the old behavior would remain unsafe.
 
-HiTool does not enable legacy cryptography by default. Security-sensitive APIs
+Hutool-Rust does not enable legacy cryptography by default. Security-sensitive APIs
 must expose explicit algorithms, limits, and validation policy. Known vulnerable
 dependencies are not accepted into default features.
 

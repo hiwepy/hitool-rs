@@ -14,7 +14,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 
 def should_demote(inv: dict[str, str]) -> tuple[bool, str]:
@@ -81,7 +81,7 @@ def main() -> None:
         if not ok:
             continue
         row["status"] = "planned"
-        row["hitool_symbol"] = ""
+        row["hutool_symbol"] = ""
         row["test_evidence"] = ""
         row["notes"] = note
         demoted += 1

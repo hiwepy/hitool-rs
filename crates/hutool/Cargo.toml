@@ -1,0 +1,117 @@
+[package]
+name = "hutool"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+description = "Feature-gated facade for the HiTool Rust utility workspace."
+
+[[example]]
+name = "core_json"
+required-features = ["core", "json"]
+
+[[example]]
+name = "json_object"
+required-features = ["json"]
+
+[[example]]
+name = "http_client"
+required-features = ["http"]
+
+[[example]]
+name = "crypto_hash"
+required-features = ["crypto"]
+
+[[example]]
+name = "cache_demo"
+required-features = ["cache"]
+
+[lints]
+workspace = true
+
+[features]
+default = ["core", "json"]
+core = ["dep:hutool-core"]
+serialization = ["core", "hutool-core/serialization"]
+serialization-musli = ["serialization", "hutool-core/serialization-musli"]
+musli-wire = ["serialization-musli", "hutool-core/musli-wire"]
+musli-storage = ["serialization-musli", "hutool-core/musli-storage"]
+musli-packed = ["serialization-musli", "hutool-core/musli-packed"]
+musli-descriptive = ["serialization-musli", "hutool-core/musli-descriptive"]
+aop = ["core", "dep:hutool-aop"]
+bloom-filter = ["core", "dep:hutool-bloom-filter"]
+cache = ["core", "dep:hutool-cache"]
+cron = ["log", "dep:hutool-cron"]
+crypto = ["dep:hutool-crypto"]
+crypto-legacy = ["crypto", "hutool-crypto/legacy"]
+db = ["json", "dep:hutool-db"]
+db-postgres = ["db", "hutool-db/postgres"]
+db-mysql = ["db", "hutool-db/mysql"]
+db-sqlite = ["db", "hutool-db/sqlite"]
+dfa = ["core", "dep:hutool-dfa"]
+extra = ["core", "dep:hutool-extra"]
+extra-image = ["extra", "hutool-extra/image"]
+extra-mail = ["extra", "hutool-extra/mail"]
+http = ["json", "dep:hutool-http"]
+http-blocking = ["http", "hutool-http/blocking"]
+log = ["dep:hutool-log"]
+script = ["core", "dep:hutool-script"]
+setting = ["json", "dep:hutool-setting"]
+system = ["core", "dep:hutool-system"]
+json = ["core", "dep:hutool-json"]
+captcha-audio = ["hutool-captcha/audio"]
+captcha-raster = ["hutool-captcha/raster"]
+socket = ["log", "dep:hutool-socket"]
+jwt = ["json", "crypto", "dep:hutool-jwt"]
+ai = ["http", "json", "dep:hutool-ai"]
+hutool-compat = ["core", "json", "dep:hutool-compat-hutool"]
+full = [
+    "core",
+    "aop",
+    "bloom-filter",
+    "cache",
+    "cron",
+    "crypto",
+    "db",
+    "dfa",
+    "extra",
+    "extra-image",
+    "extra-mail",
+    "http",
+    "log",
+    "script",
+    "setting",
+    "system",
+    "json",
+    "captcha-audio",
+    "captcha-raster",
+    "socket",
+    "jwt",
+    "ai",
+]
+
+[dependencies]
+hutool-ai = { workspace = true, optional = true }
+hutool-aop = { workspace = true, optional = true }
+hutool-bloom-filter = { workspace = true, optional = true }
+hutool-cache = { workspace = true, optional = true }
+hutool-captcha = { workspace = true, optional = true }
+hutool-compat-hutool = { workspace = true, optional = true }
+hutool-core = { workspace = true, optional = true }
+hutool-cron = { workspace = true, optional = true }
+hutool-crypto = { workspace = true, optional = true }
+hutool-db = { workspace = true, optional = true }
+hutool-dfa = { workspace = true, optional = true }
+hutool-extra = { workspace = true, optional = true }
+hutool-http = { workspace = true, optional = true }
+hutool-json = { workspace = true, optional = true }
+hutool-jwt = { workspace = true, optional = true }
+hutool-log = { workspace = true, optional = true }
+hutool-script = { workspace = true, optional = true }
+hutool-setting = { workspace = true, optional = true }
+hutool-socket = { workspace = true, optional = true }
+hutool-system = { workspace = true, optional = true }

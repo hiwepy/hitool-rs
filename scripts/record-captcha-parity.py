@@ -9,7 +9,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 
 def mapping(qualified_name: str) -> tuple[str, str] | None:
@@ -20,13 +20,13 @@ def mapping(qualified_name: str) -> tuple[str, str] | None:
     family = qualified_name.removeprefix(prefix).split("::", 1)[0]
     if family in {"AbstractGenerator", "CodeGenerator", "MathGenerator", "RandomGenerator"}:
         return (
-            f"hitool_captcha::{family}",
-            "crates/hitool-captcha/src/compat.rs::generators_cover_validation_and_math",
+            f"hutool_captcha::{family}",
+            "crates/hutool-captcha/src/compat.rs::generators_cover_validation_and_math",
         )
     if family in {"GifCaptcha"}:
         return (
-            f"hitool_captcha::{family}",
-            "crates/hitool-captcha/src/compat.rs::gif_and_constructor_variants_are_usable",
+            f"hutool_captcha::{family}",
+            "crates/hutool-captcha/src/compat.rs::gif_and_constructor_variants_are_usable",
         )
     if family in {
         "AbstractCaptcha",
@@ -37,8 +37,8 @@ def mapping(qualified_name: str) -> tuple[str, str] | None:
         "ShearCaptcha",
     }:
         return (
-            f"hitool_captcha::{family}",
-            "crates/hitool-captcha/src/compat.rs::raster_variants_generate_real_media_and_common_facade_works",
+            f"hutool_captcha::{family}",
+            "crates/hutool-captcha/src/compat.rs::raster_variants_generate_real_media_and_common_facade_works",
         )
     return None
 
@@ -61,7 +61,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": test,
             "notes": (
                 "Rust traits and explicit Results preserve Hutool generator, verification, "

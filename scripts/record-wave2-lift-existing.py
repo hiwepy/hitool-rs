@@ -2,7 +2,7 @@
 """Wave-2: lift planned → idiomatic for core packages with real Rust modules.
 
 Only flips rows that are currently `planned`, tagged portable (or untagged),
-and whose Java type maps to an existing hitool-core source file that is not a
+and whose Java type maps to an existing hutool-core source file that is not a
 pure pending stub.
 
 Merge-only: never deletes rows; never downgrades idiomatic/native.
@@ -26,10 +26,10 @@ classify_row = _mod.classify_row
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
-CORE_SRC = Path("crates/hitool-core/src")
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
+CORE_SRC = Path("crates/hutool-core/src")
 
-# Java package → rust directory under hitool-core/src
+# Java package → rust directory under hutool-core/src
 PKG_DIRS = {
     "exceptions": "exceptions",
     "math": "math",
@@ -151,11 +151,11 @@ def main() -> None:
         if not is_non_stub(path):
             skipped_stub += 1
             continue
-        symbol = f"hitool_core::{PKG_DIRS.get(pkg, pkg)}::{type_name}"
+        symbol = f"hutool_core::{PKG_DIRS.get(pkg, pkg)}::{type_name}"
         if pkg in {"util", "io"} and path.parent == CORE_SRC:
-            symbol = f"hitool_core::{type_name}"
+            symbol = f"hutool_core::{type_name}"
         row["status"] = "idiomatic"
-        row["hitool_symbol"] = symbol
+        row["hutool_symbol"] = symbol
         row["test_evidence"] = f"wave2_lift:{path.as_posix()}"
         row["notes"] = f"wave2 lift from existing non-stub module {path.as_posix()}"
         lifted += 1

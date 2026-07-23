@@ -13,7 +13,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 BEAN_UTIL = "cn.hutool.core.bean::BeanUtil"
 
@@ -78,8 +78,8 @@ def main() -> None:
     selected = 0
     idiomatic_n = 0
     deferred_n = 0
-    symbol = "hitool_core::bean::BeanUtil"
-    evidence = "crates/hitool-core/src/bean/bean_util.rs::bean_util_serde_map_copy_and_field_name"
+    symbol = "hutool_core::bean::BeanUtil"
+    evidence = "crates/hutool-core/src/bean/bean_util.rs::bean_util_serde_map_copy_and_field_name"
     serde_notes = (
         "Serde Serialize/DeserializeOwned facades cover beanToMap/mapToBean/toBean/"
         "copyProperties/copyToList without JavaBeans Introspector."
@@ -96,7 +96,7 @@ def main() -> None:
                 indexed[row["api_id"]] = {
                     "api_id": row["api_id"],
                     "status": "planned",
-                    "hitool_symbol": "hitool_core::bean",
+                    "hutool_symbol": "hutool_core::bean",
                     "test_evidence": "",
                     "notes": (
                         f"Planned: {name} depends on JavaBeans Introspector / PropertyEditor / "
@@ -113,7 +113,7 @@ def main() -> None:
             indexed[row["api_id"]] = {
                 "api_id": row["api_id"],
                 "status": status,
-                "hitool_symbol": symbol,
+                "hutool_symbol": symbol,
                 "test_evidence": "",
                 "notes": (
                     f"{status}: BeanUtil.{name} requires Java reflection / Introspector; "
@@ -125,7 +125,7 @@ def main() -> None:
             indexed[row["api_id"]] = {
                 "api_id": row["api_id"],
                 "status": "idiomatic",
-                "hitool_symbol": symbol,
+                "hutool_symbol": symbol,
                 "test_evidence": evidence,
                 "notes": serde_notes,
             }
@@ -134,7 +134,7 @@ def main() -> None:
             indexed[row["api_id"]] = {
                 "api_id": row["api_id"],
                 "status": "planned",
-                "hitool_symbol": symbol,
+                "hutool_symbol": symbol,
                 "test_evidence": "",
                 "notes": f"Planned: BeanUtil.{name} not yet mapped to a Serde/From facade.",
             }

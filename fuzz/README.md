@@ -1,4 +1,4 @@
-# HiTool fuzz targets
+# Hutool-Rust fuzz targets
 
 Install `cargo-fuzz`, then run a target from the repository root:
 

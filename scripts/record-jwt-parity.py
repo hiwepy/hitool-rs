@@ -9,8 +9,8 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
-PREFIX = "crates/hitool-jwt/src/compat.rs::"
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
+PREFIX = "crates/hutool-jwt/src/compat.rs::"
 
 
 def mapping(qualified_name: str) -> tuple[str, str, str] | None:
@@ -51,7 +51,7 @@ def mapping(qualified_name: str) -> tuple[str, str, str] | None:
         return None
     else:
         signer_family = tail.split("::", 2)[1]
-        symbol = f"hitool_jwt::{signer_family}"
+        symbol = f"hutool_jwt::{signer_family}"
         legacy = any(
             marker in tail
             for marker in (
@@ -85,7 +85,7 @@ def mapping(qualified_name: str) -> tuple[str, str, str] | None:
         )
         return symbol, PREFIX + test, note
 
-    return f"hitool_jwt::{family}", PREFIX + test, note
+    return f"hutool_jwt::{family}", PREFIX + test, note
 
 
 def main() -> None:
@@ -106,7 +106,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": test,
             "notes": notes,
         }

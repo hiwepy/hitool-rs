@@ -10,18 +10,18 @@ from pathlib import Path
 ROOT = "cn.hutool.core.stream::"
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 FAMILIES = {
     "CollectorUtil": (
-        "hitool_core::CollectorUtil",
+        "hutool_core::CollectorUtil",
         "collector_util_joins_groups_maps_and_reduces",
     ),
     "SimpleCollector": (
-        "hitool_core::SimpleCollector",
+        "hutool_core::SimpleCollector",
         "simple_collector_exposes_and_executes_every_stage",
     ),
     "StreamUtil": (
-        "hitool_core::StreamUtil",
+        "hutool_core::StreamUtil",
         "stream_util_builds_reads_and_joins_iterators",
     ),
 }
@@ -50,8 +50,8 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
-            "test_evidence": f"crates/hitool-core/src/stream.rs::{test}",
+            "hutool_symbol": symbol,
+            "test_evidence": f"crates/hutool-core/src/stream.rs::{test}",
             "notes": (
                 "Java Stream and Collector behavior maps to lazy Rust iterators, "
                 "explicit collector stages, stable grouping, joining, and bounded text loading."

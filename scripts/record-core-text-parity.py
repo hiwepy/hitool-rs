@@ -3,7 +3,7 @@
 
 Merges into parity/decisions.csv without wiping other modules.
 Only updates api_ids under `cn.hutool.core.text`.
-Marks APIs as idiomatic when hitool-core text facades cover the Hutool surface;
+Marks APIs as idiomatic when hutool-core text facades cover the Hutool surface;
 Java-only reflection / Closeable / Iterator / Bean engines stay planned.
 """
 
@@ -14,7 +14,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 TEXT_PREFIX = "cn.hutool.core.text"
 
@@ -79,16 +79,16 @@ def signature(api_id: str) -> str:
 
 def symbol_for(cls: str, pkg: str) -> str:
     if ".csv" in pkg:
-        return f"hitool_core::text::csv::{snake(cls)}"
+        return f"hutool_core::text::csv::{snake(cls)}"
     if ".finder" in pkg:
-        return f"hitool_core::text::finder::{snake(cls)}"
+        return f"hutool_core::text::finder::{snake(cls)}"
     if ".replacer" in pkg:
-        return f"hitool_core::text::replacer::{snake(cls)}"
+        return f"hutool_core::text::replacer::{snake(cls)}"
     if ".escape" in pkg:
-        return f"hitool_core::text::escape::{snake(cls)}"
+        return f"hutool_core::text::escape::{snake(cls)}"
     if ".split" in pkg or cls == "SplitIter":
-        return "hitool_core::text::split::split_iter"
-    return f"hitool_core::text::{snake(cls)}"
+        return "hutool_core::text::split::split_iter"
+    return f"hutool_core::text::{snake(cls)}"
 
 
 def snake(name: str) -> str:
@@ -102,8 +102,8 @@ def snake(name: str) -> str:
 
 def evidence_for(cls: str) -> str:
     if cls == "CharSequenceUtil":
-        return "crates/hitool-core/tests/char_sequence_util_parity.rs"
-    return "crates/hitool-core/tests/text_parity.rs"
+        return "crates/hutool-core/tests/char_sequence_util_parity.rs"
+    return "crates/hutool-core/tests/text_parity.rs"
 
 
 def notes_for(cls: str) -> str:
@@ -177,7 +177,7 @@ def main() -> None:
             indexed[api_id] = {
                 "api_id": api_id,
                 "status": status,
-                "hitool_symbol": symbol,
+                "hutool_symbol": symbol,
                 "test_evidence": evidence,
                 "notes": notes,
             }
@@ -186,7 +186,7 @@ def main() -> None:
             indexed[api_id] = {
                 "api_id": api_id,
                 "status": status,
-                "hitool_symbol": symbol,
+                "hutool_symbol": symbol,
                 "test_evidence": evidence,
                 "notes": notes,
             }

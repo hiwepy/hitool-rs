@@ -8,90 +8,90 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 HTML_UTIL = {
     "HtmlUtil": (
-        "hitool_http::html::HtmlUtil",
-        "crates/hitool-http/tests/html_util_parity.rs::clean_html_tag_test",
+        "hutool_http::html::HtmlUtil",
+        "crates/hutool-http/tests/html_util_parity.rs::clean_html_tag_test",
         "Stateless HTML helpers ported from Hutool HtmlUtil.",
     ),
     "escape": (
-        "hitool_http::html::HtmlUtil::escape",
-        "crates/hitool-http/tests/html_util_parity.rs::clean_html_tag_test",
+        "hutool_http::html::HtmlUtil::escape",
+        "crates/hutool-http/tests/html_util_parity.rs::clean_html_tag_test",
         "Escapes HTML special characters including NBSP.",
     ),
     "unescape": (
-        "hitool_http::html::HtmlUtil::unescape",
-        "crates/hitool-http/tests/html_util_parity.rs::clean_html_tag_test",
+        "hutool_http::html::HtmlUtil::unescape",
+        "crates/hutool-http/tests/html_util_parity.rs::clean_html_tag_test",
         "Restores common HTML4 entities.",
     ),
     "cleanHtmlTag": (
-        "hitool_http::html::HtmlUtil::clean_html_tag",
-        "crates/hitool-http/tests/html_util_parity.rs::clean_html_tag_test",
+        "hutool_http::html::HtmlUtil::clean_html_tag",
+        "crates/hutool-http/tests/html_util_parity.rs::clean_html_tag_test",
         "Strips tags while keeping inner text.",
     ),
     "cleanEmptyTag": (
-        "hitool_http::html::HtmlUtil::clean_empty_tag",
-        "crates/hitool-http/tests/html_util_parity.rs::clean_empty_tag_test",
+        "hutool_http::html::HtmlUtil::clean_empty_tag",
+        "crates/hutool-http/tests/html_util_parity.rs::clean_empty_tag_test",
         "Removes empty paired tags.",
     ),
     "removeHtmlTag": (
-        "hitool_http::html::HtmlUtil::remove_html_tag",
-        "crates/hitool-http/tests/html_util_parity.rs::remove_html_tag_test",
+        "hutool_http::html::HtmlUtil::remove_html_tag",
+        "crates/hutool-http/tests/html_util_parity.rs::remove_html_tag_test",
         "Named-tag removal with optional content retention overload.",
     ),
     "unwrapHtmlTag": (
-        "hitool_http::html::HtmlUtil::unwrap_html_tag",
-        "crates/hitool-http/tests/html_util_parity.rs::unwrap_html_tag_test",
+        "hutool_http::html::HtmlUtil::unwrap_html_tag",
+        "crates/hutool-http/tests/html_util_parity.rs::unwrap_html_tag_test",
         "Removes tags while keeping inner content.",
     ),
     "removeHtmlAttr": (
-        "hitool_http::html::HtmlUtil::remove_html_attr",
-        "crates/hitool-http/tests/html_util_parity.rs::remove_html_attr_test",
+        "hutool_http::html::HtmlUtil::remove_html_attr",
+        "crates/hutool-http/tests/html_util_parity.rs::remove_html_attr_test",
         "Attribute removal including issue I8YV0K trailing-space cleanup.",
     ),
     "removeAllHtmlAttr": (
-        "hitool_http::html::HtmlUtil::remove_all_html_attr",
-        "crates/hitool-http/tests/html_util_parity.rs::remove_all_html_attr_test",
+        "hutool_http::html::HtmlUtil::remove_all_html_attr",
+        "crates/hutool-http/tests/html_util_parity.rs::remove_all_html_attr_test",
         "Clears all attributes from named tags.",
     ),
     "filter": (
-        "hitool_http::html::HtmlUtil::filter",
-        "crates/hitool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
+        "hutool_http::html::HtmlUtil::filter",
+        "crates/hutool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
         "Delegates to HTMLFilter default whitelist.",
     ),
 }
 
 HTML_FILTER = {
     "HTMLFilter": (
-        "hitool_http::html::HtmlFilter",
-        "crates/hitool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
+        "hutool_http::html::HtmlFilter",
+        "crates/hutool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
         "XSS HTML whitelist filter ported from Hutool HTMLFilter.",
     ),
     "chr": (
-        "hitool_http::html::HtmlFilter::chr",
-        "crates/hitool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
+        "hutool_http::html::HtmlFilter::chr",
+        "crates/hutool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
         "Decimal code point to character.",
     ),
     "htmlSpecialChars": (
-        "hitool_http::html::HtmlFilter::html_special_chars",
-        "crates/hitool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
+        "hutool_http::html::HtmlFilter::html_special_chars",
+        "crates/hutool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
         "Escapes &, quotes, and angle brackets.",
     ),
     "filter": (
-        "hitool_http::html::HtmlFilter::filter",
-        "crates/hitool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
+        "hutool_http::html::HtmlFilter::filter",
+        "crates/hutool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
         "Whitelist filter pipeline.",
     ),
     "isAlwaysMakeTags": (
-        "hitool_http::html::HtmlFilter::is_always_make_tags",
-        "crates/hitool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
+        "hutool_http::html::HtmlFilter::is_always_make_tags",
+        "crates/hutool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
         "Reports alwaysMakeTags configuration.",
     ),
     "isStripComments": (
-        "hitool_http::html::HtmlFilter::is_strip_comments",
-        "crates/hitool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
+        "hutool_http::html::HtmlFilter::is_strip_comments",
+        "crates/hutool-http/tests/html_util_parity.rs::html_filter_issue3433_test",
         "Reports stripComment configuration.",
     ),
 }
@@ -134,7 +134,7 @@ def record_type(indexed: dict, inventory: list, prefix: str, type_name: str, tab
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": evidence,
             "notes": notes,
         }

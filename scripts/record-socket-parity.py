@@ -9,7 +9,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 
 def mapping(qualified_name: str) -> tuple[str, str] | None:
@@ -25,8 +25,8 @@ def mapping(qualified_name: str) -> tuple[str, str] | None:
 
     if family in {"SocketConfig", "SocketRuntimeException"}:
         return (
-            f"hitool_socket::{family}",
-            "crates/hitool-socket/src/compat.rs::config_errors_operations_and_formatting_are_explicit",
+            f"hutool_socket::{family}",
+            "crates/hutool-socket/src/compat.rs::config_errors_operations_and_formatting_are_explicit",
         )
     if family == "ChannelUtil":
         test = (
@@ -34,11 +34,11 @@ def mapping(qualified_name: str) -> tuple[str, str] | None:
             if "createFixedGroup" in tail or "::" not in tail
             else "session_limits_timeouts_and_close_aliases_are_bounded"
         )
-        return (f"hitool_socket::{family}", f"crates/hitool-socket/src/compat.rs::{test}")
+        return (f"hutool_socket::{family}", f"crates/hutool-socket/src/compat.rs::{test}")
     if family == "SocketUtil":
         return (
-            f"hitool_socket::{family}",
-            "crates/hitool-socket/src/compat.rs::aio_server_client_session_and_protocol_use_real_loopback_io",
+            f"hutool_socket::{family}",
+            "crates/hutool-socket/src/compat.rs::aio_server_client_session_and_protocol_use_real_loopback_io",
         )
     if family == "aio":
         nested = tail.split("::", 2)[1]
@@ -51,8 +51,8 @@ def mapping(qualified_name: str) -> tuple[str, str] | None:
         else:
             test = "aio_client_read_dispatches_server_bytes"
         return (
-            f"hitool_socket::aio::{nested}",
-            f"crates/hitool-socket/src/compat.rs::{test}",
+            f"hutool_socket::aio::{nested}",
+            f"crates/hutool-socket/src/compat.rs::{test}",
         )
     if family == "nio":
         nested = tail.split("::", 2)[1]
@@ -62,14 +62,14 @@ def mapping(qualified_name: str) -> tuple[str, str] | None:
             else "completion_handlers_and_nio_facades_delegate_to_tokio"
         )
         return (
-            f"hitool_socket::nio::{nested}",
-            f"crates/hitool-socket/src/compat.rs::{test}",
+            f"hutool_socket::nio::{nested}",
+            f"crates/hutool-socket/src/compat.rs::{test}",
         )
     if family == "protocol":
         nested = tail.split("::", 2)[1]
         return (
-            f"hitool_socket::protocol::{nested}",
-            "crates/hitool-socket/src/compat.rs::aio_server_client_session_and_protocol_use_real_loopback_io",
+            f"hutool_socket::protocol::{nested}",
+            "crates/hutool-socket/src/compat.rs::aio_server_client_session_and_protocol_use_real_loopback_io",
         )
     return None
 
@@ -92,7 +92,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": test,
             "notes": (
                 "Tokio-backed bounded TCP sessions preserve Hutool Socket configuration, "

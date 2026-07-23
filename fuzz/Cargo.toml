@@ -1,5 +1,5 @@
 [package]
-name = "hitool-fuzz"
+name = "hutool-fuzz"
 version = "0.0.0"
 publish = false
 edition = "2024"
@@ -9,11 +9,11 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-hitool-core = { path = "../crates/hitool-core" }
-hitool-cron = { path = "../crates/hitool-cron" }
-hitool-dfa = { path = "../crates/hitool-dfa" }
-hitool-json = { path = "../crates/hitool-json" }
-hitool-jwt = { path = "../crates/hitool-jwt" }
+hutool-core = { path = "../crates/hutool-core" }
+hutool-cron = { path = "../crates/hutool-cron" }
+hutool-dfa = { path = "../crates/hutool-dfa" }
+hutool-json = { path = "../crates/hutool-json" }
+hutool-jwt = { path = "../crates/hutool-jwt" }
 # easyexcel-rs = { path = "../easyexcel-rs" } # removed: engine crates are independent projects
 serde_json = "1"
 url = "2"

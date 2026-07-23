@@ -10,55 +10,55 @@ from pathlib import Path
 ROOT = "cn.hutool.core.lang.mutable::"
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 FAMILIES = {
     "Mutable": (
-        "hitool_core::Mutable",
+        "hutool_core::Mutable",
         "boolean_and_object_mutables_are_owned_standard_value_wrappers",
         "An ownership-aware Rust trait provides shared borrow, mutable borrow, and replacement semantics.",
     ),
     "MutableBool": (
-        "hitool_core::MutableBool",
+        "hutool_core::MutableBool",
         "boolean_and_object_mutables_are_owned_standard_value_wrappers",
         "A typed bool wrapper preserves Hutool parsing, comparison, display, mutation, and Java hash behavior.",
     ),
     "MutableByte": (
-        "hitool_core::MutableByte",
+        "hutool_core::MutableByte",
         "integer_mutables_cover_wrapping_parsing_conversion_and_hashing",
         "An i8-backed wrapper uses standard parsing and explicit Java-compatible wrapping arithmetic, conversions, ordering, display, and hashing.",
     ),
     "MutableShort": (
-        "hitool_core::MutableShort",
+        "hutool_core::MutableShort",
         "integer_mutables_cover_wrapping_parsing_conversion_and_hashing",
         "An i16-backed wrapper uses standard parsing and explicit Java-compatible wrapping arithmetic, conversions, ordering, display, and hashing.",
     ),
     "MutableInt": (
-        "hitool_core::MutableInt",
+        "hutool_core::MutableInt",
         "integer_mutables_cover_wrapping_parsing_conversion_and_hashing",
         "An i32-backed wrapper uses standard parsing and explicit Java-compatible wrapping arithmetic, conversions, ordering, display, and hashing.",
     ),
     "MutableLong": (
-        "hitool_core::MutableLong",
+        "hutool_core::MutableLong",
         "integer_mutables_cover_wrapping_parsing_conversion_and_hashing",
         "An i64-backed wrapper uses standard parsing and explicit Java-compatible wrapping arithmetic, conversions, ordering, display, and folded Java hashing.",
     ),
     "MutableFloat": (
-        "hitool_core::MutableFloat",
+        "hutool_core::MutableFloat",
         "floating_mutables_use_java_nan_signed_zero_comparison_and_hashing",
         "An f32-backed wrapper uses standard parsing and canonical Java NaN, signed-zero, comparison, conversion, display, and hash semantics.",
     ),
     "MutableDouble": (
-        "hitool_core::MutableDouble",
+        "hutool_core::MutableDouble",
         "floating_mutables_use_java_nan_signed_zero_comparison_and_hashing",
         "An f64-backed wrapper uses standard parsing and canonical Java NaN, signed-zero, comparison, conversion, display, and hash semantics.",
     ),
     "MutableObj": (
-        "hitool_core::MutableObj",
+        "hutool_core::MutableObj",
         "boolean_and_object_mutables_are_owned_standard_value_wrappers",
         "A generic owned Rust value wrapper supplies factory, borrow, replacement, equality, ordering, hashing, display, and extraction behavior.",
     ),
     "MutablePair": (
-        "hitool_core::MutablePair",
+        "hutool_core::MutablePair",
         "mutable_pair_supports_individual_and_atomic_replacement",
         "An owned tuple wrapper supports key, value, and atomic pair replacement while preserving standard Rust equality, ordering, and hashing.",
     ),
@@ -88,8 +88,8 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
-            "test_evidence": f"crates/hitool-core/src/mutable.rs::{test}",
+            "hutool_symbol": symbol,
+            "test_evidence": f"crates/hutool-core/src/mutable.rs::{test}",
             "notes": notes,
         }
 

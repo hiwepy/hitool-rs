@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify Hutool → hitool-rs test-method parity ledger.
+"""Verify Hutool → hutool-rs test-method parity ledger.
 
 Two bars (do not conflate them):
 
@@ -97,13 +97,13 @@ def main() -> int:
             continue
         st = row.get("status", "")
         status_counts[st] += 1
-        if st in BEHAVIORAL and row.get("hitool_test"):
+        if st in BEHAVIORAL and row.get("hutool_test"):
             behavioral += 1
             registered += 1
-        elif st == "ignored" and row.get("hitool_test"):
+        elif st == "ignored" and row.get("hutool_test"):
             ignored += 1
             registered += 1
-        elif st == "planned" and row.get("hitool_test"):
+        elif st == "planned" and row.get("hutool_test"):
             planned += 1
             registered += 1
 
@@ -136,13 +136,13 @@ def main() -> int:
             if not d:
                 continue
             st = d.get("status", "")
-            if st in BEHAVIORAL and d.get("hitool_test"):
+            if st in BEHAVIORAL and d.get("hutool_test"):
                 mod_beh[mod] += 1
                 mod_reg[mod] += 1
-            elif st == "ignored" and d.get("hitool_test"):
+            elif st == "ignored" and d.get("hutool_test"):
                 mod_ign[mod] += 1
                 mod_reg[mod] += 1
-            elif st in REGISTERED and d.get("hitool_test"):
+            elif st in REGISTERED and d.get("hutool_test"):
                 mod_reg[mod] += 1
         print("\nPer-module (behavioral / ignored / registered / total):")
         print(
@@ -161,7 +161,7 @@ def main() -> int:
         shown = 0
         for tid in sorted(inventory_ids):
             d = by_id.get(tid)
-            if d and d.get("status") in REGISTERED and d.get("hitool_test"):
+            if d and d.get("status") in REGISTERED and d.get("hutool_test"):
                 continue
             row = inventory_ids[tid]
             print(f"  {tid}  ({row['file_path']}:{row['start_line']})")
@@ -180,7 +180,7 @@ def main() -> int:
                 continue
             row = inventory_ids[tid]
             print(
-                f"  {tid}  → {d.get('hitool_test')}  "
+                f"  {tid}  → {d.get('hutool_test')}  "
                 f"({row['file_path']}:{row['start_line']})"
             )
             shown += 1

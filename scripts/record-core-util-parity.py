@@ -24,7 +24,7 @@ VERSION_ROOT = "cn.hutool.core.util::VersionUtil"
 MODERN_HASH_METHODS = {"murmur32", "murmur64", "murmur128", "cityHash32", "cityHash64", "cityHash128", "metroHash64", "metroHash128"}
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 
 def method_name(qualified_name: str) -> str:
@@ -153,59 +153,59 @@ def main() -> None:
         qualified_name = row["qualified_name"]
         name = method_name(qualified_name)
         if qualified_name.startswith(BOOLEAN_ROOT):
-            symbol = "hitool_core::BooleanUtil"
+            symbol = "hutool_core::BooleanUtil"
             test = boolean_evidence(name)
             notes = "Rust bool, Option<bool>, TypeId, and iterator operations preserve Hutool conversion, vocabulary, selection, aggregation, and empty-input behavior."
         elif qualified_name.startswith(BYTE_ROOT):
-            symbol = "hitool_core::ByteUtil"
+            symbol = "hutool_core::ByteUtil"
             test = byte_evidence(name)
             notes = "Rust endian primitives implement checked offset conversion; generic traits replace Java Class dispatch while preserving primitive, atomic, adder, BigInteger, BigDecimal, and Java-canonical NaN behavior."
         elif qualified_name.startswith(CHAR_ROOT):
-            symbol = "hitool_core::CharUtil"
+            symbol = "hutool_core::CharUtil"
             test = char_evidence(name)
             notes = "Rust char and Any provide the thin facade; unicode-general-category supplies Unicode 16 categories while explicit Java constants, blank characters, digit values, emoji heuristics, and checked enclosed conversions preserve Hutool behavior."
         elif qualified_name.startswith(CHARSET_ROOT):
-            symbol = "hitool_core::CharsetUtil"
+            symbol = "hutool_core::CharsetUtil"
             test = charset_evidence(name, row["signature"])
             notes = "encoding_rs supplies mature WHATWG codecs while the thin facade preserves exact ISO-8859-1, ASCII, BOM-aware UTF-16, string repair, bounded file conversion, and candidate detection semantics."
         elif qualified_name.startswith(COORDINATE_ROOT):
-            symbol = "hitool_core::CoordinateUtil"
+            symbol = "hutool_core::CoordinateUtil"
             test = coordinate_evidence(qualified_name, name)
             notes = "Rust f64 math implements Hutool's WGS84, GCJ-02, BD-09, and Web Mercator formulas; the owned Coordinate value preserves mutation, Java-style equality, hashing, and display semantics."
         elif qualified_name.startswith(CREDIT_CODE_ROOT):
-            symbol = "hitool_core::CreditCodeUtil"
+            symbol = "hutool_core::CreditCodeUtil"
             test = credit_code_evidence(name)
             notes = "A direct GB 32100-2015 weighted checksum implementation validates every section and rand-backed generation always appends a verified parity character."
         elif qualified_name.startswith(DESENSITIZED_ROOT):
-            symbol = "hitool_core::DesensitizedUtil"
+            symbol = "hutool_core::DesensitizedUtil"
             test = desensitized_evidence(name)
             notes = "A Unicode-safe owned-string facade implements every Hutool masking policy while Option preserves the observable null versus empty distinction for dispatcher, bank-card, passport, and credit-code paths."
         elif qualified_name.startswith(HASH_ROOT) and name not in MODERN_HASH_METHODS:
-            symbol = "hitool_core::HashUtil"
+            symbol = "hutool_core::HashUtil"
             test = hash_evidence(name)
             notes = "Explicit wrapping arithmetic and Java UTF-16 units preserve Hutool's classic hash formulas; identity hashing is lifetime-bound and table algorithms return validated errors. Murmur, City, and Metro methods remain uncounted pending a version-compatible engine."
         elif qualified_name.startswith(HEX_ROOT):
-            symbol = "hitool_core::HexUtil"
+            symbol = "hutool_core::HexUtil"
             test = hex_evidence(name)
             notes = "The mature hex and num-bigint crates plus Rust UTF-16 and encoding primitives provide the engine; the facade preserves Hutool prefixes, Java numeric bit patterns, colors, pair formatting, and typed errors."
         elif qualified_name.startswith(IDCARD_ROOT):
-            symbol = "hitool_core::{IdcardUtil,Idcard,Card10Info}"
+            symbol = "hutool_core::{IdcardUtil,Idcard,Card10Info}"
             test = idcard_evidence(qualified_name, name)
             notes = "Chrono supplies strict Gregorian dates while checked Rust checksum, region, age, conversion, masking, and owned-value logic preserves Hutool mainland, Taiwan, Macao, Hong Kong, and foreign-resident card semantics with structured errors."
         elif qualified_name.startswith(PAGE_ROOT):
-            symbol = "hitool_core::PageUtil"
+            symbol = "hutool_core::PageUtil"
             test = page_evidence(name)
             notes = "Explicit owned page-number configuration, Rust Range segments, Java-compatible wrapping offsets, checked total-page narrowing, and the complete rainbow algorithm implement Hutool behavior without hidden global state."
         elif qualified_name.startswith(PHONE_ROOT):
-            symbol = "hitool_core::PhoneUtil"
+            symbol = "hutool_core::PhoneUtil"
             test = phone_evidence(name)
             notes = "The mature regex engine compiles Hutool's mainland, Hong Kong, Taiwan, Macao, landline, 400, and 800 rules once; the thin facade provides Unicode-safe masking, slicing, and typed optional captures."
         elif qualified_name.startswith(RADIX_ROOT):
-            symbol = "hitool_core::RadixUtil"
+            symbol = "hutool_core::RadixUtil"
             test = "integer_overloads_round_trip_zero_positive_negative_and_unicode_alphabets"
             notes = "A bounded unique Unicode alphabet, checked arithmetic, and exact unsigned-i32 and narrowing semantics provide reversible custom-radix conversion with structured errors."
         elif qualified_name.startswith(VERSION_ROOT):
-            symbol = "hitool_core::VersionUtil"
+            symbol = "hutool_core::VersionUtil"
             test = version_evidence(name)
             notes = "A direct loose-version token engine preserves Hutool's non-SemVer ordering, null comparison, exact, operator, inclusive-range, multi-expression, and delimiter-validation behavior."
         else:
@@ -213,26 +213,26 @@ def main() -> None:
 
         selected += 1
         source = {
-            "hitool_core::BooleanUtil": "boolean_util.rs",
-            "hitool_core::ByteUtil": "byte_util.rs",
-            "hitool_core::CharUtil": "char_util.rs",
-            "hitool_core::CharsetUtil": "charset_util.rs",
-            "hitool_core::CoordinateUtil": "coordinate_util.rs",
-            "hitool_core::CreditCodeUtil": "credit_code_util.rs",
-            "hitool_core::DesensitizedUtil": "desensitized_util.rs",
-            "hitool_core::HashUtil": "hash_util.rs",
-            "hitool_core::HexUtil": "hex_util.rs",
-            "hitool_core::{IdcardUtil,Idcard,Card10Info}": "idcard_util.rs",
-            "hitool_core::PageUtil": "page_util.rs",
-            "hitool_core::PhoneUtil": "phone_util.rs",
-            "hitool_core::RadixUtil": "radix_util.rs",
-            "hitool_core::VersionUtil": "version_util.rs",
+            "hutool_core::BooleanUtil": "boolean_util.rs",
+            "hutool_core::ByteUtil": "byte_util.rs",
+            "hutool_core::CharUtil": "char_util.rs",
+            "hutool_core::CharsetUtil": "charset_util.rs",
+            "hutool_core::CoordinateUtil": "coordinate_util.rs",
+            "hutool_core::CreditCodeUtil": "credit_code_util.rs",
+            "hutool_core::DesensitizedUtil": "desensitized_util.rs",
+            "hutool_core::HashUtil": "hash_util.rs",
+            "hutool_core::HexUtil": "hex_util.rs",
+            "hutool_core::{IdcardUtil,Idcard,Card10Info}": "idcard_util.rs",
+            "hutool_core::PageUtil": "page_util.rs",
+            "hutool_core::PhoneUtil": "phone_util.rs",
+            "hutool_core::RadixUtil": "radix_util.rs",
+            "hutool_core::VersionUtil": "version_util.rs",
         }[symbol]
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
-            "test_evidence": f"crates/hitool-core/src/{source}::{test}",
+            "hutool_symbol": symbol,
+            "test_evidence": f"crates/hutool-core/src/{source}::{test}",
             "notes": notes,
         }
 

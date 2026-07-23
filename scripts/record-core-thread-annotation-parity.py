@@ -15,7 +15,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 THREAD_PREFIX = "cn.hutool.core.thread"
 ANNOTATION_PREFIX = "cn.hutool.core.annotation"
@@ -72,10 +72,10 @@ def snake(name: str) -> str:
 
 def thread_symbol(api_id: str, cls: str) -> str:
     if "thread.lock" in api_id or ".lock." in api_id:
-        return f"hitool_core::thread::lock::{snake(cls)}"
+        return f"hutool_core::thread::lock::{snake(cls)}"
     if "threadlocal" in api_id.lower():
-        return f"hitool_core::thread::threadlocal::{snake(cls)}"
-    return f"hitool_core::thread::{snake(cls)}"
+        return f"hutool_core::thread::threadlocal::{snake(cls)}"
+    return f"hutool_core::thread::{snake(cls)}"
 
 
 def annotation_symbol(cls: str) -> str:
@@ -89,8 +89,8 @@ def annotation_symbol(cls: str) -> str:
         "TypeAnnotationScanner",
         "GenericAnnotationScanner",
     }:
-        return f"hitool_core::annotation::scanner::{snake(cls)}"
-    return f"hitool_core::annotation::{snake(cls)}"
+        return f"hutool_core::annotation::scanner::{snake(cls)}"
+    return f"hutool_core::annotation::{snake(cls)}"
 
 
 def decide_thread(api_id: str, qualified_name: str) -> tuple[str, str, str, str]:
@@ -130,9 +130,9 @@ def decide_thread(api_id: str, qualified_name: str) -> tuple[str, str, str, str]
             "Planned: JVM ThreadLocal/ThreadGroup API.",
         )
 
-    evidence = "crates/hitool-core/tests/thread_parity.rs"
+    evidence = "crates/hutool-core/tests/thread_parity.rs"
     if cls == "AsyncUtil":
-        evidence = "crates/hitool-core/tests/async_util_parity.rs"
+        evidence = "crates/hutool-core/tests/async_util_parity.rs"
         notes = (
             "Idiomatic Tokio JoinHandle waitAll/waitAny/get behind feature `async`; "
             "maps CompletableFuture to JoinHandle/Future."
@@ -163,8 +163,8 @@ def decide_annotation(api_id: str, qualified_name: str, existing: dict[str, str]
             status = "unsafe-to-copy"
         return (
             status,
-            "hitool_core::annotation::AnnotationUtil",
-            "crates/hitool-core/tests/annotation_parity.rs",
+            "hutool_core::annotation::AnnotationUtil",
+            "crates/hutool-core/tests/annotation_parity.rs",
             "[reflection] AnnotationUtil mirrors JVM reflective annotation lookup; "
             "Rust ElementHandle/AnnotationMirror model is available but decision stays unsafe-to-copy per Wave-2 policy.",
         )
@@ -177,9 +177,9 @@ def decide_annotation(api_id: str, qualified_name: str, existing: dict[str, str]
             f"Planned: `{cls}` needs JVM dynamic proxy / synthesizer runtime; mirror attribute model covers portable subset.",
         )
 
-    evidence = "crates/hitool-core/tests/annotation_parity.rs"
+    evidence = "crates/hutool-core/tests/annotation_parity.rs"
     if "scanner" in api_id or cls.endswith("Scanner"):
-        evidence = "crates/hitool-core/tests/annotation_parity_gap.rs"
+        evidence = "crates/hutool-core/tests/annotation_parity_gap.rs"
     if cls in {
         "Alias",
         "AliasFor",
@@ -189,7 +189,7 @@ def decide_annotation(api_id: str, qualified_name: str, existing: dict[str, str]
         "RelationType",
         "Link",
     }:
-        evidence = "crates/hitool-core/tests/annotation_helpers_parity.rs"
+        evidence = "crates/hutool-core/tests/annotation_helpers_parity.rs"
     notes = (
         f"Idiomatic non-reflective annotation helper `{cls}` via AnnotationMirror/ElementHandle; "
         "no JVM Class/AnnotatedElement reflection."
@@ -227,7 +227,7 @@ def main() -> None:
         indexed[api_id] = {
             "api_id": api_id,
             "status": status,
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": evidence,
             "notes": notes,
         }

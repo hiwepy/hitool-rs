@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Record hutool-core exceptions / comparator / math idiomatic parity (merge-only).
 
-Wave2: flips planned → idiomatic only for APIs with hitool_symbol + test_evidence.
+Wave2: flips planned → idiomatic only for APIs with hutool_symbol + test_evidence.
 Never deletes existing decisions outside these three packages.
 """
 
@@ -12,7 +12,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 OWNED_PREFIXES = (
     "cn.hutool.core.exceptions",
@@ -79,24 +79,24 @@ def snake(name: str) -> str:
 
 def symbol_for(pkg: str, cls: str) -> str:
     if pkg.startswith("cn.hutool.core.exceptions"):
-        return f"hitool_core::exceptions::{snake(cls)}"
+        return f"hutool_core::exceptions::{snake(cls)}"
     if pkg.startswith("cn.hutool.core.comparator"):
-        return f"hitool_core::comparator::{snake(cls)}"
+        return f"hutool_core::comparator::{snake(cls)}"
     if pkg.startswith("cn.hutool.core.math"):
-        return f"hitool_core::math::{snake(cls)}"
-    return f"hitool_core::{snake(cls)}"
+        return f"hutool_core::math::{snake(cls)}"
+    return f"hutool_core::{snake(cls)}"
 
 
 def evidence_for(pkg: str, cls: str) -> str:
     if pkg.startswith("cn.hutool.core.exceptions"):
-        return "crates/hitool-core/tests/exceptions_parity_gap.rs"
+        return "crates/hutool-core/tests/exceptions_parity_gap.rs"
     if pkg.startswith("cn.hutool.core.comparator"):
         if cls == "CompareUtil":
-            return "crates/hitool-core/tests/compare_util_parity.rs"
-        return "crates/hitool-core/tests/comparator_parity_gap.rs"
+            return "crates/hutool-core/tests/compare_util_parity.rs"
+        return "crates/hutool-core/tests/comparator_parity_gap.rs"
     if pkg.startswith("cn.hutool.core.math"):
-        return "crates/hitool-core/tests/math_parity_gap.rs"
-    return "crates/hitool-core/tests/"
+        return "crates/hutool-core/tests/math_parity_gap.rs"
+    return "crates/hutool-core/tests/"
 
 
 def notes_for(pkg: str, cls: str) -> str:
@@ -173,7 +173,7 @@ def main() -> None:
             indexed[api_id] = {
                 "api_id": api_id,
                 "status": "planned",
-                "hitool_symbol": symbol,
+                "hutool_symbol": symbol,
                 "test_evidence": "",
                 "notes": reason,
             }
@@ -183,7 +183,7 @@ def main() -> None:
             indexed[api_id] = {
                 "api_id": api_id,
                 "status": "idiomatic",
-                "hitool_symbol": symbol,
+                "hutool_symbol": symbol,
                 "test_evidence": evidence,
                 "notes": notes,
             }

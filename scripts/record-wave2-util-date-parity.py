@@ -16,7 +16,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 ARRAY_ROOT = "cn.hutool.core.util::ArrayUtil"
 OBJECT_ROOT = "cn.hutool.core.util::ObjectUtil"
@@ -107,14 +107,14 @@ def signature(api_id: str) -> str:
 
 
 def array_decision(name: str, sig: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::ArrayUtil"
-    evidence = "crates/hitool-core/tests/array_util_parity.rs::wave2_array_util_portable_parity"
+    symbol = "hutool_core::ArrayUtil"
+    evidence = "crates/hutool-core/tests/array_util_parity.rs::wave2_array_util_portable_parity"
     notes = (
         "Owned slice/Vec facades cover Hutool ArrayUtil portable overloads; "
         "Class/Object reflective array engines remain planned."
     )
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/array_util.rs::ArrayUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/array_util.rs::ArrayUtil", notes)
     if any(m in sig for m in ARRAY_PLANNED_SIG_MARKERS):
         return (
             "planned",
@@ -126,14 +126,14 @@ def array_decision(name: str, sig: str) -> tuple[str, str, str, str]:
 
 
 def object_decision(name: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::ObjectUtil"
-    evidence = "crates/hitool-core/tests/object_util_parity.rs::wave2_object_util_portable_parity"
+    symbol = "hutool_core::ObjectUtil"
+    evidence = "crates/hutool-core/tests/object_util_parity.rs::wave2_object_util_portable_parity"
     notes = (
         "Option/trait facades preserve Hutool null/empty/equals/length/contains semantics; "
         "Java serialization and TypeArgument reflection stay planned."
     )
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/object_util.rs::ObjectUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/object_util.rs::ObjectUtil", notes)
     if name in OBJECT_PLANNED:
         return (
             "planned",
@@ -145,14 +145,14 @@ def object_decision(name: str) -> tuple[str, str, str, str]:
 
 
 def random_decision(name: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::RandomUtil"
-    evidence = "crates/hitool-core/tests/random_util_parity.rs::wave2_random_util_portable_parity"
+    symbol = "hutool_core::RandomUtil"
+    evidence = "crates/hutool-core/tests/random_util_parity.rs::wave2_random_util_portable_parity"
     notes = (
         "rand + rust_decimal facades cover Hutool numeric/string/collection random APIs; "
         "SecureRandom/ThreadLocalRandom handles stay planned."
     )
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/random_util.rs::RandomUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/random_util.rs::RandomUtil", notes)
     if name in RANDOM_PLANNED:
         return (
             "planned",
@@ -164,14 +164,14 @@ def random_decision(name: str) -> tuple[str, str, str, str]:
 
 
 def re_decision(name: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::ReUtil"
-    evidence = "crates/hitool-core/tests/re_util_parity.rs::wave2_re_util_portable_parity"
+    symbol = "hutool_core::ReUtil"
+    evidence = "crates/hutool-core/tests/re_util_parity.rs::wave2_re_util_portable_parity"
     notes = (
         "regex crate facade consolidates Hutool ReUtil get/find/del/replace/escape overloads "
         "with Pattern/String dual entry points."
     )
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/re_util.rs::ReUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/re_util.rs::ReUtil", notes)
     if name in RE_PLANNED:
         return (
             "planned",
@@ -183,91 +183,91 @@ def re_decision(name: str) -> tuple[str, str, str, str]:
 
 
 def stop_decision(name: str, family: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::{StopWatch,TaskInfo}"
-    evidence = "crates/hitool-core/tests/date_types_parity.rs::wave2_stop_watch_parity"
+    symbol = "hutool_core::{StopWatch,TaskInfo}"
+    evidence = "crates/hutool-core/tests/date_types_parity.rs::wave2_stop_watch_parity"
     notes = (
         "std::time::Instant Spring-style StopWatch with TaskInfo, prettyPrint, and TimeUnit totals."
     )
     if family == "TaskInfo" or name.startswith("TaskInfo") or "::TaskInfo" in family:
         pass
     if not name or name == "TaskInfo":
-        return ("idiomatic", symbol, "crates/hitool-core/src/date/stop_watch.rs::StopWatch", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/date/stop_watch.rs::StopWatch", notes)
     return ("idiomatic", symbol, evidence, notes)
 
 
 def date_range_decision(name: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::DateRange"
-    evidence = "crates/hitool-core/tests/date_types_parity.rs::date_range_issue_3783_test_2"
+    symbol = "hutool_core::DateRange"
+    evidence = "crates/hutool-core/tests/date_types_parity.rs::date_range_issue_3783_test_2"
     notes = "Chrono DateTime offset stepping with includeStart/includeEnd and step<=0 issue#3783."
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/date/date_range.rs::DateRange", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/date/date_range.rs::DateRange", notes)
     return ("idiomatic", symbol, evidence, notes)
 
 
 def between_decision(name: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::{BetweenFormatter,BetweenFormatterLevel}"
-    evidence = "crates/hitool-core/tests/date_types_parity.rs::between_formatter_format_test_2"
+    symbol = "hutool_core::{BetweenFormatter,BetweenFormatterLevel}"
+    evidence = "crates/hutool-core/tests/date_types_parity.rs::between_formatter_format_test_2"
     notes = "Owned BetweenFormatter with Level units, max-count, separator, and Display."
     if not name or name == "Level":
         return (
             "idiomatic",
             symbol,
-            "crates/hitool-core/src/date/between_formatter.rs::BetweenFormatter",
+            "crates/hutool-core/src/date/between_formatter.rs::BetweenFormatter",
             notes,
         )
     return ("idiomatic", symbol, evidence, notes)
 
 
 def pattern_decision(name: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::DatePattern"
-    evidence = "crates/hitool-core/tests/date_types_parity.rs::wave2_date_pattern_formatter"
+    symbol = "hutool_core::DatePattern"
+    evidence = "crates/hutool-core/tests/date_types_parity.rs::wave2_date_pattern_formatter"
     notes = "Java SimpleDateFormat subset → chrono strftime via DatePattern::create_formatter."
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/date/date_pattern.rs::DatePattern", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/date/date_pattern.rs::DatePattern", notes)
     return ("idiomatic", symbol, evidence, notes)
 
 
 def time_interval_decision(name: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::TimeInterval"
-    evidence = "crates/hitool-core/tests/date_types_parity.rs::wave2_time_interval_parity"
+    symbol = "hutool_core::TimeInterval"
+    evidence = "crates/hutool-core/tests/date_types_parity.rs::wave2_time_interval_parity"
     notes = "Instant-backed TimeInterval with ms/nano modes and BetweenFormatter pretty output."
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/date/time_interval.rs::TimeInterval", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/date/time_interval.rs::TimeInterval", notes)
     return ("idiomatic", symbol, evidence, notes)
 
 
 def group_time_decision(name: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::GroupTimeInterval"
-    evidence = "crates/hitool-core/tests/date_types_parity.rs::wave2_group_time_interval_parity"
+    symbol = "hutool_core::GroupTimeInterval"
+    evidence = "crates/hutool-core/tests/date_types_parity.rs::wave2_group_time_interval_parity"
     notes = "HashMap<id, Instant> group timer with DateUnit interval helpers."
     if not name:
         return (
             "idiomatic",
             symbol,
-            "crates/hitool-core/src/date/group_time_interval.rs::GroupTimeInterval",
+            "crates/hutool-core/src/date/group_time_interval.rs::GroupTimeInterval",
             notes,
         )
     return ("idiomatic", symbol, evidence, notes)
 
 
 def temporal_decision(name: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::TemporalUtil"
-    evidence = "crates/hitool-core/tests/date_types_parity.rs::wave2_temporal_util_parity"
+    symbol = "hutool_core::TemporalUtil"
+    evidence = "crates/hutool-core/tests/date_types_parity.rs::wave2_temporal_util_parity"
     notes = "chrono Duration/offset/weekday helpers for Hutool TemporalUtil portable subset."
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/date/temporal_util.rs::TemporalUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/date/temporal_util.rs::TemporalUtil", notes)
     return ("idiomatic", symbol, evidence, notes)
 
 
 def temporal_acc_decision(name: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::TemporalAccessorUtil"
-    evidence = "crates/hitool-core/tests/date_types_parity.rs::wave2_temporal_accessor_parity"
+    symbol = "hutool_core::TemporalAccessorUtil"
+    evidence = "crates/hutool-core/tests/date_types_parity.rs::wave2_temporal_accessor_parity"
     notes = "chrono NaiveDateTime field/format/isIn facades for TemporalAccessorUtil."
     if not name:
         return (
             "idiomatic",
             symbol,
-            "crates/hitool-core/src/date/temporal_accessor_util.rs::TemporalAccessorUtil",
+            "crates/hutool-core/src/date/temporal_accessor_util.rs::TemporalAccessorUtil",
             notes,
         )
     return ("idiomatic", symbol, evidence, notes)
@@ -278,14 +278,14 @@ def date_util_leftover(name: str) -> tuple[str, str, str, str] | None:
     if name in DATE_UTIL_IDIOMATIC:
         return (
             "idiomatic",
-            "hitool_core::DateUtil",
-            "crates/hitool-core/tests/date_types_parity.rs::wave2_date_util_timer_range_parity",
+            "hutool_core::DateUtil",
+            "crates/hutool-core/tests/date_types_parity.rs::wave2_date_util_timer_range_parity",
             "Chrono/StopWatch/DateRange/Zodiac facades for remaining portable DateUtil helpers.",
         )
     if name in DATE_UTIL_PLANNED:
         return (
             "planned",
-            "hitool_core::DateUtil",
+            "hutool_core::DateUtil",
             "",
             f"Planned: DateUtil.{name} needs ZoneId/SimpleDateFormat JVM engine.",
         )
@@ -357,7 +357,7 @@ def main() -> None:
             indexed[api_id] = {
                 "api_id": api_id,
                 "status": "idiomatic",
-                "hitool_symbol": symbol,
+                "hutool_symbol": symbol,
                 "test_evidence": evidence,
                 "notes": notes,
             }
@@ -366,7 +366,7 @@ def main() -> None:
             indexed[api_id] = {
                 "api_id": api_id,
                 "status": "planned",
-                "hitool_symbol": symbol,
+                "hutool_symbol": symbol,
                 "test_evidence": evidence,
                 "notes": notes,
             }

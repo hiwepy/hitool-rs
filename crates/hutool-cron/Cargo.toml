@@ -1,0 +1,21 @@
+[package]
+name = "hutool-cron"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+description = "Cron parsing and asynchronous scheduling utilities for HiTool."
+
+[lints]
+workspace = true
+
+[dependencies]
+chrono.workspace = true
+cron.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true

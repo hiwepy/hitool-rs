@@ -8,7 +8,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 CLASSES = {
     "ContentType",
     "GlobalHeaders",
@@ -22,37 +22,37 @@ CLASSES = {
 def mapping(class_name: str) -> tuple[str, str, str]:
     if class_name == "ContentType":
         return (
-            "hitool_http::ContentType",
-            "crates/hitool-http/src/metadata.rs::content_types_format_detect_and_classify_every_shape",
+            "hutool_http::ContentType",
+            "crates/hutool-http/src/metadata.rs::content_types_format_detect_and_classify_every_shape",
             "A typed Rust enum preserves Hutool media values, charset formatting, default checks and JSON/XML body detection.",
         )
     if class_name == "GlobalHeaders":
         return (
-            "hitool_http::GlobalHeaders",
-            "crates/hitool-http/src/metadata.rs::owned_global_headers_cover_defaults_overloads_mutation_and_reset",
+            "hutool_http::GlobalHeaders",
+            "crates/hutool-http/src/metadata.rs::owned_global_headers_cover_defaults_overloads_mutation_and_reset",
             "Hutool header overloads are consolidated into an explicitly owned collection with the same defaults, append, overwrite, remove and reset behavior.",
         )
     if class_name == "Header":
         return (
-            "hitool_http::Header",
-            "crates/hitool-http/src/metadata.rs::methods_headers_and_statuses_match_hutool_catalogs",
+            "hutool_http::Header",
+            "crates/hutool-http/src/metadata.rs::methods_headers_and_statuses_match_hutool_catalogs",
             "The typed enum exposes every Hutool header wire value with value and display accessors.",
         )
     if class_name == "HttpStatus":
         return (
-            "hitool_http::HttpStatus",
-            "crates/hitool-http/src/metadata.rs::methods_headers_and_statuses_match_hutool_catalogs",
+            "hutool_http::HttpStatus",
+            "crates/hutool-http/src/metadata.rs::methods_headers_and_statuses_match_hutool_catalogs",
             "All Hutool status constants and its exact five-code redirect predicate are available without allocation.",
         )
     if class_name == "Status":
         return (
-            "hitool_http::Status",
-            "crates/hitool-http/src/metadata.rs::methods_headers_and_statuses_match_hutool_catalogs",
+            "hutool_http::Status",
+            "crates/hutool-http/src/metadata.rs::methods_headers_and_statuses_match_hutool_catalogs",
             "The legacy Hutool status namespace is retained as associated Rust constants.",
         )
     return (
-        "hitool_http::Method",
-        "crates/hitool-http/src/metadata.rs::methods_headers_and_statuses_match_hutool_catalogs",
+        "hutool_http::Method",
+        "crates/hutool-http/src/metadata.rs::methods_headers_and_statuses_match_hutool_catalogs",
         "The mature reqwest Method type natively provides all nine Hutool HTTP methods.",
     )
 
@@ -72,7 +72,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": test,
             "notes": notes,
         }

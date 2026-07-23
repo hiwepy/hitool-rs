@@ -1,6 +1,6 @@
 # Security model
 
-HiTool treats network, cryptographic, archive, script, and parser boundaries as
+Hutool-Rust treats network, cryptographic, archive, script, and parser boundaries as
 hostile-input surfaces.
 
 ## Defaults
@@ -47,7 +47,7 @@ hostile-input surfaces.
 - Keep database transaction boundaries explicit and protect connection URLs.
 - Choose cron retry and timeout values that fit the downstream service budget;
   a job handle intentionally serializes scheduled runs to prevent overlap.
-- Wrap secrets in `secrecy` or `hitool_log::Redacted`; never attach them to
+- Wrap secrets in `secrecy` or `hutool_log::Redacted`; never attach them to
   tracing fields directly.
 - Choose archive and document limits below the host's actual resource budget.
 

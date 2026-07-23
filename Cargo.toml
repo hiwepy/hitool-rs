@@ -9,8 +9,8 @@ edition = "2024"
 rust-version = "1.85"
 license = "Apache-2.0"
 authors = ["wandl <hiwepy@gmail.com>"]
-repository = "https://github.com/hiwepy/hitool-rs"
-homepage = "https://github.com/hiwepy/hitool-rs"
+repository = "https://github.com/easy-4-rust/hutool-rust"
+homepage = "https://github.com/easy-4-rust/hutool-rust"
 readme = "README.md"
 
 [workspace.dependencies]
@@ -104,27 +104,27 @@ x509-cert = "0.2.5"
 zeroize = "1.8.2"
 zip = { version = "7.2.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
-hitool = { version = "=0.1.0", path = "crates/hitool" }
-hitool-ai = { version = "=0.1.0", path = "crates/hitool-ai" }
-hitool-aop = { version = "=0.1.0", path = "crates/hitool-aop" }
-hitool-bloom-filter = { version = "=0.1.0", path = "crates/hitool-bloom-filter" }
-hitool-cache = { version = "=0.1.0", path = "crates/hitool-cache" }
-hitool-captcha = { version = "=0.1.0", path = "crates/hitool-captcha" }
-hitool-compat-hutool = { version = "=0.1.0", path = "crates/hitool-compat-hutool" }
-hitool-core = { version = "=0.1.0", path = "crates/hitool-core" }
-hitool-cron = { version = "=0.1.0", path = "crates/hitool-cron" }
-hitool-crypto = { version = "=0.1.0", path = "crates/hitool-crypto" }
-hitool-db = { version = "=0.1.0", path = "crates/hitool-db" }
-hitool-dfa = { version = "=0.1.0", path = "crates/hitool-dfa" }
-hitool-extra = { version = "=0.1.0", path = "crates/hitool-extra" }
-hitool-http = { version = "=0.1.0", path = "crates/hitool-http" }
-hitool-json = { version = "=0.1.0", path = "crates/hitool-json" }
-hitool-jwt = { version = "=0.1.0", path = "crates/hitool-jwt" }
-hitool-log = { version = "=0.1.0", path = "crates/hitool-log" }
-hitool-script = { version = "=0.1.0", path = "crates/hitool-script" }
-hitool-setting = { version = "=0.1.0", path = "crates/hitool-setting" }
-hitool-socket = { version = "=0.1.0", path = "crates/hitool-socket" }
-hitool-system = { version = "=0.1.0", path = "crates/hitool-system" }
+hutool = { version = "=0.1.0", path = "crates/hutool" }
+hutool-ai = { version = "=0.1.0", path = "crates/hutool-ai" }
+hutool-aop = { version = "=0.1.0", path = "crates/hutool-aop" }
+hutool-bloom-filter = { version = "=0.1.0", path = "crates/hutool-bloom-filter" }
+hutool-cache = { version = "=0.1.0", path = "crates/hutool-cache" }
+hutool-captcha = { version = "=0.1.0", path = "crates/hutool-captcha" }
+hutool-compat-hutool = { version = "=0.1.0", path = "crates/hutool-compat-hutool" }
+hutool-core = { version = "=0.1.0", path = "crates/hutool-core" }
+hutool-cron = { version = "=0.1.0", path = "crates/hutool-cron" }
+hutool-crypto = { version = "=0.1.0", path = "crates/hutool-crypto" }
+hutool-db = { version = "=0.1.0", path = "crates/hutool-db" }
+hutool-dfa = { version = "=0.1.0", path = "crates/hutool-dfa" }
+hutool-extra = { version = "=0.1.0", path = "crates/hutool-extra" }
+hutool-http = { version = "=0.1.0", path = "crates/hutool-http" }
+hutool-json = { version = "=0.1.0", path = "crates/hutool-json" }
+hutool-jwt = { version = "=0.1.0", path = "crates/hutool-jwt" }
+hutool-log = { version = "=0.1.0", path = "crates/hutool-log" }
+hutool-script = { version = "=0.1.0", path = "crates/hutool-script" }
+hutool-setting = { version = "=0.1.0", path = "crates/hutool-setting" }
+hutool-socket = { version = "=0.1.0", path = "crates/hutool-socket" }
+hutool-system = { version = "=0.1.0", path = "crates/hutool-system" }
 
 [workspace.lints.rust]
 unsafe_code = "deny"

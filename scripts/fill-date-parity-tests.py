@@ -8,7 +8,7 @@ import textwrap
 from pathlib import Path
 
 HUTOOL = Path("/Users/wandl/workspaces/workspace-github/hutool/hutool-core/src/test/java/cn/hutool/core/date")
-HITOOL = Path("/Users/wandl/workspaces/workspace-github/hitool-rs/crates/hitool-core/tests")
+HITOOL = Path("/Users/wandl/workspaces/workspace-github/hutool-rs/crates/hutool-core/tests")
 
 JAVA_CLASS_FILES = {
     "DateUtilTest": HUTOOL / "DateUtilTest.java",

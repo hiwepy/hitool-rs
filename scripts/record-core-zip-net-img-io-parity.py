@@ -14,7 +14,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 PROTECTED_PREFIXES = (
     "cn.hutool.core.util::NumberUtil",
@@ -47,15 +47,15 @@ def family(qualified_name: str) -> str:
 
 
 def zip_decision(name: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::ZipUtil"
-    evidence = "crates/hitool-core/tests/zip_util_parity.rs::gzip_test"
+    symbol = "hutool_core::ZipUtil"
+    evidence = "crates/hutool-core/tests/zip_util_parity.rs::gzip_test"
     notes = (
         "zip crate + flate2 facades consolidate Hutool ZipUtil overloads "
         "(gzip/zlib/zip/unzip/append/list/get/read)."
     )
     planned = {"toZipFile", "getStream", "getZipOutputStream"}
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/zip_util.rs::ZipUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/zip_util.rs::ZipUtil", notes)
     if name in planned:
         return (
             "planned",
@@ -67,8 +67,8 @@ def zip_decision(name: str) -> tuple[str, str, str, str]:
 
 
 def url_decision(name: str) -> tuple[str, str, str, str]:
-    symbol = "hitool_core::UrlUtil"
-    evidence = "crates/hitool-core/tests/url_util_parity.rs::is_url_http"
+    symbol = "hutool_core::UrlUtil"
+    evidence = "crates/hutool-core/tests/url_util_parity.rs::is_url_http"
     notes = "Owned string/URI facades for encode/decode/normalize/complete/file-jar checks."
     planned = {
         "getContentLength",
@@ -81,7 +81,7 @@ def url_decision(name: str) -> tuple[str, str, str, str]:
         "getURL",
     }
     if not name:
-        return ("idiomatic", symbol, "crates/hitool-core/src/url_util.rs::UrlUtil", notes)
+        return ("idiomatic", symbol, "crates/hutool-core/src/url_util.rs::UrlUtil", notes)
     if name in planned:
         return (
             "planned",
@@ -167,16 +167,16 @@ def net_decision(qualified_name: str, name: str) -> tuple[str, str, str, str]:
     if fam in NET_PLANNED:
         return (
             "planned",
-            f"hitool_core::net::{fam}",
+            f"hutool_core::net::{fam}",
             "",
             f"Planned: {fam} needs JVM SSL/auth/multipart servlet engine.",
         )
     if fam == "NetUtil":
-        symbol = "hitool_core::NetUtil"
-        evidence = "crates/hitool-core/tests/net_util_parity.rs::net_util_ip_port_helpers"
+        symbol = "hutool_core::NetUtil"
+        evidence = "crates/hutool-core/tests/net_util_parity.rs::net_util_ip_port_helpers"
         notes = "std::net + idna facades for ports, IPv4, localhost, CIDR, proxy IP, ping."
         if not name:
-            return ("idiomatic", symbol, "crates/hitool-core/src/net/net_util.rs::NetUtil", notes)
+            return ("idiomatic", symbol, "crates/hutool-core/src/net/net_util.rs::NetUtil", notes)
         if name in NET_UTIL_PLANNED:
             return (
                 "planned",
@@ -188,34 +188,34 @@ def net_decision(qualified_name: str, name: str) -> tuple[str, str, str, str]:
     if fam == "Ipv4Util":
         return (
             "idiomatic",
-            "hitool_core::Ipv4Util",
-            "crates/hitool-core/tests/net_util_parity.rs::ipv4_util_mask_and_range",
+            "hutool_core::Ipv4Util",
+            "crates/hutool-core/tests/net_util_parity.rs::ipv4_util_mask_and_range",
             "std::net::Ipv4Addr facades for mask/range/list/inner-IP matching.",
         )
     if fam == "LocalPortGenerater":
         return (
             "idiomatic",
-            "hitool_core::LocalPortGenerater",
-            "crates/hitool-core/tests/net_util_parity.rs::local_port_generater",
+            "hutool_core::LocalPortGenerater",
+            "crates/hutool-core/tests/net_util_parity.rs::local_port_generater",
             "Usable local TCP port generator over NetUtil range scan.",
         )
     if fam in {"URLDecoder", "URLEncodeUtil", "URLEncoder", "RFC3986"}:
         symbol = {
-            "URLDecoder": "hitool_core::UrlDecoder",
-            "URLEncodeUtil": "hitool_core::UrlEncodeUtil",
-            "URLEncoder": "hitool_core::UrlEncoder",
-            "RFC3986": "hitool_core::Rfc3986",
+            "URLDecoder": "hutool_core::UrlDecoder",
+            "URLEncodeUtil": "hutool_core::UrlEncodeUtil",
+            "URLEncoder": "hutool_core::UrlEncoder",
+            "RFC3986": "hutool_core::Rfc3986",
         }[fam]
         return (
             "idiomatic",
             symbol,
-            "crates/hitool-core/tests/net_util_parity.rs::url_encode_decode_helpers",
+            "crates/hutool-core/tests/net_util_parity.rs::url_encode_decode_helpers",
             "percent-encoding / RFC3986 facades replace java.net URLEncoder/Decoder.",
         )
     if fam == "FormUrlencoded":
         return (
             "planned",
-            "hitool_core::net::FormUrlencoded",
+            "hutool_core::net::FormUrlencoded",
             "",
             "Planned: FormUrlencoded needs application/x-www-form-urlencoded charset table.",
         )
@@ -223,26 +223,26 @@ def net_decision(qualified_name: str, name: str) -> tuple[str, str, str, str]:
         if fam == "MaskBit":
             return (
                 "idiomatic",
-                "hitool_core::MaskBit",
-                "crates/hitool-core/tests/net_util_parity.rs::ipv4_util_mask_and_range",
+                "hutool_core::MaskBit",
+                "crates/hutool-core/tests/net_util_parity.rs::ipv4_util_mask_and_range",
                 "MaskBit delegates to Ipv4Util mask helpers.",
             )
         if fam == "UrlBuilder":
             return (
                 "idiomatic",
-                "hitool_core::UrlBuilder",
-                "crates/hitool-core/tests/net_util_parity.rs::url_builder_path",
+                "hutool_core::UrlBuilder",
+                "crates/hutool-core/tests/net_util_parity.rs::url_builder_path",
                 "Owned UrlBuilder path/query encoding helpers.",
             )
         return (
             "planned",
-            f"hitool_core::net::url::{fam}",
+            f"hutool_core::net::url::{fam}",
             "",
             f"Planned: {fam} full mutator surface awaiting completion.",
         )
     return (
         "planned",
-        f"hitool_core::net::{fam}",
+        f"hutool_core::net::{fam}",
         "",
         f"Planned: {fam} awaiting typed Rust surface.",
     )
@@ -253,34 +253,34 @@ def img_decision(qualified_name: str, name: str) -> tuple[str, str, str, str]:
     if fam == "ImgUtil" and (not name or name in IMG_IDIOMATIC):
         return (
             "idiomatic",
-            "hitool_core::ImgUtil",
-            "crates/hitool-core/tests/img_util_parity.rs::scale_cut_slice_roundtrip",
+            "hutool_core::ImgUtil",
+            "crates/hutool-core/tests/img_util_parity.rs::scale_cut_slice_roundtrip",
             "image crate (feature `img`) byte/pixel facades for scale/cut/rotate/encode.",
         )
     if fam == "ColorUtil" and (not name or name in IMG_IDIOMATIC):
         return (
             "idiomatic",
-            "hitool_core::ColorUtil",
-            "crates/hitool-core/tests/img_util_parity.rs::color_util_hex_distance",
+            "hutool_core::ColorUtil",
+            "crates/hutool-core/tests/img_util_parity.rs::color_util_hex_distance",
             "RGB/hex/distance helpers without AWT Color.",
         )
     if fam == "ScaleType":
         return (
             "idiomatic",
-            "hitool_core::img::ScaleType",
-            "crates/hitool-core/tests/img_util_parity.rs::scale_cut_slice_roundtrip",
+            "hutool_core::img::ScaleType",
+            "crates/hutool-core/tests/img_util_parity.rs::scale_cut_slice_roundtrip",
             "Scale filter enum maps to image::imageops::FilterType.",
         )
     if fam == "ImgUtil" and name in {"backgroundRemoval", "getMainColor"}:
         return (
             "idiomatic",
-            "hitool_core::ImgUtil",
-            "crates/hitool-core/tests/img_util_parity.rs::background_and_main_color",
+            "hutool_core::ImgUtil",
+            "crates/hutool-core/tests/img_util_parity.rs::background_and_main_color",
             "Tolerance-based alpha removal and mean-color sampling.",
         )
     return (
         "planned",
-        f"hitool_core::img::{fam}",
+        f"hutool_core::img::{fam}",
         "",
         f"Planned: {fam}.{name or fam} needs AWT Graphics2D/font/GIF codec engine.",
     )
@@ -347,8 +347,8 @@ def file_extra_decision(name: str) -> tuple[str, str, str, str] | None:
         return None
     return (
         "idiomatic",
-        "hitool_core::FileUtil",
-        "crates/hitool-core/tests/file_util_parity.rs::file_util_leftover_helpers",
+        "hutool_core::FileUtil",
+        "crates/hutool-core/tests/file_util_parity.rs::file_util_leftover_helpers",
         "std::fs PathBuf leftovers: lines/move/normalize/checksum/mime/home/tmp.",
     )
 
@@ -358,8 +358,8 @@ def io_extra_decision(name: str) -> tuple[str, str, str, str] | None:
         return None
     return (
         "idiomatic",
-        "hitool_core::IoUtil",
-        "crates/hitool-core/tests/io_util_parity.rs::io_util_checksum_and_stream_helpers",
+        "hutool_core::IoUtil",
+        "crates/hutool-core/tests/io_util_parity.rs::io_util_checksum_and_stream_helpers",
         "std::io leftovers: checksum/CRC32/lineIter/utf8 stream bytes.",
     )
 
@@ -406,7 +406,7 @@ def main() -> None:
         indexed[api_id] = {
             "api_id": api_id,
             "status": status,
-            "hitool_symbol": symbol,
+            "hutool_symbol": symbol,
             "test_evidence": evidence,
             "notes": notes,
         }

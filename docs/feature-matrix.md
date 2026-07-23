@@ -1,12 +1,12 @@
 # Feature matrix
 
-`hitool` features are additive. The default set is only `core` and `json`;
+`hutool` features are additive. The default set is only `core` and `json`;
 `full` is provided for convenience but is never enabled implicitly.
 
 | Feature | Adds | Compile cost | Runtime/platform notes | Security impact |
 |---|---|---:|---|---|
-| `core` | `hitool-core` | low | portable | parsers enforce typed errors |
-| `json` | `hitool-json` | low | portable | full-input parsing; callers bound input transport |
+| `core` | `hutool-core` | low | portable | parsers enforce typed errors |
+| `json` | `hutool-json` | low | portable | full-input parsing; callers bound input transport |
 | `aop` | interceptor chains | low | synchronous | advice can observe context by design |
 | `bloom-filter` | probabilistic lookup | low | portable | false positives are expected |
 | `cache` | Moka cache | medium | threads | applications must choose capacity/TTL |

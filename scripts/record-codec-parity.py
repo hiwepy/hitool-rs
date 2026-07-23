@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = "cn.hutool.core.codec::"
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 
 def family(row: dict[str, str]) -> str | None:
@@ -57,19 +57,19 @@ def family(row: dict[str, str]) -> str | None:
 
 def rust_symbol(codec_family: str) -> str:
     return {
-        "base16": "hitool_core::Base16Codec",
-        "base32": "hitool_core::{Base32Encoder,Base32Decoder,base32_encode_text,base32_decode_text,base32_encode_file,base32_decode_to_file}",
-        "base58": "hitool_core::{Base58Encoder,Base58Decoder,base58_encode_checked,base58_decode_checked}",
-        "base62": "hitool_core::{Base62Encoder,Base62Decoder,base62_encode_text,base62_decode_text,base62_encode_file,base62_decode_to_file}",
-        "rot": "hitool_core::{rot_encode,rot_decode}",
-        "caesar": "hitool_core::{caesar_encode,caesar_decode}",
-        "bcd": "hitool_core::{bcd_encode,bcd_decode,bcd_encode_ascii_prefix}",
-        "morse": "hitool_core::MorseCodec",
-        "punycode": "hitool_core::{punycode_encode_prefixed,punycode_decode,idna_encode_domain,idna_decode_domain}",
-        "hashids": "hitool_core::HashIds",
-        "base64": "hitool_core::{base64_encode_config,base64_decode_tolerant,base64_encode_text,base64_decode_text}",
-        "percent": "hitool_core::PercentCodec",
-        "traits": "hitool_core::{Encoder,Decoder}",
+        "base16": "hutool_core::Base16Codec",
+        "base32": "hutool_core::{Base32Encoder,Base32Decoder,base32_encode_text,base32_decode_text,base32_encode_file,base32_decode_to_file}",
+        "base58": "hutool_core::{Base58Encoder,Base58Decoder,base58_encode_checked,base58_decode_checked}",
+        "base62": "hutool_core::{Base62Encoder,Base62Decoder,base62_encode_text,base62_decode_text,base62_encode_file,base62_decode_to_file}",
+        "rot": "hutool_core::{rot_encode,rot_decode}",
+        "caesar": "hutool_core::{caesar_encode,caesar_decode}",
+        "bcd": "hutool_core::{bcd_encode,bcd_decode,bcd_encode_ascii_prefix}",
+        "morse": "hutool_core::MorseCodec",
+        "punycode": "hutool_core::{punycode_encode_prefixed,punycode_decode,idna_encode_domain,idna_decode_domain}",
+        "hashids": "hutool_core::HashIds",
+        "base64": "hutool_core::{base64_encode_config,base64_decode_tolerant,base64_encode_text,base64_decode_text}",
+        "percent": "hutool_core::PercentCodec",
+        "traits": "hutool_core::{Encoder,Decoder}",
     }[codec_family]
 
 
@@ -92,7 +92,7 @@ def evidence(codec_family: str) -> str:
     source = "radix_codec.rs" if codec_family in {"base32", "base58", "base62", "bcd"} else "advanced_codec.rs"
     if codec_family in {"base16", "base64", "percent", "traits"}:
         source = "hutool_codec.rs"
-    return f"crates/hitool-core/src/{source}::{test}"
+    return f"crates/hutool-core/src/{source}::{test}"
 
 
 def main() -> None:
@@ -111,7 +111,7 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": rust_symbol(codec_family),
+            "hutool_symbol": rust_symbol(codec_family),
             "test_evidence": evidence(codec_family),
             "notes": "Hutool overloads are consolidated into typed Rust APIs; official Hutool vectors are asserted.",
         }

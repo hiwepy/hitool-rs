@@ -10,38 +10,38 @@ from pathlib import Path
 ROOT = "cn.hutool.core.compiler::"
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 FAMILIES = {
     "CompilerException": (
-        "hitool_core::CompilerException",
+        "hutool_core::CompilerException",
         "source_loading_and_exception_constructors_are_bounded",
     ),
     "CompilerUtil": (
-        "hitool_core::RustSourceCompiler",
+        "hutool_core::RustSourceCompiler",
         "rust_source_compiler_builds_and_reports_diagnostics",
     ),
     "DiagnosticUtil": (
-        "hitool_core::diagnostic_messages",
+        "hutool_core::diagnostic_messages",
         "file_objects_enforce_names_limits_and_manage_artifacts",
     ),
     "JavaClassFileManager": (
-        "hitool_core::ClassFileManager",
+        "hutool_core::ClassFileManager",
         "file_objects_enforce_names_limits_and_manage_artifacts",
     ),
     "JavaClassFileObject": (
-        "hitool_core::ClassFileObject",
+        "hutool_core::ClassFileObject",
         "file_objects_enforce_names_limits_and_manage_artifacts",
     ),
     "JavaFileObjectUtil": (
-        "hitool_core::SourceFileObjectUtil",
+        "hutool_core::SourceFileObjectUtil",
         "source_loading_and_exception_constructors_are_bounded",
     ),
     "JavaSourceCompiler": (
-        "hitool_core::RustSourceCompiler",
+        "hutool_core::RustSourceCompiler",
         "rust_source_compiler_builds_and_reports_diagnostics",
     ),
     "JavaSourceFileObject": (
-        "hitool_core::SourceFileObject",
+        "hutool_core::SourceFileObject",
         "source_loading_and_exception_constructors_are_bounded",
     ),
 }
@@ -70,8 +70,8 @@ def main() -> None:
         indexed[row["api_id"]] = {
             "api_id": row["api_id"],
             "status": "idiomatic",
-            "hitool_symbol": symbol,
-            "test_evidence": f"crates/hitool-core/src/compiler.rs::{test}",
+            "hutool_symbol": symbol,
+            "test_evidence": f"crates/hutool-core/src/compiler.rs::{test}",
             "notes": (
                 "The JVM compiler and class-loader workflow maps to bounded Rust "
                 "source units, rustc execution, artifacts, and sourced diagnostics."

@@ -13,7 +13,7 @@ from pathlib import Path
 
 INVENTORY = Path("parity/hutool-v5.8.46-api.csv")
 DECISIONS = Path("parity/decisions.csv")
-FIELDS = ["api_id", "status", "hitool_symbol", "test_evidence", "notes"]
+FIELDS = ["api_id", "status", "hutool_symbol", "test_evidence", "notes"]
 
 CONVERT_ROOT = "cn.hutool.core.convert::Convert"
 CAST_ROOT = "cn.hutool.core.convert::CastUtil"
@@ -114,8 +114,8 @@ def main() -> None:
         "ConvertValue-tagged facades cover common primitives/collections/hex/unicode/"
         "SBC-DBC/time/number formatters; Java Class/Type reflection convert stays planned."
     )
-    convert_evidence = "crates/hitool-core/tests/convert_parity.rs"
-    convert_symbol = "hitool_core::convert::Convert"
+    convert_evidence = "crates/hutool-core/tests/convert_parity.rs"
+    convert_symbol = "hutool_core::convert::Convert"
 
     for row in inventory:
         qn = row["qualified_name"]
@@ -152,7 +152,7 @@ def main() -> None:
                 indexed[api_id] = {
                     "api_id": api_id,
                     "status": "idiomatic",
-                    "hitool_symbol": convert_symbol,
+                    "hutool_symbol": convert_symbol,
                     "test_evidence": convert_evidence,
                     "notes": convert_notes,
                 }
@@ -161,7 +161,7 @@ def main() -> None:
                 indexed[api_id] = {
                     "api_id": api_id,
                     "status": "planned",
-                    "hitool_symbol": convert_symbol,
+                    "hutool_symbol": convert_symbol,
                     "test_evidence": "",
                     "notes": (
                         f"Planned: Convert.{name or 'class'} needs Java Class/Type/TypeReference "
@@ -173,42 +173,42 @@ def main() -> None:
         for root, symbol, evidence, notes, status in (
             (
                 CAST_ROOT,
-                "hitool_core::convert::CastUtil",
-                "crates/hitool-core/tests/convert_parity.rs::cast_util_test_test_cast_to_super",
+                "hutool_core::convert::CastUtil",
+                "crates/hutool-core/tests/convert_parity.rs::cast_util_test_test_cast_to_super",
                 "Identity cast_up/cast_down generics preserve collection type views without unsafe.",
                 "idiomatic",
             ),
             (
                 NCF_ROOT,
-                "hitool_core::convert::NumberChineseFormatter",
+                "hutool_core::convert::NumberChineseFormatter",
                 convert_evidence,
                 "Chinese number formatter mirrors Hutool digit/money conversion helpers.",
                 "idiomatic",
             ),
             (
                 NWF_ROOT,
-                "hitool_core::convert::NumberWordFormatter",
+                "hutool_core::convert::NumberWordFormatter",
                 convert_evidence,
                 "English number-word formatter covers numberToWord/numberToSimple paths.",
                 "idiomatic",
             ),
             (
                 NWFMT_ROOT,
-                "hitool_core::convert::NumberWithFormat",
+                "hutool_core::convert::NumberWithFormat",
                 convert_evidence,
                 "NumberWithFormat value wrapper feeds Convert typed numeric paths.",
                 "idiomatic",
             ),
             (
                 BASIC_ROOT,
-                "hitool_core::convert::BasicType",
+                "hutool_core::convert::BasicType",
                 convert_evidence,
                 "BasicType wrap/unwrap maps primitive class names to Rust scalar tags.",
                 "idiomatic",
             ),
             (
                 REG_ROOT,
-                "hitool_core::convert::ConverterRegistry",
+                "hutool_core::convert::ConverterRegistry",
                 "",
                 "Planned: full ConverterRegistry SPI / Class-keyed converter table beyond typed facades.",
                 "planned",
@@ -223,7 +223,7 @@ def main() -> None:
                 indexed[api_id] = {
                     "api_id": api_id,
                     "status": status,
-                    "hitool_symbol": symbol,
+                    "hutool_symbol": symbol,
                     "test_evidence": evidence,
                     "notes": notes,
                 }
@@ -245,7 +245,7 @@ def main() -> None:
         indexed[api_id] = {
             "api_id": api_id,
             "status": "planned",
-            "hitool_symbol": "hitool_core::convert",
+            "hutool_symbol": "hutool_core::convert",
             "test_evidence": "",
             "notes": (
                 "Planned: convert.impl / SPI converter type; common Convert facades "
