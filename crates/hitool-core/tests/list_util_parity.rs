@@ -291,3 +291,53 @@ fn split_avg_basic() {
     assert_eq!(p.get(1), Some(&[3, 4][..]));
     assert_eq!(p.get(2), Some(&[5][..]));
 }
+
+
+/// 对齐 Java: `ListUtilTest.editTest()`
+#[test]
+fn edit_test() {
+    let a = hitool_core::ListUtil::to_linked_list(["1", "2", "3"]);
+    let edited = hitool_core::CollUtil::edit(a, |s| Some(format!("edit{s}")));
+    assert_eq!(edited[0], "edit1");
+    assert_eq!(edited[1], "edit2");
+    assert_eq!(edited[2], "edit3");
+}
+
+/// 对齐 Java: `ListUtilTest.pageTest()`
+#[test]
+fn page_test() {
+    let a = vec![1, 2, 3, 4, 5];
+    // firstPageNo=0 语义：page(0,2)=[1,2]
+    let p0 = hitool_core::ListUtil::page(&a, 0, 2).unwrap();
+    assert_eq!(p0, &[1, 2]);
+    let p1 = hitool_core::ListUtil::page(&a, 1, 2).unwrap();
+    assert_eq!(p1, &[3, 4]);
+    let p2 = hitool_core::ListUtil::page(&a, 2, 2).unwrap();
+    assert_eq!(p2, &[5]);
+    let p3 = hitool_core::ListUtil::page(&a, 3, 2).unwrap();
+    assert!(p3.is_empty());
+}
+
+/// 对齐 Java: `ListUtilTest.sortByPropertyTest()`
+#[test]
+fn sort_by_property_test() {
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    struct Bean { name: String }
+    let mut list = vec![
+        Bean { name: "c".into() },
+        Bean { name: "a".into() },
+        Bean { name: "b".into() },
+    ];
+    hitool_core::ListUtil::sort_by(&mut list, |x, y| x.name.cmp(&y.name));
+    assert_eq!(list[0].name, "a");
+    assert_eq!(list[1].name, "b");
+    assert_eq!(list[2].name, "c");
+}
+
+/// 对齐 Java: `ListUtilTest.splitBenchTest()`
+#[test]
+fn split_bench_test() {
+    let list: Vec<i32> = (0..1000).collect();
+    let p = hitool_core::ListUtil::partition(&list, 100).unwrap();
+    assert_eq!(p.iter().count(), 10);
+}

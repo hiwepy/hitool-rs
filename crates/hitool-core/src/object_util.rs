@@ -4,6 +4,129 @@
 //! Rust 版本提供对象操作的 idiomatic 实现。
 
 use std::any::Any;
+use std::collections::{BTreeMap, HashMap};
+use std::hash::Hash;
+
+/// 对齐 Java `CharSequence`：文本序列视图。
+pub trait CharSequence {
+    /// 返回 UTF-8 文本内容。
+    fn as_text(&self) -> &str;
+}
+
+impl CharSequence for str {
+    fn as_text(&self) -> &str {
+        self
+    }
+}
+
+impl CharSequence for String {
+    fn as_text(&self) -> &str {
+        self.as_str()
+    }
+}
+
+/// 对齐 Java `ObjectUtil.length` 支持的长度探测目标。
+pub trait ObjectLength {
+    /// 返回对象长度。
+    fn object_length(&self) -> i32;
+}
+
+impl ObjectLength for str {
+    fn object_length(&self) -> i32 {
+        i32_from_usize(self.len())
+    }
+}
+
+impl ObjectLength for String {
+    fn object_length(&self) -> i32 {
+        i32_from_usize(self.len())
+    }
+}
+
+impl<T> ObjectLength for [T] {
+    fn object_length(&self) -> i32 {
+        i32_from_usize(self.len())
+    }
+}
+
+impl<T> ObjectLength for Vec<T> {
+    fn object_length(&self) -> i32 {
+        i32_from_usize(self.len())
+    }
+}
+
+impl<K, V, S> ObjectLength for HashMap<K, V, S> {
+    fn object_length(&self) -> i32 {
+        i32_from_usize(self.len())
+    }
+}
+
+impl<K: Ord, V> ObjectLength for BTreeMap<K, V> {
+    fn object_length(&self) -> i32 {
+        i32_from_usize(self.len())
+    }
+}
+
+/// 对齐 Java `ObjectUtil.contains` 支持的包含探测目标。
+pub trait ObjectContains<E: ?Sized> {
+    /// 判断对象是否包含指定元素。
+    fn object_contains(&self, element: &E) -> bool;
+}
+
+impl ObjectContains<str> for str {
+    fn object_contains(&self, element: &str) -> bool {
+        self.contains(element)
+    }
+}
+
+impl ObjectContains<String> for str {
+    fn object_contains(&self, element: &String) -> bool {
+        self.contains(element.as_str())
+    }
+}
+
+impl<T: PartialEq> ObjectContains<T> for [T] {
+    fn object_contains(&self, element: &T) -> bool {
+        self.iter()
+            .any(|item| ObjectUtil::equal(Some(item), Some(element)))
+    }
+}
+
+impl<T: PartialEq> ObjectContains<T> for Vec<T> {
+    fn object_contains(&self, element: &T) -> bool {
+        self.as_slice().object_contains(element)
+    }
+}
+
+impl<V: PartialEq, K: Eq + Hash, S: std::hash::BuildHasher> ObjectContains<V> for HashMap<K, V, S> {
+    fn object_contains(&self, element: &V) -> bool {
+        self.values()
+            .any(|value| ObjectUtil::equal(Some(value), Some(element)))
+    }
+}
+
+/// 对齐 Java CharSequence 元素经 `toString()` 后的文本；`None` 等价于 Java 返回 null。
+pub trait CharSequenceElement {
+    /// 返回元素文本；`None` 表示 `toString()` 为 null 或不可用。
+    fn element_text(&self) -> Option<&str>;
+}
+
+impl CharSequenceElement for str {
+    fn element_text(&self) -> Option<&str> {
+        Some(self)
+    }
+}
+
+impl CharSequenceElement for String {
+    fn element_text(&self) -> Option<&str> {
+        Some(self.as_str())
+    }
+}
+
+/// 将 `usize` 安全转换为 Java `int` 长度语义下的 `i32`。
+fn i32_from_usize(value: usize) -> i32 {
+    i32::try_from(value).unwrap_or(i32::MAX)
+}
 
 /// 对齐 Java: `cn.hutool.core.util.ObjectUtil`
 #[derive(Debug, Clone, Copy, Default)]
@@ -99,5 +222,184 @@ impl ObjectUtil {
     /// 对齐 Java: `ObjectUtil.isNotEmpty(Object)`
     pub fn is_not_empty_str(value: Option<&str>) -> bool {
         !Self::is_empty_str(value)
+    }
+
+    // ── 长度 / 包含 ──
+
+    /// 对齐 Java: `ObjectUtil.length(Object)` — null 返回 0。
+    pub fn length<T: ObjectLength + ?Sized>(obj: Option<&T>) -> i32 {
+        obj.map(ObjectLength::object_length).unwrap_or(0)
+    }
+
+    /// 对齐 Java: `ObjectUtil.length(Object)` — Iterator/Enumeration；副作用：消耗迭代器。
+    pub fn length_iter<I: Iterator>(iter: I) -> i32 {
+        i32_from_usize(iter.count())
+    }
+
+    /// 对齐 Java: `ObjectUtil.length(Object)` — 不支持的类型返回 -1。
+    pub fn length_unsupported<T: ?Sized>(_obj: &T) -> i32 {
+        -1
+    }
+
+    /// 对齐 Java: `ObjectUtil.contains(Object, Object)` — null obj 返回 false。
+    pub fn contains<O, E>(obj: Option<&O>, element: Option<&E>) -> bool
+    where
+        O: ObjectContains<E> + ?Sized,
+        E: ?Sized,
+    {
+        match (obj, element) {
+            (Some(obj), Some(element)) => obj.object_contains(element),
+            _ => false,
+        }
+    }
+
+    /// 对齐 Java: CharSequence 分支 — element 为 CharSequence 时使用 `toString()` 文本匹配。
+    pub fn contains_text<T, E>(obj: Option<&T>, element: &E) -> bool
+    where
+        T: CharSequence + ?Sized,
+        E: CharSequenceElement,
+    {
+        match (obj.map(CharSequence::as_text), element.element_text()) {
+            (Some(obj_text), Some(element_text)) => obj_text.contains(element_text),
+            _ => false,
+        }
+    }
+
+    /// 对齐 Java: CharSequence 分支 — element 非 CharSequence 时返回 false。
+    pub fn contains_text_with_non_char_sequence<T, E>(obj: Option<&T>, _element: &E) -> bool
+    where
+        T: CharSequence + ?Sized,
+        E: ?Sized,
+    {
+        let _ = obj;
+        false
+    }
+
+    /// 对齐 Java: `ObjectUtil.contains(Object, Object)` — Iterator/Enumeration。
+    pub fn contains_iter<I, T>(mut obj: I, element: Option<&T>) -> bool
+    where
+        I: Iterator<Item = T>,
+        T: PartialEq,
+    {
+        match element {
+            Some(element) => obj.any(|item| Self::equal(Some(&item), Some(element))),
+            None => false,
+        }
+    }
+
+    /// 对齐 Java: `ObjectUtil.equals`（`equal` 别名）
+    pub fn equals<T: PartialEq>(a: Option<&T>, b: Option<&T>) -> bool {
+        Self::equal(a, b)
+    }
+
+    /// 对齐 Java: `ObjectUtil.isEmpty(Object)` — 通用空判断。
+    pub fn is_empty<T: ObjectLength + ?Sized>(obj: Option<&T>) -> bool {
+        obj.map_or(true, |v| v.object_length() == 0)
+    }
+
+    /// 对齐 Java: `ObjectUtil.isNotEmpty(Object)`
+    pub fn is_not_empty<T: ObjectLength + ?Sized>(obj: Option<&T>) -> bool {
+        !Self::is_empty(obj)
+    }
+
+    /// 对齐 Java: `ObjectUtil.defaultIfEmpty(String, String)`
+    pub fn default_if_empty<'a>(value: &'a str, default: &'a str) -> &'a str {
+        if value.is_empty() { default } else { value }
+    }
+
+    /// 对齐 Java: `ObjectUtil.defaultIfBlank(String, String)`
+    pub fn default_if_blank<'a>(value: &'a str, default: &'a str) -> &'a str {
+        if value.trim().is_empty() {
+            default
+        } else {
+            value
+        }
+    }
+
+    /// 对齐 Java: `ObjectUtil.cloneIfPossible`
+    pub fn clone_if_possible<T: Clone>(value: &T) -> T {
+        value.clone()
+    }
+
+    /// 对齐 Java: `ObjectUtil.hasNull(Object...)`
+    pub fn has_null(values: &[bool]) -> bool {
+        // values[i]==true 表示该槽位为 null
+        values.iter().any(|&is_null| is_null)
+    }
+
+    /// 对齐 Java: `ObjectUtil.hasEmpty` — 空字符串检测。
+    pub fn has_empty(values: &[&str]) -> bool {
+        values.iter().any(|s| s.is_empty())
+    }
+
+    /// 对齐 Java: `ObjectUtil.isAllEmpty`
+    pub fn is_all_empty(values: &[&str]) -> bool {
+        values.iter().all(|s| s.is_empty())
+    }
+
+    /// 对齐 Java: `ObjectUtil.isAllNotEmpty`
+    pub fn is_all_not_empty(values: &[&str]) -> bool {
+        values.iter().all(|s| !s.is_empty())
+    }
+
+    /// 对齐 Java: `ObjectUtil.emptyCount`
+    pub fn empty_count(values: &[&str]) -> i32 {
+        values.iter().filter(|s| s.is_empty()).count() as i32
+    }
+
+    /// 对齐 Java: `ObjectUtil.isValidIfNumber` — 非数字对象视为 valid。
+    pub fn is_valid_if_number(value: &dyn Any) -> bool {
+        if let Some(n) = value.downcast_ref::<f64>() {
+            return n.is_finite();
+        }
+        if let Some(n) = value.downcast_ref::<f32>() {
+            return n.is_finite();
+        }
+        true
+    }
+
+    /// 对齐 Java: `ObjectUtil.compare(..., boolean nullGreater)`
+    pub fn compare_null_greater<T: Ord>(a: Option<&T>, b: Option<&T>, null_greater: bool) -> i32 {
+        match (a, b) {
+            (Some(a), Some(b)) => a.cmp(b) as i32,
+            (None, Some(_)) => {
+                if null_greater {
+                    1
+                } else {
+                    -1
+                }
+            }
+            (Some(_), None) => {
+                if null_greater {
+                    -1
+                } else {
+                    1
+                }
+            }
+            (None, None) => 0,
+        }
+    }
+
+    /// 对齐 Java: `ObjectUtil.apply` — source 非空时应用 handler。
+    pub fn apply<T, R, F>(source: Option<T>, handler: F) -> Option<R>
+    where
+        F: FnOnce(T) -> R,
+    {
+        source.map(handler)
+    }
+
+    /// 对齐 Java: `ObjectUtil.accept` — source 非空时消费。
+    pub fn accept<T, F>(source: Option<T>, consumer: F)
+    where
+        F: FnOnce(T),
+    {
+        if let Some(value) = source {
+            consumer(value);
+        }
+    }
+
+    /// 对齐 Java: `ObjectUtil.clone` — Clone trait 路径。
+    pub fn clone_value<T: Clone>(value: &T) -> T {
+        value.clone()
     }
 }

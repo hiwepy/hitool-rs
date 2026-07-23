@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use base64::Engine as _;
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::engine::general_purpose::{STANDARD, URL_SAFE, URL_SAFE_NO_PAD};
 use jsonwebtoken::crypto;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey};
 use p256::elliptic_curve::sec1::ToEncodedPoint as _;
@@ -105,10 +105,44 @@ impl Claims {
         self
     }
 
+    /// Returns a claim as `i64`, matching Hutool `JSONObject#getLong`.
+    #[must_use]
+    pub fn get_long(&self, name: &str) -> Option<i64> {
+        self.0.get(name).and_then(|value| {
+            value
+                .as_i64()
+                .or_else(|| value.as_u64().and_then(|n| i64::try_from(n).ok()))
+                .or_else(|| value.as_f64().map(|n| n as i64))
+        })
+    }
+
     fn encode(&self) -> String {
         URL_SAFE_NO_PAD
             .encode(serde_json::to_vec(&self.0).expect("serde_json::Value maps always serialize"))
     }
+}
+
+/// Decodes a JWT header/payload segment (URL-safe or standard Base64, optional padding).
+fn decode_jwt_part(part: &str) -> Result<Vec<u8>, JWTException> {
+    let pad = |input: &str| -> String {
+        let rem = input.len() % 4;
+        if rem == 0 {
+            input.to_owned()
+        } else {
+            format!("{input}{}", "=".repeat(4 - rem))
+        }
+    };
+    let padded = pad(part);
+    if let Ok(bytes) = URL_SAFE.decode(padded.as_bytes()) {
+        return Ok(bytes);
+    }
+    if let Ok(bytes) = URL_SAFE_NO_PAD.decode(part.as_bytes()) {
+        return Ok(bytes);
+    }
+    let standard = padded.replace('-', "+").replace('_', "/");
+    STANDARD
+        .decode(standard.as_bytes())
+        .map_err(JWTException::from)
 }
 
 impl fmt::Display for Claims {
@@ -423,9 +457,16 @@ impl AsymmetricJWTSigner {
     ) -> Result<Self, JWTException> {
         if !matches!(
             algorithm,
-            Algorithm::RS256 | Algorithm::RS384 | Algorithm::RS512
+            Algorithm::RS256
+                | Algorithm::RS384
+                | Algorithm::RS512
+                | Algorithm::PS256
+                | Algorithm::PS384
+                | Algorithm::PS512
         ) {
-            return Err(JWTException::new("algorithm is not an RSA JWT algorithm"));
+            return Err(JWTException::new(
+                "algorithm is not an RSA or RSA-PSS JWT algorithm",
+            ));
         }
         let private_key = rsa_private_der(private_key)?;
         let public_key = rsa_public_der(public_key)?;
@@ -546,6 +587,9 @@ impl AlgorithmUtil {
             "RS512" | "SHA512WITHRSA" => Ok(Algorithm::RS512),
             "ES256" | "SHA256WITHECDSA" => Ok(Algorithm::ES256),
             "ES384" | "SHA384WITHECDSA" => Ok(Algorithm::ES384),
+            "PS256" | "SHA256WITHRSAANDMGF1" => Ok(Algorithm::PS256),
+            "PS384" | "SHA384WITHRSAANDMGF1" => Ok(Algorithm::PS384),
+            "PS512" | "SHA512WITHRSAANDMGF1" => Ok(Algorithm::PS512),
             _ => Err(JWTException::formatted(
                 "unsupported JWT algorithm: {}",
                 &[&value],
@@ -629,6 +673,27 @@ impl JWTSignerUtil {
     ) -> Result<EllipticCurveJWTSigner, JWTException> {
         EllipticCurveJWTSigner::from_pem(Algorithm::ES384, private_key, public_key)
     }
+    /// PS256 (RSASSA-PSS) signer from separate private and public PEM keys.
+    pub fn ps256(
+        private_key: &[u8],
+        public_key: &[u8],
+    ) -> Result<AsymmetricJWTSigner, JWTException> {
+        AsymmetricJWTSigner::from_rsa_pem(Algorithm::PS256, private_key, public_key)
+    }
+    /// PS384 (RSASSA-PSS) signer from separate private and public PEM keys.
+    pub fn ps384(
+        private_key: &[u8],
+        public_key: &[u8],
+    ) -> Result<AsymmetricJWTSigner, JWTException> {
+        AsymmetricJWTSigner::from_rsa_pem(Algorithm::PS384, private_key, public_key)
+    }
+    /// PS512 (RSASSA-PSS) signer from separate private and public PEM keys.
+    pub fn ps512(
+        private_key: &[u8],
+        public_key: &[u8],
+    ) -> Result<AsymmetricJWTSigner, JWTException> {
+        AsymmetricJWTSigner::from_rsa_pem(Algorithm::PS512, private_key, public_key)
+    }
     /// Rejects ES512 because the selected `RustCrypto` JOSE engine does not expose it.
     pub fn es512(
         _private_key: &[u8],
@@ -691,10 +756,13 @@ impl JWTSignerUtil {
             Algorithm::RS256 => Ok(Arc::new(Self::rs256(private_key, public_key)?)),
             Algorithm::RS384 => Ok(Arc::new(Self::rs384(private_key, public_key)?)),
             Algorithm::RS512 => Ok(Arc::new(Self::rs512(private_key, public_key)?)),
+            Algorithm::PS256 => Ok(Arc::new(Self::ps256(private_key, public_key)?)),
+            Algorithm::PS384 => Ok(Arc::new(Self::ps384(private_key, public_key)?)),
+            Algorithm::PS512 => Ok(Arc::new(Self::ps512(private_key, public_key)?)),
             Algorithm::ES256 => Ok(Arc::new(Self::es256(private_key, public_key)?)),
             Algorithm::ES384 => Ok(Arc::new(Self::es384(private_key, public_key)?)),
             _ => Err(JWTException::new(
-                "PEM key pairs require an RSA or ECDSA JWT algorithm",
+                "PEM key pairs require an RSA, RSA-PSS, or ECDSA JWT algorithm",
             )),
         }
     }
@@ -741,6 +809,9 @@ impl JWT {
 
     /// Replaces this object with parsed token content.
     pub fn parse(mut self, token: &str) -> Result<Self, JWTException> {
+        if token.trim().is_empty() {
+            return Err(JWTException::new("Token String must be not blank!"));
+        }
         let parts: Vec<_> = token.split('.').collect();
         if parts.len() != 3 {
             return Err(JWTException::formatted(
@@ -748,9 +819,9 @@ impl JWT {
                 &[&parts.len()],
             ));
         }
-        let header = String::from_utf8(URL_SAFE_NO_PAD.decode(parts[0])?)
+        let header = String::from_utf8(decode_jwt_part(parts[0])?)
             .map_err(|error| JWTException::new(error.to_string()))?;
-        let payload = String::from_utf8(URL_SAFE_NO_PAD.decode(parts[1])?)
+        let payload = String::from_utf8(decode_jwt_part(parts[1])?)
             .map_err(|error| JWTException::new(error.to_string()))?;
         self.header = JWTHeader(Claims::parse(&header)?);
         self.payload = JWTPayload(Claims::parse(&payload)?);
@@ -762,13 +833,21 @@ impl JWT {
         Ok(self)
     }
 
-    /// Configures HS256 with a shared key.
-    pub fn set_key(&mut self, key: &[u8]) -> &mut Self {
-        self.set_signer(Arc::new(HMacJWTSigner {
-            algorithm: Algorithm::HS256,
-            encoding: EncodingKey::from_secret(key),
-            decoding: DecodingKey::from_secret(key),
-        }))
+    /// Configures an HMAC signer from the shared key.
+    ///
+    /// Aligns with Hutool `JWT#setKey(byte[])`: uses the existing header `alg`
+    /// when present (so a pre-set `HS384` header yields an HS384 signer), otherwise
+    /// defaults to HS256. When `alg` is `none`/empty, returns an error (Hutool throws).
+    pub fn set_key(&mut self, key: &[u8]) -> Result<&mut Self, JWTException> {
+        let algorithm_id = self.algorithm().unwrap_or("HS256");
+        if NoneJWTSigner::is_none(Some(algorithm_id)) {
+            return Err(JWTException::new(
+                "When key is not null, algorithmId must not be none.",
+            ));
+        }
+        let signer = JWTSignerUtil::create_signer(algorithm_id, key)?;
+        self.set_signer(Arc::new(signer));
+        Ok(self)
     }
 
     /// Sets the signer and its header algorithm when absent.
@@ -815,6 +894,24 @@ impl JWT {
             .claims()
             .get_claim(JWTHeader::ALGORITHM)
             .and_then(Value::as_str)
+    }
+
+    /// Returns a header claim by name (Hutool `JWT#getHeader(String)`).
+    #[must_use]
+    pub fn get_header(&self, name: &str) -> Option<&Value> {
+        self.header.claims().get_claim(name)
+    }
+
+    /// Returns a payload claim by name (Hutool `JWT#getPayload(String)`).
+    #[must_use]
+    pub fn get_payload(&self, name: &str) -> Option<&Value> {
+        self.payload.claims().get_claim(name)
+    }
+
+    /// Returns all payload claims (Hutool `JWT#getPayloads()`).
+    #[must_use]
+    pub const fn get_payloads(&self) -> &Claims {
+        self.payload.claims()
     }
 
     /// Sets a header.
@@ -868,21 +965,37 @@ impl JWT {
     }
 
     /// Verifies using the configured signer.
+    ///
+    /// Aligns with Hutool `JWT#verify()`: a missing signer defaults to `none`.
     pub fn verify(&self) -> Result<bool, JWTException> {
-        let signer = self
-            .signer
-            .as_ref()
-            .ok_or_else(|| JWTException::new("no signer provided"))?;
-        self.verify_with(signer.as_ref())
+        match self.signer.as_ref() {
+            Some(signer) => self.verify_with(signer.as_ref()),
+            None => self.verify_with(&NoneJWTSigner),
+        }
     }
 
     /// Verifies with an explicit signer.
+    ///
+    /// Aligns with Hutool `JWT#verify(JWTSigner)` including `alg=none` guards.
     pub fn verify_with(&self, signer: &dyn JWTSigner) -> Result<bool, JWTException> {
         let parts = self
             .tokens
             .as_ref()
             .ok_or_else(|| JWTException::new("no token to verify"))?;
-        if self.algorithm() != Some(signer.algorithm_id()) {
+        let none_alg = NoneJWTSigner::is_none(self.algorithm());
+        let none_signer = NoneJWTSigner::is_none(Some(signer.algorithm_id()));
+        if none_alg && !none_signer {
+            return Err(JWTException::formatted(
+                "Alg is 'none' but use: {} !",
+                &[&signer.algorithm_id()],
+            ));
+        }
+        if none_signer && !none_alg {
+            return Err(JWTException::new(
+                "Alg is not 'none' but use NoneJWTSigner!",
+            ));
+        }
+        if !none_alg && self.algorithm() != Some(signer.algorithm_id()) {
             return Err(JWTException::new(
                 "header and signer algorithms do not match",
             ));
@@ -894,6 +1007,17 @@ impl JWT {
     #[must_use]
     pub fn validate(&self) -> JWTValidator {
         JWTValidator::new(self)
+    }
+
+    /// Verifies signature and registered dates with the supplied leeway.
+    ///
+    /// Aligns with Hutool `JWT#validate(long)`.
+    pub fn validate_leeway(&self, leeway: u64) -> Result<bool, JWTException> {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        self.is_valid_at(now, leeway)
     }
 
     /// Verifies signature and registered dates with the supplied leeway.
@@ -1025,7 +1149,7 @@ impl JWTUtil {
     ) -> Result<String, JWTException> {
         let mut jwt = JWT::create();
         jwt.add_headers(headers).add_payloads(payload);
-        jwt.set_key(key);
+        jwt.set_key(key)?;
         jwt.sign()
     }
 
@@ -1056,7 +1180,7 @@ impl JWTUtil {
     /// Verifies an HS256 token.
     pub fn verify(token: &str, key: &[u8]) -> Result<bool, JWTException> {
         let mut jwt = JWT::of(token)?;
-        jwt.set_key(key);
+        jwt.set_key(key)?;
         jwt.verify()
     }
 
@@ -1409,7 +1533,7 @@ mod tests {
             .set_payload("role", Value::String("admin".into()));
         jwt.payload_mut().set_audience("audience");
         jwt.add_payloads(map(&serde_json::json!({"batch-payload":3})));
-        jwt.set_key(SECRET);
+        jwt.set_key(SECRET).unwrap();
         assert!(jwt.signer().is_some());
         assert_eq!(jwt.algorithm(), Some("HS256"));
         let token = jwt.sign().unwrap();
@@ -1418,7 +1542,7 @@ mod tests {
         assert_eq!(jwt.payload().claims().get_claim("sub").unwrap(), "subject");
 
         let mut no_type = JWT::create();
-        no_type.set_key(SECRET);
+        no_type.set_key(SECRET).unwrap();
         let token_without_type = no_type.sign_with_type(false).unwrap();
         assert!(
             JWT::of(&token_without_type)
@@ -1431,7 +1555,7 @@ mod tests {
 
         let mut parsed = JWT::of(&token).unwrap();
         assert!(parsed.verify().is_err());
-        parsed.set_key(SECRET);
+        parsed.set_key(SECRET).unwrap();
         assert!(parsed.verify().unwrap());
         assert!(parsed.validate().validate_algorithm().is_ok());
         assert!(
@@ -1443,10 +1567,11 @@ mod tests {
         assert!(parsed.is_valid_at(100, 0).unwrap());
 
         let mut expired = JWT::create();
-        expired.set_expires_at(99).set_key(SECRET);
+        expired.set_expires_at(99);
+        expired.set_key(SECRET).unwrap();
         let expired_token = expired.sign().unwrap();
         let mut expired = JWT::of(&expired_token).unwrap();
-        expired.set_key(SECRET);
+        expired.set_key(SECRET).unwrap();
         assert!(!expired.is_valid_at(100, 0).unwrap());
         let wrong: Arc<dyn JWTSigner> = Arc::new(JWTSignerUtil::hs384(SECRET).unwrap());
         assert!(parsed.verify_with(wrong.as_ref()).is_err());

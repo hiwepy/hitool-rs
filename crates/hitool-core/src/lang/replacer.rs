@@ -1,14 +1,36 @@
 //! 对齐: `cn.hutool.core.lang.Replacer`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/lang/Replacer.java
-//!
-//! Hutool 的 `Replacer` Java 类型,等待完整实现。
-//! 状态: 对齐桩(对象/方法/参数已对齐),等待 `hitool-core` 内部继续迁移。
 
-use crate::{CoreError, Result};
+/// 对齐 Java: `cn.hutool.core.lang.Replacer<T>`
+pub trait Replacer<T> {
+    /// 对齐 Java: `Replacer.replace(T)`
+    fn replace(&mut self, value: T) -> T;
+}
 
-/// 对齐 Java: `cn.hutool.core.lang.Replacer`
-#[derive(Debug, Clone, Default)]
-pub struct Replacer;
+impl<T, F> Replacer<T> for F
+where
+    F: FnMut(T) -> T,
+{
+    fn replace(&mut self, value: T) -> T {
+        self(value)
+    }
+}
 
-impl Replacer {
+/// 对迭代器逐项替换。
+pub fn replace_all<T, R: Replacer<T>>(
+    items: impl IntoIterator<Item = T>,
+    mut replacer: R,
+) -> Vec<T> {
+    items.into_iter().map(|v| replacer.replace(v)).collect()
+}
+
+#[cfg(test)]
+mod replacer_idiomatic_parity {
+    use super::*;
+
+    #[test]
+    fn replacer_maps_values() {
+        let out = replace_all(vec![1, 2, 3], |x| x * 2);
+        assert_eq!(out, vec![2, 4, 6]);
+    }
 }

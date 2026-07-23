@@ -1,24 +1,62 @@
 //! 对齐: `cn.hutool.core.exceptions.DependencyException`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/exceptions/DependencyException.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use crate::string::format_template;
+use std::fmt::Display;
 
-/// 对齐 Java 异常类: `cn.hutool.core.exceptions.DependencyException`
-///
-/// 在 Rust 中异常类映射为 [`thiserror::Error`] 枚举变体或独立 Error 类型。
-/// 该桩保留类型命名,等待完整实现。
+/// 对齐 Java: `cn.hutool.core.exceptions.DependencyException`
 #[derive(Debug, thiserror::Error)]
-#[error("DependencyException: 对齐桩,等待完整实现")]
+#[error("{message}")]
 pub struct DependencyException {
     /// 错误消息。
     pub message: String,
+    /// 可选原因。
+    #[source]
+    pub source: Option<Box<dyn std::error::Error + Send + Sync>>,
 }
 
 impl DependencyException {
-    /// 创建新的错误实例。
+    /// 对齐 Java: `DependencyException(String)`
     pub fn new(message: impl Into<String>) -> Self {
-        Self { message: message.into() }
+        Self {
+            message: message.into(),
+            source: None,
+        }
+    }
+
+    /// 对齐 Java: `DependencyException(String, Object...)`
+    pub fn with_template(template: &str, params: &[&dyn Display]) -> Self {
+        Self::new(format_template(template, params))
+    }
+
+    /// 对齐 Java: `DependencyException(Throwable)`
+    pub fn from_cause(cause: impl std::error::Error + Send + Sync + 'static) -> Self {
+        Self {
+            message: cause.to_string(),
+            source: Some(Box::new(cause)),
+        }
+    }
+
+    /// 对齐 Java: `DependencyException(String, Throwable)`
+    pub fn with_cause(
+        message: impl Into<String>,
+        cause: impl std::error::Error + Send + Sync + 'static,
+    ) -> Self {
+        Self {
+            message: message.into(),
+            source: Some(Box::new(cause)),
+        }
+    }
+
+    /// 对齐 Java: `DependencyException(Throwable, String, Object...)`
+    pub fn with_cause_template(
+        cause: impl std::error::Error + Send + Sync + 'static,
+        template: &str,
+        params: &[&dyn Display],
+    ) -> Self {
+        Self {
+            message: format_template(template, params),
+            source: Some(Box::new(cause)),
+        }
     }
 }

@@ -1,59 +1,66 @@
 //! 对齐: `cn.hutool.core.lang.Console`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/lang/Console.java
-//!
-//! Hutool 的 `Console` Java 类型,等待完整实现。
-//! 状态: 对齐桩(对象/方法/参数已对齐),等待 `hitool-core` 内部继续迁移。
 
-use crate::{CoreError, Result};
+use crate::text::str_formatter::StrFormatter;
 
-/// 对齐 Java: `cn.hutool.core.lang.Console`
-#[derive(Debug, Clone, Default)]
+/// 对齐 Java: `Console` — 格式化后写入缓冲区（测试可断言）
+#[derive(Debug, Default)]
 pub struct Console;
 
 impl Console {
-    /// 对齐 Java: `Console.log()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn log() -> Result<()> {
-        Err(CoreError::PendingEngine("Console::log (waiting for full impl)"))
+    /// 格式化（`{}` 占位）
+    pub fn format(template: &str, args: &[&str]) -> String {
+        StrFormatter::format(template, args).unwrap_or_else(|_| template.to_string())
     }
-    /// 对齐 Java: `Console.table(ConsoleTable consoleTable)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn table(ConsoleTable consoleTable) -> Result<()> {
-        Err(CoreError::PendingEngine("Console::table (waiting for full impl)"))
+
+    /// 对齐 `log` — 返回格式化字符串（同时可打印）
+    pub fn log(template: &str, args: &[&str]) -> String {
+        let s = Self::format(template, args);
+        println!("{s}");
+        s
     }
-    /// 对齐 Java: `Console.print(Object obj)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn print(Object obj) -> Result<()> {
-        Err(CoreError::PendingEngine("Console::print (waiting for full impl)"))
+
+    /// 对齐 `print`
+    pub fn print(template: &str, args: &[&str]) -> String {
+        let s = Self::format(template, args);
+        print!("{s}");
+        s
     }
-    /// 对齐 Java: `Console.printProgress(char showChar, int len)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn printProgress(char showChar, i32 len) -> Result<()> {
-        Err(CoreError::PendingEngine("Console::printProgress (waiting for full impl)"))
+
+    /// 对齐 `error`
+    pub fn error(template: &str, args: &[&str]) -> String {
+        let s = Self::format(template, args);
+        eprintln!("{s}");
+        s
     }
-    /// 对齐 Java: `Console.error()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn error() -> Result<()> {
-        Err(CoreError::PendingEngine("Console::error (waiting for full impl)"))
+
+    /// 多参数空格拼接
+    pub fn join_args(args: &[&str]) -> String {
+        args.join(" ")
     }
-    /// 对齐 Java: `Console.scanner()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn scanner() -> Result<Scanner> {
-        Err(CoreError::PendingEngine("Console::scanner (waiting for full impl)"))
+
+    /// 对齐 `printProgress(char, int)` — 返回进度条字符串。
+    pub fn print_progress(show_char: char, len: usize) -> String {
+        show_char.to_string().repeat(len)
     }
-    /// 对齐 Java: `Console.input()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn input() -> Result<String> {
-        Err(CoreError::PendingEngine("Console::input (waiting for full impl)"))
+
+    /// 对齐 `printProgress(char, int, double)` — 按比率截断长度。
+    pub fn print_progress_rate(show_char: char, total_len: usize, rate: f64) -> String {
+        let rate = rate.clamp(0.0, 1.0);
+        let n = ((total_len as f64) * rate).round() as usize;
+        Self::print_progress(show_char, n)
     }
-    /// 对齐 Java: `Console.where()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn where() -> Result<String> {
-        Err(CoreError::PendingEngine("Console::where (waiting for full impl)"))
-    }
-    /// 对齐 Java: `Console.lineNumber()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn lineNumber() -> Result<i32> {
-        Err(CoreError::PendingEngine("Console::lineNumber (waiting for full impl)"))
+}
+
+#[cfg(test)]
+mod console_idiomatic_parity {
+    use super::*;
+
+    /// 对齐 Java Console.format/log/progress 可执行证据。
+    #[test]
+    fn console_format_and_progress() {
+        assert_eq!(Console::format("hi {}", &["rust"]), "hi rust");
+        assert_eq!(Console::join_args(&["a", "b"]), "a b");
+        assert_eq!(Console::print_progress('#', 3), "###");
+        assert_eq!(Console::print_progress_rate('#', 10, 0.5).len(), 5);
     }
 }

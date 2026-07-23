@@ -1,20 +1,48 @@
 //! 对齐: `cn.hutool.core.lang.hash.KetamaHash`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/lang/hash/KetamaHash.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use ::md5::{Digest, Md5};
 
-/// 对齐 Java 类: `cn.hutool.core.lang.hash.KetamaHash`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
+/// 对齐 Java: `cn.hutool.core.lang.hash.KetamaHash`
+#[derive(Debug, Clone, Copy, Default)]
 pub struct KetamaHash;
 
 impl KetamaHash {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// UTF-8 MD5 摘要。
+    fn md5(key: &str) -> [u8; 16] {
+        let mut hasher = Md5::new();
+        hasher.update(key.as_bytes());
+        hasher.finalize().into()
+    }
+
+    /// 对齐 Java: `hash64(String)`
+    pub fn hash64(key: &str) -> i64 {
+        let b = Self::md5(key);
+        ((b[3] as i64 & 0xff) << 24)
+            | ((b[2] as i64 & 0xff) << 16)
+            | ((b[1] as i64 & 0xff) << 8)
+            | (b[0] as i64 & 0xff)
+    }
+
+    /// 对齐 Java: `hash32(String)`
+    pub fn hash32(key: &str) -> i32 {
+        (Self::hash64(key) & 0xffff_ffff) as i32
+    }
+
+    /// 对齐 Java: `hash(String)` → 返回 hash64。
+    pub fn hash(key: &str) -> i64 {
+        Self::hash64(key)
+    }
+}
+
+#[cfg(test)]
+mod ketama_hash_idiomatic_parity {
+    use super::*;
+
+    #[test]
+    fn ketama_hash32_matches_hash64_low_bits() {
+        let h64 = KetamaHash::hash64("node-1");
+        assert_eq!(KetamaHash::hash32("node-1"), (h64 & 0xffff_ffff) as i32);
+        assert_eq!(KetamaHash::hash("node-1"), h64);
     }
 }

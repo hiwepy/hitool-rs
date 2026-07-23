@@ -142,12 +142,30 @@ pub(crate) fn read_text(path: &Path, encoding: &'static Encoding) -> Result<Stri
     Ok(text.into_owned())
 }
 
-pub(crate) const DEFAULT_ENCODING: &Encoding = UTF_8;
+/// UTF-8 charset used by Hutool `Setting` by default (exposed for parity tests).
+pub const DEFAULT_ENCODING: &Encoding = UTF_8;
 
+/// Builds a nested [`Config`] from flat property keys.
+///
+/// Supports Hutool-style dotted paths (`credentials.username`) and array
+/// indices (`hobby[0]`) so `to_bean` can deserialize nested beans. Bracket
+/// subscripts must be preserved — config treats `.0` as a map key, not an index.
 pub(crate) fn config_from_string_map(
     values: &std::collections::HashMap<String, String>,
 ) -> Result<Config, ConfigError> {
-    Config::try_from(values)
+    let mut builder = Config::builder();
+    for (key, value) in values {
+        builder = builder.set_override(normalize_property_key(key), value.clone())?;
+    }
+    builder.build()
+}
+
+/// Normalizes Hutool property keys into config-crate path expressions.
+///
+/// Leaves `hobby[0]` / `credentials.username` intact so array indices stay
+/// [`config`] Index postfixes rather than string map keys.
+pub(crate) fn normalize_property_key(key: &str) -> String {
+    key.to_owned()
 }
 
 #[cfg(test)]

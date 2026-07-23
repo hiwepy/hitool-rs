@@ -43,3 +43,28 @@ pub enum AnsiColor {
     /// 对齐 Java 枚举常量: `BRIGHT_WHITE`
     BRIGHT_WHITE,
 }
+
+impl AnsiColor {
+    /// ANSI 前景色代码
+    pub fn code(self) -> u8 {
+        match self {
+            Self::DEFAULT => 39,
+            Self::BLACK => 30,
+            Self::RED => 31,
+            Self::GREEN => 32,
+            Self::YELLOW => 33,
+            Self::BLUE => 34,
+            Self::MAGENTA => 35,
+            Self::CYAN => 36,
+            Self::WHITE => 37,
+            Self::BRIGHT_BLACK => 90,
+            Self::BRIGHT_RED => 91,
+            Self::BRIGHT_GREEN => 92,
+            Self::BRIGHT_YELLOW => 93,
+            Self::BRIGHT_BLUE => 94,
+            Self::BRIGHT_MAGENTA => 95,
+            Self::BRIGHT_CYAN => 96,
+            Self::BRIGHT_WHITE => 97,
+        }
+    }
+}

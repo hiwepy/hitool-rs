@@ -1,34 +1,77 @@
 //! 对齐: `cn.hutool.core.lang.Pair`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/lang/Pair.java
-//!
-//! Hutool 的 `Pair` Java 类型,等待完整实现。
-//! 状态: 对齐桩(对象/方法/参数已对齐),等待 `hitool-core` 内部继续迁移。
 
-use crate::{CoreError, Result};
+use std::fmt;
+use std::hash::{Hash, Hasher};
 
-/// 对齐 Java: `cn.hutool.core.lang.Pair` (容器类型)
-#[derive(Debug, Clone, Default)]
-pub struct Pair;
+/// 对齐 Java: `cn.hutool.core.lang.Pair`
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Pair<K, V> {
+    key: K,
+    value: V,
+}
 
-impl Pair {
-    /// 对齐 Java: `Pair.of(K key, V value)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn of(K key, V value) -> Result<Pair<K, V>> {
-        Err(CoreError::PendingEngine("Pair::of (waiting for full impl)"))
+impl<K, V> Pair<K, V> {
+    /// 对齐 Java: `Pair.of(K, V)` / `Pair(K, V)`
+    #[must_use]
+    pub fn of(key: K, value: V) -> Self {
+        Self { key, value }
     }
+
     /// 对齐 Java: `Pair.getKey()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn getKey() -> Result<K> {
-        Err(CoreError::PendingEngine("Pair::getKey (waiting for full impl)"))
+    pub fn get_key(&self) -> &K {
+        &self.key
     }
+
     /// 对齐 Java: `Pair.getValue()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn getValue() -> Result<V> {
-        Err(CoreError::PendingEngine("Pair::getValue (waiting for full impl)"))
+    pub fn get_value(&self) -> &V {
+        &self.value
     }
-    /// 对齐 Java: `Pair.equals(Object o)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn equals(Object o) -> Result<bool> {
-        Err(CoreError::PendingEngine("Pair::equals (waiting for full impl)"))
+
+    /// 消费并拆成元组。
+    pub fn into_parts(self) -> (K, V) {
+        (self.key, self.value)
+    }
+}
+
+impl<K: Hash, V: Hash> Hash for Pair<K, V> {
+    /// 对齐 Java: `Objects.hashCode(key) ^ Objects.hashCode(value)`
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // 使用标准哈希再异或，贴近 Java HashMap.Node 风格。
+        let mut hk = std::collections::hash_map::DefaultHasher::new();
+        self.key.hash(&mut hk);
+        let mut hv = std::collections::hash_map::DefaultHasher::new();
+        self.value.hash(&mut hv);
+        state.write_u64(hk.finish() ^ hv.finish());
+    }
+}
+
+impl<K: fmt::Display, V: fmt::Display> fmt::Display for Pair<K, V> {
+    /// 对齐 Java: `Pair.toString()`
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Pair [key={}, value={}]", self.key, self.value)
+    }
+}
+
+/// 对齐 Java: `Pair.equals(Object)`
+impl<K: PartialEq, V: PartialEq> Pair<K, V> {
+    /// 显式 equals，与 `PartialEq` 一致。
+    pub fn equals(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+#[cfg(test)]
+mod pair_idiomatic_parity {
+    use super::*;
+
+    /// 对齐 Java Pair 构造/取值/相等的可执行证据。
+    #[test]
+    fn pair_of_getters_equals_and_display() {
+        let p = Pair::of("k", 1);
+        assert_eq!(*p.get_key(), "k");
+        assert_eq!(*p.get_value(), 1);
+        assert!(p.equals(&Pair::of("k", 1)));
+        assert_eq!(p.to_string(), "Pair [key=k, value=1]");
     }
 }

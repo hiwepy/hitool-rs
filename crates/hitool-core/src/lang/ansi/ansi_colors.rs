@@ -1,20 +1,50 @@
 //! 对齐: `cn.hutool.core.lang.ansi.AnsiColors`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/lang/ansi/AnsiColors.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+/// 色深
+#[derive(Debug, Clone, Copy)]
+pub enum BitDepth {
+    /// 4-bit
+    Four,
+    /// 8-bit
+    Eight,
+}
 
-/// 对齐 Java 类: `cn.hutool.core.lang.ansi.AnsiColors`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct AnsiColors;
+/// 最近色结果
+#[derive(Debug, Clone, Copy)]
+pub struct ClosestColor {
+    /// ANSI 码
+    pub code: u8,
+}
+
+impl ClosestColor {
+    /// 转为前景/背景码
+    pub fn to_ansi_code(self, fore: bool) -> u8 {
+        if fore {
+            self.code
+        } else {
+            self.code.saturating_add(10)
+        }
+    }
+}
+
+/// 对齐 Java: `AnsiColors`
+pub struct AnsiColors {
+    depth: BitDepth,
+}
 
 impl AnsiColors {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 构造
+    pub fn new(depth: BitDepth) -> Self {
+        Self { depth }
+    }
+
+    /// 找最近颜色（简化：灰度映射）
+    pub fn find_closest(&self, r: u8, g: u8, b: u8) -> ClosestColor {
+        let gray = ((r as u16 + g as u16 + b as u16) / 3) as u8;
+        let code = match self.depth {
+            BitDepth::Four => 30 + (gray / 36).min(7),
+            BitDepth::Eight => 16 + (gray / 11).min(23),
+        };
+        ClosestColor { code }
     }
 }

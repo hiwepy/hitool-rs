@@ -1,20 +1,23 @@
 //! 对齐: `cn.hutool.core.comparator.LengthComparator`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/comparator/LengthComparator.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::cmp::Ordering;
 
 /// 对齐 Java 类: `cn.hutool.core.comparator.LengthComparator`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct LengthComparator;
 
 impl LengthComparator {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 对齐 Java: `LengthComparator.INSTANCE`
+    pub const INSTANCE: LengthComparator = LengthComparator;
+
+    /// 对齐 Java: `compare(CharSequence o1, CharSequence o2)` —— 按字符长度。
+    #[must_use]
+    pub fn compare(&self, o1: &str, o2: &str) -> i32 {
+        match o1.chars().count().cmp(&o2.chars().count()) {
+            Ordering::Less => -1,
+            Ordering::Equal => 0,
+            Ordering::Greater => 1,
+        }
     }
 }

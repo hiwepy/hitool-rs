@@ -1,5 +1,6 @@
 //! collection_types module parity tests
-//! 对齐: hutool-core BoundedPriorityQueue/ConcurrentHashSet/UniqueKeySet tests
+//! 对齐: `cn.hutool.core.collection.UniqueKeySetTest` / `RingIndexUtilTest`
+//! 来源: hutool-core collection types tests
 
 use hitool_core::{BoundedPriorityQueue, ConcurrentHashSet, UniqueKeySet, ring_next_for_len, ring_next_index};
 use std::sync::atomic::AtomicUsize;
@@ -133,4 +134,32 @@ fn unique_key_set_insert_if_absent() {
     // same key (len=5) already exists
     assert!(!set.insert_if_absent("world".to_string()));
     assert_eq!(set.len(), 1);
+}
+
+
+/// 对齐 Java: `UniqueKeySetTest.addTest()`
+#[test]
+fn add_test() {
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    struct UniqueTestBean {
+        id: String,
+        name: String,
+        address: String,
+    }
+    let mut set = UniqueKeySet::new(|b: &UniqueTestBean| b.id.clone());
+    set.insert(UniqueTestBean { id: "id1".into(), name: "张三".into(), address: "地球".into() });
+    set.insert(UniqueTestBean { id: "id2".into(), name: "李四".into(), address: "火星".into() });
+    set.insert(UniqueTestBean { id: "id2".into(), name: "王五".into(), address: "木星".into() });
+    assert_eq!(set.len(), 2);
+}
+
+/// 对齐 Java: `RingIndexUtilTest.ringNextIntByObjTest()`
+#[test]
+fn ring_next_int_by_obj_test() {
+    let str_list = vec!["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+    let idx = AtomicUsize::new(0);
+    for _ in 0..str_list.len() {
+        let index = ring_next_for_len(&str_list, &idx).unwrap();
+        assert!(str_list.get(index).is_some());
+    }
 }

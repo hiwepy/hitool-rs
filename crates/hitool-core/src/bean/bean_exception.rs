@@ -10,7 +10,7 @@
 /// 在 Rust 中异常类映射为 [`thiserror::Error`] 枚举变体或独立 Error 类型。
 /// 该桩保留类型命名,等待完整实现。
 #[derive(Debug, thiserror::Error)]
-#[error("BeanException: 对齐桩,等待完整实现")]
+#[error("{message}")]
 pub struct BeanException {
     /// 错误消息。
     pub message: String,

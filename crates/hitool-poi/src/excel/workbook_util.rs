@@ -1,107 +1,41 @@
-//! Workbook factory utilities aligned with Hutool.
+//! 迁移自 hutool 的 `cn.hutool.poi.excel.WorkbookUtil`
 //!
-//! 对齐: `cn.hutool.poi.excel.WorkbookUtil`
-//! 来源: hutool-poi/src/main/java/cn/hutool/poi/excel/WorkbookUtil.java
-//!
-//! 提供 `createBook(...)` / `createSXSSFBook(...)` 等创建工作簿的便捷工厂。
+//! - 原 Java 包：`cn.hutool.poi.excel`
+//! - 原 Java 主类：`cn.hutool.poi.excel.WorkbookUtil`
+//! - 迁移状态：🟡 占位实现，等待 `easyexcel-rs` / `easydoc-rs` / `easyofd-rs` / `easypdf-rs` 完成
+//! - Java 源文件：`hutool-poi/src/main/java/excel/WorkbookUtil.java`
 
-use crate::{PoiError, Result};
+#![allow(dead_code, clippy::missing_docs_in_private_items)]
 
-/// Workbook factory utility.
+/// 占位结构体，对齐 Java `WorkbookUtil`。
 ///
-/// 对齐 Java: `cn.hutool.poi.excel.WorkbookUtil`
-#[derive(Debug, Clone, Copy, Default)]
+/// 当前状态：等待 `easyexcel-rs` 引擎完成后填充实现。
 pub struct WorkbookUtil;
 
 impl WorkbookUtil {
-    /// 对齐 Java: `WorkbookUtil.createBook(String)`
-    pub fn create_book_path(_path: &str) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createBook (waiting for easyexcel-rs)",
-        ))
+    /// 占位方法。当前调用会 panic。
+    ///
+    /// # Panics
+    ///
+    /// 此方法尚未实现，等待 `easyexcel-rs` / `easydoc-rs` 等引擎完成。
+    pub fn new() -> Self {
+        unimplemented!("WorkbookUtil::new() 等待 easyexcel-rs / easydoc-rs / easyofd-rs / easypdf-rs 完成")
     }
-    /// 对齐 Java: `WorkbookUtil.createBook(String, boolean)`
-    pub fn create_book_path_readonly(_path: &str, _read_only: bool) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createBook (waiting for easyexcel-rs)",
-        ))
+}
+
+impl Default for WorkbookUtil {
+    fn default() -> Self {
+        Self::new()
     }
-    /// 对齐 Java: `WorkbookUtil.createBook(File)`
-    pub fn create_book() -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createBook (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `WorkbookUtil.createBook(File, boolean)`
-    pub fn create_book_readonly(_read_only: bool) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createBook (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `WorkbookUtil.createBookForWriter(File)`
-    pub fn create_book_for_writer() -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createBookForWriter (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `WorkbookUtil.createBook(File, String)`
-    pub fn create_book_password(_password: &str) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createBook (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `WorkbookUtil.createBook(File, String, boolean)`
-    pub fn create_book_password_readonly(_password: &str, _read_only: bool) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createBook (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `WorkbookUtil.createBook(InputStream)`
-    pub fn create_book_stream(_bytes: &[u8]) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createBook (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `WorkbookUtil.createBook(InputStream, String)`
-    pub fn create_book_stream_password(_bytes: &[u8], _password: &str) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createBook (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `WorkbookUtil.createBook(boolean)`
-    pub fn create_book_xlsx(_is_xlsx: bool) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createBook (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `WorkbookUtil.createSXSSFBook(String)`
-    pub fn create_sxssf_book_path(_path: &str) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createSXSSFBook (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `WorkbookUtil.createSXSSFBook(String, boolean)`
-    pub fn create_sxssf_book_path_readonly(_path: &str, _read_only: bool) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createSXSSFBook (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `WorkbookUtil.createSXSSFBook(File)`
-    pub fn create_sxssf_book() -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createSXSSFBook (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `WorkbookUtil.createSXSSFBook(File, boolean)`
-    pub fn create_sxssf_book_readonly(_read_only: bool) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createSXSSFBook (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `WorkbookUtil.createSXSSFBook(File, String)`
-    pub fn create_sxssf_book_password(_password: &str) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "WorkbookUtil::createSXSSFBook (waiting for easyexcel-rs)",
-        ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic(expected = "等待 easyexcel-rs")]
+    fn workbookutil_new_is_unimplemented() {
+        let _ = WorkbookUtil::new();
     }
 }

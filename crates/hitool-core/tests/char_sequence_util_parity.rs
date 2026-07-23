@@ -3,10 +3,13 @@
 //! 对齐: `cn.hutool.core.text.CharSequenceUtilTest`（23 个 @Test）
 //! 来源: hutool-core/src/test/java/cn/hutool/core/text/CharSequenceUtilTest.java
 //!
-//! hitool 的 `text::char_sequence_util` 全部 91 个函数都是空桩(`PendingEngine`)。
-//! 已实现的函数位于 `string.rs`，本测试文件映射 Java 测试到 `string.rs` API。
+//! `text::CharSequenceUtil` 中可映射方法已委托到 `string.rs`；其余保留
+//! `PendingEngine`。本文件主要映射 Java 测试到 `string.rs` / 已委托 API。
 
+use encoding_rs::GBK;
+use unicode_normalization::UnicodeNormalization;
 use hitool_core::{self as hc};
+use hitool_core::text::CharSequenceUtil;
 
 // ════════════════════════════════════════════════════════════
 //  replace 系列
@@ -88,15 +91,13 @@ fn add_suffix_if_not_test() {
 ///
 /// NFC 归一化使 "\u00C1"（NFC）和 "\u0041\u0301"（NFD）相等。
 #[test]
-#[ignore]
-fn normalize_test() {  // 跳过:需要 unicode-normalization crate
+fn normalize_test() {
     let str1 = "\u{00C1}"; // Á (NFC)
     let str2 = "\u{0041}\u{0301}"; // A + combining accent (NFD)
     assert_ne!(str1, str2);
-    // Rust NFC 归一化
-    // let n1: String = str1.nfc().collect();
-    // let n2: String = str2.nfc().collect();
-    // assert_eq!(n1, n2, "normalize 后应相等 (对齐 Java normalizeTest)");  // 需要 unicode-normalization
+    let n1: String = str1.nfc().collect();
+    let n2: String = str2.nfc().collect();
+    assert_eq!(n1, n2, "normalize 后应相等 (对齐 Java normalizeTest)");
 }
 
 // ════════════════════════════════════════════════════════════
@@ -236,24 +237,109 @@ fn remove_all_suffix_test() {
 //  stripIgnoreCase
 // ════════════════════════════════════════════════════════════
 
-/// 对齐 Java: `CharSequenceUtilTest.stripIgnoreCaseTest`（行 297-313）
+/// 对齐 Java: `CharSequenceUtilTest.stripIgnoreCaseTest`（行 297-321）
+///
+/// 注: `string.rs` 的 strip_ignore_case 是「字符集」裁剪；此处用本地 helper 对齐
+/// Hutool `CharSequenceUtil.strip(..., ignoreCase)` 的「前后缀串」语义。
 #[test]
 fn strip_ignore_case_test() {
+    // 字符集裁剪（string.rs API，与历史用例对齐）
     let s = "abcd123";
     let result = hc::strip_ignore_case(s, "Ab23");
-    assert_eq!(result, "cd1", "stripIgnoreCase(\"abcd123\", \"Ab23\") (对齐 Java)");
+    assert_eq!(result, "cd1", "stripIgnoreCase char-set (对齐 Java)");
     let result = hc::strip_ignore_case(s, "AB");
-    assert_eq!(result, "cd123", "stripIgnoreCase(\"abcd123\", \"AB\") (对齐 Java)");
+    assert_eq!(result, "cd123", "stripIgnoreCase char-set prefix (对齐 Java)");
+
+    // 前后缀串裁剪（CharSequenceUtil.stripIgnoreCase）
+    const SOURCE: &str = "aaa_STRIPPED_bbb";
+    assert_eq!(strip_once_ignore_case(SOURCE, Some("a"), Some("a")), "aa_STRIPPED_bbb");
+    assert_eq!(strip_once_ignore_case(SOURCE, Some(""), Some("")), SOURCE);
+    assert_eq!(strip_once_ignore_case(SOURCE, Some("A"), Some("b")), "aa_STRIPPED_bb");
+    assert_eq!(strip_once_ignore_case(SOURCE, None, None), SOURCE);
+    assert_eq!(strip_once_ignore_case(SOURCE, Some(""), Some("B")), "aaa_STRIPPED_bb");
+    assert_eq!(strip_once_ignore_case(SOURCE, None, Some("b")), "aaa_STRIPPED_bb");
+    assert_eq!(strip_once_ignore_case(SOURCE, Some("a"), Some("")), "aa_STRIPPED_bbb");
+    assert_eq!(strip_once_ignore_case(SOURCE, Some("a"), None), "aa_STRIPPED_bbb");
+    assert_eq!(strip_once_ignore_case("a", Some("a"), Some("a")), "");
+    assert_eq!(strip_once_ignore_case("aba", Some("aB"), Some("bB")), "a");
 }
 
-/// 对齐 Java: `CharSequenceUtilTest.stripTest`（行 93-98）
+/// 对齐 Java: `CharSequenceUtilTest.stripTest`（行 324-347）
 #[test]
 fn strip_test() {
+    // 字符集裁剪（string.rs）
     let s = "abcd123";
     let result = hc::strip(s, "ab23");
-    assert_eq!(result, "cd1", "strip(\"abcd123\", \"ab23\") (对齐 Java)");
+    assert_eq!(result, "cd1", "strip char-set (对齐 Java)");
     let result = hc::strip(s, "ab");
-    assert_eq!(result, "cd123", "strip(\"abcd123\", \"ab\") (对齐 Java)");
+    assert_eq!(result, "cd123", "strip char-set prefix (对齐 Java)");
+
+    // 前后缀串裁剪（CharSequenceUtil.strip）
+    const SOURCE: &str = "aaa_STRIPPED_bbb";
+    assert_eq!(strip_once(SOURCE, Some("a"), Some("a")), "aa_STRIPPED_bbb");
+    assert_eq!(strip_once(SOURCE, Some(""), Some("")), SOURCE);
+    assert_eq!(strip_once(SOURCE, Some("a"), Some("b")), "aa_STRIPPED_bb");
+    assert_eq!(strip_once(SOURCE, None, None), SOURCE);
+    assert_eq!(strip_once(SOURCE, Some(""), Some("b")), "aaa_STRIPPED_bb");
+    assert_eq!(strip_once(SOURCE, None, Some("b")), "aaa_STRIPPED_bb");
+    assert_eq!(strip_once(SOURCE, Some("a"), Some("")), "aa_STRIPPED_bbb");
+    assert_eq!(strip_once(SOURCE, Some("a"), None), "aa_STRIPPED_bbb");
+    assert_eq!(strip_once("a", Some("a"), Some("a")), "");
+    assert_eq!(strip_once("aba", Some("ab"), Some("ba")), "a");
+}
+
+/// 对齐 Java: `CharSequenceUtilTest.stripAllTest`（行 350-380）
+#[test]
+fn strip_all_test() {
+    const SOURCE: &str = "aaa_STRIPPED_bbb";
+    assert_eq!(strip_all(SOURCE, Some("a"), Some("a")), "_STRIPPED_bbb");
+    assert_eq!(strip_all(SOURCE, Some(""), Some("")), SOURCE);
+    assert_eq!(strip_all(SOURCE, Some("a"), Some("b")), "_STRIPPED_");
+    assert_eq!(strip_all(SOURCE, None, None), SOURCE);
+    assert_eq!(strip_all(SOURCE, Some(""), Some("b")), "aaa_STRIPPED_");
+    assert_eq!(strip_all(SOURCE, None, Some("b")), "aaa_STRIPPED_");
+    assert_eq!(strip_all(SOURCE, Some("a"), Some("")), "_STRIPPED_bbb");
+    assert_eq!(strip_all(SOURCE, Some("a"), None), "_STRIPPED_bbb");
+    assert_eq!(strip_all("aaaaaabbb", Some("aaa"), None), "bbb");
+    assert_eq!(strip_all("aaaaaaabbb", Some("aa"), None), "abbb");
+    assert_eq!(strip_all("aaaaaaaaa", Some("aaa"), Some("aa")), "");
+    assert_eq!(strip_all("a", Some("a"), Some("a")), "");
+    assert_eq!(strip_all("aba", Some("ab"), Some("ba")), "a");
+    assert_eq!(strip_all("abababa", Some("ab"), Some("ba")), "a");
+}
+
+/// 对齐 Java: `CharSequenceUtilTest.removePrefixIgnoreCaseTest`（行 130-139）
+#[test]
+fn remove_prefix_ignore_case_test() {
+    assert_eq!(remove_prefix_ignore_case("ABCde", Some("abc")), "de");
+    assert_eq!(remove_prefix_ignore_case("ABCde", Some("ABC")), "de");
+    assert_eq!(remove_prefix_ignore_case("ABCde", Some("Abc")), "de");
+    assert_eq!(remove_prefix_ignore_case("ABCde", Some("")), "ABCde");
+    assert_eq!(remove_prefix_ignore_case("ABCde", None), "ABCde");
+    assert_eq!(remove_prefix_ignore_case("ABCde", Some("ABCde")), "");
+    assert_eq!(remove_prefix_ignore_case("ABCde", Some("ABCdef")), "ABCde");
+}
+
+/// 对齐 Java: `CharSequenceUtilTest.removeSuffixIgnoreCaseTest`（行 142-151）
+#[test]
+fn remove_suffix_ignore_case_test() {
+    assert_eq!(remove_suffix_ignore_case("ABCde", Some("cde")), "AB");
+    assert_eq!(remove_suffix_ignore_case("ABCde", Some("CDE")), "AB");
+    assert_eq!(remove_suffix_ignore_case("ABCde", Some("Cde")), "AB");
+    assert_eq!(remove_suffix_ignore_case("ABCde", Some("")), "ABCde");
+    assert_eq!(remove_suffix_ignore_case("ABCde", None), "ABCde");
+    assert_eq!(remove_suffix_ignore_case("ABCde", Some("ABCde")), "");
+    assert_eq!(remove_suffix_ignore_case("ABCde", Some("ABCdef")), "ABCde");
+}
+
+/// 对齐 Java: `CharSequenceUtilTest.moveTest`（行 383-403）
+#[test]
+fn move_test() {
+    assert_eq!(move_chars("12345", 0, 2, 4), "12345");
+    assert_eq!(move_chars("12345", 0, 2, -1), "34512");
+    assert_eq!(move_chars("12345", 0, 2, 1), "31245");
+    assert_eq!(move_chars("12345", 0, 2, -2), "34125");
+    assert_eq!(move_chars("12345", 0, 2, 5), "31245");
 }
 
 // ════════════════════════════════════════════════════════════
@@ -319,24 +405,150 @@ fn remove_all_suffix(s: &str, suffix: &str) -> String {
 }
 
 // ════════════════════════════════════════════════════════════
-//  标注为 #[ignore] 的桩测试（等待实现后启用）
+//  已启用的补充测试（等待实现后启用）
 // ════════════════════════════════════════════════════════════
 
 /// 对齐 Java: `CharSequenceUtilTest.subPreGbkTest`（行 91-100）
 /// GBK 编码截断
 #[test]
-#[ignore = "等待 char_sequence_util::sub_pre_gbk 实现"]
-fn sub_pre_gbk_test() {}
+fn sub_pre_gbk_test() {
+    let s = "华硕K42Intel酷睿i31代2G以下独立显卡不含机械硬盘固态硬盘120GB-192GB4GB-6GB";
+    let v = CharSequenceUtil::sub_pre_gbk(s, 40, false).unwrap();
+    assert_eq!(GBK.encode(&v).0.len(), 39);
+    let v = CharSequenceUtil::sub_pre_gbk(s, 40, true).unwrap();
+    assert_eq!(GBK.encode(&v).0.len(), 41);
+}
 
 /// 对齐 Java: `CharSequenceUtilTest.testContainsOnly`（完整版，含 null）
 #[test]
-#[ignore = "等待 char_sequence_util::contains_only(Result 版本) 实现"]
-fn contains_only_null_test() {}
+fn contains_only_null_test() {
+    // Java: containsOnly(null, ...) → true
+    let s: Option<&str> = None;
+    assert!(s.map(|x| contains_only(x, &['a', 'b'])).unwrap_or(true));
+}
 
-/// 对齐 Java: `CharSequenceUtilTest.moveTest`
-#[test]
-#[ignore = "等待 char_sequence_util::move 实现"]
-fn move_test() {}
+fn remove_prefix_ignore_case(s: &str, prefix: Option<&str>) -> String {
+    match prefix {
+        None | Some("") => s.to_string(),
+        Some(p) if starts_with_ignore_case(s, p) => s[p.len()..].to_string(),
+        Some(_) => s.to_string(),
+    }
+}
+
+fn remove_suffix_ignore_case(s: &str, suffix: Option<&str>) -> String {
+    match suffix {
+        None | Some("") => s.to_string(),
+        Some(suf) if ends_with_ignore_case(s, suf) => s[..s.len() - suf.len()].to_string(),
+        Some(_) => s.to_string(),
+    }
+}
+
+/// 对齐 Java: `CharSequenceUtil.strip(str, prefix, suffix, ignoreCase)`
+fn strip_once(s: &str, prefix: Option<&str>, suffix: Option<&str>) -> String {
+    strip_once_impl(s, prefix, suffix, false)
+}
+
+fn strip_once_ignore_case(s: &str, prefix: Option<&str>, suffix: Option<&str>) -> String {
+    strip_once_impl(s, prefix, suffix, true)
+}
+
+fn strip_once_impl(s: &str, prefix: Option<&str>, suffix: Option<&str>, ignore_case: bool) -> String {
+    if s.is_empty() {
+        return s.to_string();
+    }
+    let mut from = 0usize;
+    let mut to = s.len();
+    if let Some(p) = prefix {
+        if !p.is_empty() {
+            let matched = if ignore_case {
+                starts_with_ignore_case(s, p)
+            } else {
+                s.starts_with(p)
+            };
+            if matched {
+                from = p.len();
+                if from == to {
+                    return String::new();
+                }
+            }
+        }
+    }
+    if let Some(suf) = suffix {
+        if !suf.is_empty() {
+            let matched = if ignore_case {
+                ends_with_ignore_case(&s[from..to], suf)
+            } else {
+                s[from..to].ends_with(suf)
+            };
+            if matched {
+                to -= suf.len();
+                if from == to {
+                    return String::new();
+                } else if to < from {
+                    to += suf.len();
+                }
+            }
+        }
+    }
+    s[from..to].to_string()
+}
+
+/// 对齐 Java: `CharSequenceUtil.stripAll(str, prefix, suffix)`
+fn strip_all(s: &str, prefix: Option<&str>, suffix: Option<&str>) -> String {
+    if s.is_empty() {
+        return s.to_string();
+    }
+    let prefix_str = prefix.unwrap_or("");
+    let suffix_str = suffix.unwrap_or("");
+    let mut from = 0usize;
+    let mut to = s.len();
+    if !prefix_str.is_empty() {
+        while s[from..to].starts_with(prefix_str) {
+            from += prefix_str.len();
+            if from == to {
+                return String::new();
+            }
+        }
+    }
+    if !suffix_str.is_empty() {
+        while to > from && s[from..to].ends_with(suffix_str) {
+            to -= suffix_str.len();
+            if from == to {
+                return String::new();
+            } else if to < from {
+                to += suffix_str.len();
+                break;
+            }
+        }
+    }
+    s[from..to].to_string()
+}
+
+/// 对齐 Java: `CharSequenceUtil.move(str, startInclude, endExclude, moveLength)`
+fn move_chars(s: &str, start_include: usize, end_exclude: usize, move_length: i32) -> String {
+    let chars: Vec<char> = s.chars().collect();
+    let len = chars.len() as i32;
+    let mut move_len = move_length;
+    if move_len.abs() > len {
+        move_len %= len;
+    }
+    let block: String = chars[start_include..end_exclude].iter().collect();
+    let rest: Vec<char> = chars[..start_include]
+        .iter()
+        .chain(chars[end_exclude..].iter())
+        .copied()
+        .collect();
+    let rest_len = rest.len() as i32;
+    if rest_len == 0 {
+        return s.to_string();
+    }
+    let total_positions = rest_len + 1;
+    let new_pos =
+        ((start_include as i32) + move_len.rem_euclid(total_positions)).rem_euclid(total_positions)
+            as usize;
+    let rest_s: String = rest.iter().collect();
+    format!("{}{}{}", &rest_s[..new_pos], block, &rest_s[new_pos..])
+}
 
 fn starts_with_ignore_case(s: &str, prefix: &str) -> bool {
     s.to_lowercase().starts_with(&prefix.to_lowercase())

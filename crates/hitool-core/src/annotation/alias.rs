@@ -1,20 +1,26 @@
 //! 对齐: `cn.hutool.core.annotation.Alias`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/annotation/Alias.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+/// `@Alias` 元注解类型名。
+pub const TYPE_NAME: &str = "cn.hutool.core.annotation.Alias";
 
-/// 对齐 Java 类: `cn.hutool.core.annotation.Alias`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct Alias;
+/// 对齐 Java 注解: `cn.hutool.core.annotation.Alias` — 非反射元数据描述符。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Alias {
+    /// 别名目标属性名。
+    pub value: String,
+}
 
 impl Alias {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 创建别名标记。
+    pub fn new(value: impl Into<String>) -> Self {
+        Self {
+            value: value.into(),
+        }
+    }
+
+    /// 返回注解类型全名。
+    pub fn type_name() -> &'static str {
+        TYPE_NAME
     }
 }

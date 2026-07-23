@@ -2,6 +2,7 @@
 
 #![allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 
+use crate::lang::hash::{CityHash, Number128};
 use crate::IdKey;
 use thiserror::Error;
 
@@ -340,6 +341,30 @@ impl HashUtil {
             hash = hash.wrapping_add(i64::from(units[index % 4] ^ unit));
         }
         hash
+    }
+
+    /// 对齐 Java: `HashUtil.cityHash32(byte[])`
+    #[must_use]
+    pub fn city_hash32(data: &[u8]) -> i32 {
+        CityHash::hash32(data)
+    }
+
+    /// 对齐 Java: `HashUtil.cityHash64(byte[])`
+    #[must_use]
+    pub fn city_hash64(data: &[u8]) -> i64 {
+        CityHash::hash64(data)
+    }
+
+    /// 对齐 Java: `HashUtil.cityHash128(byte[])`
+    #[must_use]
+    pub fn city_hash128(data: &[u8]) -> [i64; 2] {
+        CityHash::hash128(data).get_long_array()
+    }
+
+    /// 对齐 Java: `HashUtil.cityHash128(byte[], Number128 seed)`
+    #[must_use]
+    pub fn city_hash128_seeded(data: &[u8], seed: Number128) -> [i64; 2] {
+        CityHash::hash128_seeded(data, seed).get_long_array()
     }
 }
 

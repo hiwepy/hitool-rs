@@ -1,24 +1,45 @@
 //! 对齐: `cn.hutool.core.lang.DefaultSegment`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/lang/DefaultSegment.java
-//!
-//! Hutool 的 `DefaultSegment` Java 类型,等待完整实现。
-//! 状态: 对齐桩(对象/方法/参数已对齐),等待 `hitool-core` 内部继续迁移。
 
-use crate::{CoreError, Result};
+use super::segment::Segment;
 
 /// 对齐 Java: `cn.hutool.core.lang.DefaultSegment`
-#[derive(Debug, Clone, Default)]
-pub struct DefaultSegment;
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct DefaultSegment {
+    start_index: i64,
+    end_index: i64,
+}
 
 impl DefaultSegment {
-    /// 对齐 Java: `DefaultSegment.getStartIndex()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn getStartIndex() -> Result<T> {
-        Err(CoreError::PendingEngine("DefaultSegment::getStartIndex (waiting for full impl)"))
+    /// 对齐 Java: `DefaultSegment(T, T)`
+    #[must_use]
+    pub fn new(start_index: i64, end_index: i64) -> Self {
+        Self {
+            start_index,
+            end_index,
+        }
     }
-    /// 对齐 Java: `DefaultSegment.getEndIndex()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn getEndIndex() -> Result<T> {
-        Err(CoreError::PendingEngine("DefaultSegment::getEndIndex (waiting for full impl)"))
+}
+
+impl Segment for DefaultSegment {
+    fn get_start_index(&self) -> i64 {
+        self.start_index
+    }
+
+    fn get_end_index(&self) -> i64 {
+        self.end_index
+    }
+}
+
+#[cfg(test)]
+mod default_segment_idiomatic_parity {
+    use super::*;
+
+    #[test]
+    fn default_segment_indexes_and_length() {
+        let s = DefaultSegment::new(3, 10);
+        assert_eq!(s.get_start_index(), 3);
+        assert_eq!(s.get_end_index(), 10);
+        assert_eq!(s.length(), 7);
     }
 }

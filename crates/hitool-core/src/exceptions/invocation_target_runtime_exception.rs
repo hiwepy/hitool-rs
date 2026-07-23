@@ -1,24 +1,62 @@
 //! 对齐: `cn.hutool.core.exceptions.InvocationTargetRuntimeException`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/exceptions/InvocationTargetRuntimeException.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use crate::string::format_template;
+use std::fmt::Display;
 
-/// 对齐 Java 异常类: `cn.hutool.core.exceptions.InvocationTargetRuntimeException`
-///
-/// 在 Rust 中异常类映射为 [`thiserror::Error`] 枚举变体或独立 Error 类型。
-/// 该桩保留类型命名,等待完整实现。
+/// 对齐 Java: `cn.hutool.core.exceptions.InvocationTargetRuntimeException`
 #[derive(Debug, thiserror::Error)]
-#[error("InvocationTargetRuntimeException: 对齐桩,等待完整实现")]
+#[error("{message}")]
 pub struct InvocationTargetRuntimeException {
     /// 错误消息。
     pub message: String,
+    /// 可选原因（目标调用异常）。
+    #[source]
+    pub source: Option<Box<dyn std::error::Error + Send + Sync>>,
 }
 
 impl InvocationTargetRuntimeException {
-    /// 创建新的错误实例。
+    /// 对齐 Java: `InvocationTargetRuntimeException(String)`
     pub fn new(message: impl Into<String>) -> Self {
-        Self { message: message.into() }
+        Self {
+            message: message.into(),
+            source: None,
+        }
+    }
+
+    /// 对齐 Java: `InvocationTargetRuntimeException(String, Object...)`
+    pub fn with_template(template: &str, params: &[&dyn Display]) -> Self {
+        Self::new(format_template(template, params))
+    }
+
+    /// 对齐 Java: `InvocationTargetRuntimeException(Throwable)`
+    pub fn from_cause(cause: impl std::error::Error + Send + Sync + 'static) -> Self {
+        Self {
+            message: cause.to_string(),
+            source: Some(Box::new(cause)),
+        }
+    }
+
+    /// 对齐 Java: `InvocationTargetRuntimeException(String, Throwable)`
+    pub fn with_cause(
+        message: impl Into<String>,
+        cause: impl std::error::Error + Send + Sync + 'static,
+    ) -> Self {
+        Self {
+            message: message.into(),
+            source: Some(Box::new(cause)),
+        }
+    }
+
+    /// 对齐 Java: `InvocationTargetRuntimeException(Throwable, String, Object...)`
+    pub fn with_cause_template(
+        cause: impl std::error::Error + Send + Sync + 'static,
+        template: &str,
+        params: &[&dyn Display],
+    ) -> Self {
+        Self {
+            message: format_template(template, params),
+            source: Some(Box::new(cause)),
+        }
     }
 }

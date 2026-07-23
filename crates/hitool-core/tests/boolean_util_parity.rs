@@ -124,7 +124,7 @@ fn xor_test() {
     );
 }
 
-/// 对齐 Java: `BooleanUtilTest.orOfWrapTest()`
+/// 参考 Java BooleanUtilTest.orOfWrapTest（Java 源无 @Test，非 inventory 项；此处保留对等行为校验）
 ///
 /// Java 源(行 57-60):
 /// ```java
@@ -166,7 +166,7 @@ fn is_true_is_false_test() {
     );
 }
 
-/// 对齐 Java: `BooleanUtilTest.negateTest()`
+/// 参考 Java BooleanUtilTest.negateTest（Java 源无 @Test，非 inventory 项；此处保留对等行为校验）
 ///
 /// Java 源(行 81-88):
 /// ```java

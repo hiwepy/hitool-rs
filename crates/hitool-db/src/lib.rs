@@ -2,8 +2,65 @@
 
 #![forbid(unsafe_code)]
 
+pub mod active_entity;
+pub mod dao_template;
+pub mod db;
+pub mod dialect;
+pub mod ds;
+pub mod entity;
+pub mod global_db_config;
+pub mod handler;
+pub mod hutool_page;
+pub mod jdbc_wrapper;
+pub mod meta;
+pub mod meta_types;
+pub mod nosql;
+pub mod page_result;
+pub mod runner;
+pub mod session;
+pub mod sql;
+pub mod thread_local_connection;
+pub mod wrapper;
+
 use std::time::Duration;
 use thiserror::Error;
+
+pub use active_entity::ActiveEntity;
+pub use dao_template::{DaoOperations, DaoTemplate};
+pub use db::{memory_pool, seed_hutool_user_fixture, Db, DbResult, DbRuntimeError};
+pub use global_db_config::{GlobalDbConfig, LogLevel};
+pub use jdbc_wrapper::{AbstractDataSource, ConnectionWraper, DbWrapperError, StatementWrapper};
+pub use thread_local_connection::{GroupedConnection, ThreadLocalConnection};
+pub use dialect::{
+    identify_driver, identify_driver_from_text, AnsiSqlDialect, Dialect, DialectName, DmDialect,
+    H2Dialect, HanaDialect, MysqlDialect, OracleDialect, PhoenixDialect, PostgresqlDialect,
+    SqlServer2012Dialect, Sqlite3Dialect,
+};
+pub use ds::{
+    AbstractDsFactory, BeeDsFactory, C3p0DsFactory, DataSourceWrapper, DbConfig, DbSetting,
+    DbcpDsFactory, DruidDsFactory, DsFactory, HikariDsFactory, PooledDataSource, PooledDsFactory,
+    SimpleDataSource, SimpleDsFactory, TomcatDsFactory,
+};
+pub use entity::Entity;
+pub use handler::{
+    BeanHandler, BeanListHandler, EntityHandler, EntityListHandler, EntitySetHandler, HandleHelper,
+    NumberHandler, PageResultHandler, RsHandler, StringHandler, ValueListHandler,
+};
+pub use hutool_page::HutoolPage;
+pub use meta::{
+    get_column_names, get_table_meta, get_table_meta_or_err, get_tables, Column, ColumnIndexInfo,
+    IndexInfo, JdbcType, Table, TableType,
+};
+pub use nosql::{MongoDs, RedisDs};
+pub use page_result::PageResult;
+pub use runner::{AbstractDb, DialectRunner, SqlConnRunner, SqlExecutor, TransactionLevel};
+pub use session::Session;
+pub use sql::{
+    build_conditions, build_like_value, format_sql, is_in_clause, remove_outer_order_by,
+    Condition, ConditionBuilder, ConditionGroup, ConditionValue, Direction, Join, LikeType,
+    LogicalOperator, NamedSql, Order, Query, SqlBuilder, SqlLog,
+};
+pub use wrapper::Wrapper;
 
 /// Database utility errors.
 #[derive(Debug, Error, Clone, PartialEq, Eq)]
@@ -86,6 +143,18 @@ impl<T> Page<T> {
             size: request.size,
             total,
         }
+    }
+
+    /// 对齐 Java: `PageResult.getPage()` / Hutool Page 元数据。
+    #[must_use]
+    pub fn page_number(&self) -> u64 {
+        self.page
+    }
+
+    /// 对齐 Java: `PageResult.getPageSize()`.
+    #[must_use]
+    pub fn page_size(&self) -> u32 {
+        self.size
     }
 
     /// Returns the total page count using ceiling division.

@@ -1,20 +1,46 @@
 //! 对齐: `cn.hutool.core.annotation.scanner.MethodAnnotationScanner`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/annotation/scanner/MethodAnnotationScanner.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::sync::Arc;
+
+use super::abstract_type_annotation_scanner::AbstractTypeAnnotationScanner;
+use super::annotation_scanner::{accept_annotation, declared_annotations, AnnotationScanner, ScanConsumer};
+use crate::annotation::element::{global_registry, AnnotatedElement, ElementHandle, ElementKind};
 
 /// 对齐 Java 类: `cn.hutool.core.annotation.scanner.MethodAnnotationScanner`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct MethodAnnotationScanner;
+pub struct MethodAnnotationScanner {
+    inner: AbstractTypeAnnotationScanner,
+}
 
 impl MethodAnnotationScanner {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 构造方法扫描器。
+    pub fn new(include_super_class: bool, include_interfaces: bool) -> Self {
+        Self {
+            inner: AbstractTypeAnnotationScanner::new(include_super_class, include_interfaces),
+        }
+    }
+}
+
+impl AnnotationScanner for MethodAnnotationScanner {
+    fn support(&self, element: ElementHandle) -> bool {
+        global_registry()
+            .read()
+            .get(element)
+            .map(|e| e.kind() == ElementKind::Method)
+            .unwrap_or(false)
+    }
+
+    fn scan(&self, consumer: &mut ScanConsumer, element: ElementHandle) {
+        let registry = global_registry().read();
+        let AnnotatedElement::Method(method) = registry.get(element).expect("method") else {
+            return;
+        };
+        let chain = registry.method_override_chain(element);
+        for (idx, mh) in chain.iter().enumerate() {
+            for annotation in declared_annotations(*mh) {
+                if accept_annotation(&annotation) {
+                    consumer(idx as i32, annotation);
+                }
+            }
+        }
     }
 }

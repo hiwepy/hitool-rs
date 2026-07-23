@@ -1,20 +1,59 @@
 //! 对齐: `cn.hutool.core.annotation.AliasLinkAnnotationPostProcessor`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/annotation/AliasLinkAnnotationPostProcessor.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::sync::Arc;
+
+use super::abstract_link_annotation_post_processor::AbstractLinkAnnotationPostProcessor;
+use super::aliased_annotation_attribute::AliasedAnnotationAttribute;
+use super::annotation_attribute::AnnotationAttribute;
+use super::force_aliased_annotation_attribute::ForceAliasedAnnotationAttribute;
+use super::relation_type::RelationType;
+use super::synthesized_annotation::SynthesizedAnnotation;
+use super::synthesized_annotation_post_processor::SynthesizedAnnotationPostProcessor;
 
 /// 对齐 Java 类: `cn.hutool.core.annotation.AliasLinkAnnotationPostProcessor`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 pub struct AliasLinkAnnotationPostProcessor;
 
-impl AliasLinkAnnotationPostProcessor {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+impl SynthesizedAnnotationPostProcessor for AliasLinkAnnotationPostProcessor {
+    fn order(&self) -> i32 {
+        i32::MIN + 2
+    }
+
+    fn process(
+        &self,
+        synthesized_annotation: Arc<dyn SynthesizedAnnotation>,
+        synthesizer: &dyn super::annotation_synthesizer::AnnotationSynthesizer,
+    ) {
+        AbstractLinkAnnotationPostProcessor::process_types(
+            self,
+            synthesized_annotation,
+            synthesizer,
+            &[RelationType::AliasFor, RelationType::ForceAliasFor],
+            |original_annotation, original_attribute, linked_annotation, linked_attribute| {
+                let link_type = original_attribute
+                    .get_meta_annotation(super::link::LINK_TYPE)
+                    .map(super::link::Link::from_mirror)
+                    .map(|l| l.relation_type())
+                    .unwrap_or(RelationType::AliasFor);
+                let original = Arc::clone(&original_attribute);
+                let attr_name = linked_attribute.get_attribute_name().to_string();
+                if link_type == RelationType::AliasFor {
+                    linked_annotation.replace_attribute(
+                        &attr_name,
+                        Box::new(move |old| {
+                            AliasedAnnotationAttribute::new(Arc::clone(&original), old)
+                        }),
+                    );
+                } else {
+                    linked_annotation.replace_attribute(
+                        &attr_name,
+                        Box::new(move |old| {
+                            ForceAliasedAnnotationAttribute::new(Arc::clone(&original), old)
+                        }),
+                    );
+                }
+                let _ = original_annotation;
+            },
+        );
     }
 }

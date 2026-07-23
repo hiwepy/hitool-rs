@@ -2,6 +2,28 @@
 
 #![forbid(unsafe_code)]
 
+mod aes_modes;
+mod asn1_util;
+mod asymmetric;
+mod bc_util;
+mod chacha_util;
+mod cipher_wrapper;
+mod digest_util;
+mod ecies_util;
+mod hutool_facade;
+mod key_util;
+mod legacy;
+mod mac_util;
+mod otp_util;
+mod pbkdf2_util;
+mod pem_util;
+mod rsa_util;
+mod sm2_util;
+mod spec_util;
+mod symmetric_legacy;
+
+pub use cipher_wrapper::{CipherWrapper, ProviderFactory, StubCipherWrapper};
+
 use aes_gcm::{
     Aes256Gcm, Nonce,
     aead::{Aead, AeadCore, KeyInit, OsRng as AeadOsRng},
@@ -10,10 +32,27 @@ use argon2::{
     Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
     password_hash::{Error as PasswordHashError, SaltString, rand_core::OsRng as PasswordOsRng},
 };
-use hmac::{Hmac, Mac};
 use secrecy::{ExposeSecret, SecretString};
-use sha2::{Digest, Sha256};
 use thiserror::Error;
+
+pub use aes_modes::*;
+pub use asn1_util::*;
+pub use asymmetric::{asc_to_bcd, bcd_to_str, decode, KeyType};
+pub use bc_util::*;
+pub use chacha_util::*;
+pub use digest_util::*;
+pub use ecies_util::*;
+pub use hutool_facade::*;
+pub use key_util::*;
+pub use legacy::*;
+pub use mac_util::*;
+pub use otp_util::*;
+pub use pbkdf2_util::*;
+pub use pem_util::*;
+pub use rsa_util::*;
+pub use sm2_util::*;
+pub use spec_util::*;
+pub use symmetric_legacy::*;
 
 const AES_256_KEY_LENGTH: usize = 32;
 const GCM_NONCE_LENGTH: usize = 12;
@@ -33,53 +72,36 @@ pub enum CryptoError {
     /// The supplied MAC key is invalid.
     #[error("invalid HMAC key")]
     InvalidMacKey,
+    /// ChaCha20 key or IV length is invalid.
+    #[error("invalid ChaCha20 key or nonce")]
+    InvalidChaChaKey,
+    /// OTP digit count is invalid.
+    #[error("invalid OTP digit count")]
+    InvalidOtpDigits,
+    /// PEM or DER key material is invalid.
+    #[error("invalid PEM key material")]
+    InvalidPem,
+    /// Hex/base64 decoding failed.
+    #[error("invalid encoded data")]
+    InvalidEncoding,
+    /// RSA key parsing or export failed.
+    #[error("RSA key error")]
+    RsaKey,
+    /// RSA encrypt/decrypt failed.
+    #[error("RSA operation failed")]
+    RsaOperation,
+    /// SM2 key material is invalid.
+    #[error("SM2 key error")]
+    Sm2Key,
+    /// SM2 signature is invalid.
+    #[error("SM2 signature error")]
+    Sm2Signature,
+    /// Legacy algorithm rejected by security policy.
+    #[error("{0}")]
+    LegacyRejected(&'static str),
     /// Password hashing or encoded-hash parsing failed.
     #[error(transparent)]
     PasswordHash(#[from] PasswordHashError),
-}
-
-/// Returns a lowercase SHA-256 digest.
-#[must_use]
-pub fn sha256_hex(input: impl AsRef<[u8]>) -> String {
-    hex::encode(Sha256::digest(input.as_ref()))
-}
-
-/// Computes HMAC-SHA256.
-pub fn hmac_sha256(key: &[u8], message: &[u8]) -> Result<[u8; 32], CryptoError> {
-    let mut mac =
-        <Hmac<Sha256> as Mac>::new_from_slice(key).map_err(|_| CryptoError::InvalidMacKey)?;
-    mac.update(message);
-    Ok(mac.finalize().into_bytes().into())
-}
-
-/// Verifies HMAC-SHA256 in constant time.
-pub fn verify_hmac_sha256(
-    key: &[u8],
-    message: &[u8],
-    expected: &[u8],
-) -> Result<bool, CryptoError> {
-    let mut mac =
-        <Hmac<Sha256> as Mac>::new_from_slice(key).map_err(|_| CryptoError::InvalidMacKey)?;
-    mac.update(message);
-    Ok(mac.verify_slice(expected).is_ok())
-}
-
-/// Hashes a password with Argon2id and a fresh operating-system random salt.
-pub fn hash_password(password: &SecretString) -> Result<String, CryptoError> {
-    let salt = SaltString::generate(&mut PasswordOsRng);
-    Ok(Argon2::default()
-        .hash_password(password.expose_secret().as_bytes(), &salt)?
-        .to_string())
-}
-
-/// Verifies a password against a PHC-formatted Argon2 hash.
-pub fn verify_password(password: &SecretString, encoded_hash: &str) -> Result<bool, CryptoError> {
-    let parsed = PasswordHash::new(encoded_hash)?;
-    match Argon2::default().verify_password(password.expose_secret().as_bytes(), &parsed) {
-        Ok(()) => Ok(true),
-        Err(PasswordHashError::Password) => Ok(false),
-        Err(error) => Err(CryptoError::PasswordHash(error)),
-    }
 }
 
 /// Encrypts using AES-256-GCM and prefixes the random 96-bit nonce.
@@ -111,6 +133,24 @@ pub fn aes256_gcm_decrypt(key: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>, Cryp
     cipher
         .decrypt(Nonce::from_slice(nonce), encrypted)
         .map_err(|_| CryptoError::Aead)
+}
+
+/// Hashes a password with Argon2id and a fresh operating-system random salt.
+pub fn hash_password(password: &SecretString) -> Result<String, CryptoError> {
+    let salt = SaltString::generate(&mut PasswordOsRng);
+    Ok(Argon2::default()
+        .hash_password(password.expose_secret().as_bytes(), &salt)?
+        .to_string())
+}
+
+/// Verifies a password against a PHC-formatted Argon2 hash.
+pub fn verify_password(password: &SecretString, encoded_hash: &str) -> Result<bool, CryptoError> {
+    let parsed = PasswordHash::new(encoded_hash)?;
+    match Argon2::default().verify_password(password.expose_secret().as_bytes(), &parsed) {
+        Ok(()) => Ok(true),
+        Err(PasswordHashError::Password) => Ok(false),
+        Err(error) => Err(CryptoError::PasswordHash(error)),
+    }
 }
 
 #[cfg(test)]

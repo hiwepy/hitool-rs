@@ -1,74 +1,135 @@
 //! 对齐: `cn.hutool.core.lang.Tuple`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/lang/Tuple.java
 //!
-//! Hutool 的 `Tuple` Java 类型,等待完整实现。
-//! 状态: 对齐桩(对象/方法/参数已对齐),等待 `hitool-core` 内部继续迁移。
+//! 异构元素用 `serde_json::Value` 承载，保留 Eq/Hash/Display；
+//! Java Stream/Spliterator 映射为迭代器与 `to_list`。
 
-use crate::{CoreError, Result};
+use serde_json::Value;
+use std::hash::{Hash, Hasher};
 
-/// 对齐 Java: `cn.hutool.core.lang.Tuple` (容器类型)
-#[derive(Debug, Clone, Default)]
-pub struct Tuple;
+/// 对齐 Java: `Tuple`
+#[derive(Debug, Clone)]
+pub struct Tuple {
+    members: Vec<Value>,
+    cache_hash: bool,
+    cached: Option<u64>,
+}
 
 impl Tuple {
-    /// 对齐 Java: `Tuple.get(int index)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn get(i32 index) -> Result<T> {
-        Err(CoreError::PendingEngine("Tuple::get (waiting for full impl)"))
+    /// 对齐 `new Tuple(Object...)`
+    pub fn new(members: Vec<Value>) -> Self {
+        Self {
+            members,
+            cache_hash: false,
+            cached: None,
+        }
     }
-    /// 对齐 Java: `Tuple.getMembers()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn getMembers() -> Result<Object[]> {
-        Err(CoreError::PendingEngine("Tuple::getMembers (waiting for full impl)"))
+
+    /// 从可序列化显示值构造（字符串化）。
+    pub fn from_display(values: &[impl ToString]) -> Self {
+        Self::new(values.iter().map(|v| Value::String(v.to_string())).collect())
     }
-    /// 对齐 Java: `Tuple.toList()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn toList() -> Result<final List<Object>> {
-        Err(CoreError::PendingEngine("Tuple::toList (waiting for full impl)"))
+
+    /// 对齐 `get(int)`
+    pub fn get(&self, index: usize) -> Option<&Value> {
+        self.members.get(index)
     }
-    /// 对齐 Java: `Tuple.setCacheHash(boolean cacheHash)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn setCacheHash(bool cacheHash) -> Result<Tuple> {
-        Err(CoreError::PendingEngine("Tuple::setCacheHash (waiting for full impl)"))
+
+    /// 对齐 `getMembers`
+    #[must_use]
+    pub fn get_members(&self) -> &[Value] {
+        &self.members
     }
-    /// 对齐 Java: `Tuple.size()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn size() -> Result<i32> {
-        Err(CoreError::PendingEngine("Tuple::size (waiting for full impl)"))
+
+    /// 对齐 `toList`
+    #[must_use]
+    pub fn to_list(&self) -> Vec<Value> {
+        self.members.clone()
     }
-    /// 对齐 Java: `Tuple.contains(Object value)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn contains(Object value) -> Result<bool> {
-        Err(CoreError::PendingEngine("Tuple::contains (waiting for full impl)"))
+
+    /// 对齐 `setCacheHash`
+    pub fn set_cache_hash(&mut self, cache: bool) -> &mut Self {
+        self.cache_hash = cache;
+        if !cache {
+            self.cached = None;
+        }
+        self
     }
-    /// 对齐 Java: `Tuple.stream()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn stream() -> Result<final Stream<Object>> {
-        Err(CoreError::PendingEngine("Tuple::stream (waiting for full impl)"))
+
+    /// 对齐 `size`
+    #[must_use]
+    pub fn size(&self) -> usize {
+        self.members.len()
     }
-    /// 对齐 Java: `Tuple.parallelStream()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn parallelStream() -> Result<final Stream<Object>> {
-        Err(CoreError::PendingEngine("Tuple::parallelStream (waiting for full impl)"))
+
+    /// 对齐 `contains`
+    pub fn contains(&self, value: &Value) -> bool {
+        self.members.iter().any(|m| m == value)
     }
-    /// 对齐 Java: `Tuple.sub(final int start, final int end)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn sub(i32 start, i32 end) -> Result<final Tuple> {
-        Err(CoreError::PendingEngine("Tuple::sub (waiting for full impl)"))
+
+    /// 对齐 `sub(start, end)` — 半开区间 `[start, end)`
+    pub fn sub(&self, start: usize, end: usize) -> Tuple {
+        let end = end.min(self.members.len());
+        let start = start.min(end);
+        Tuple::new(self.members[start..end].to_vec())
     }
-    /// 对齐 Java: `Tuple.equals(Object obj)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn equals(Object obj) -> Result<bool> {
-        Err(CoreError::PendingEngine("Tuple::equals (waiting for full impl)"))
+
+    /// 对齐 `iterator` / `stream`
+    pub fn iter(&self) -> impl Iterator<Item = &Value> {
+        self.members.iter()
     }
-    /// 对齐 Java: `Tuple.iterator()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn iterator() -> Result<Iterator<Object>> {
-        Err(CoreError::PendingEngine("Tuple::iterator (waiting for full impl)"))
+}
+
+impl PartialEq for Tuple {
+    fn eq(&self, other: &Self) -> bool {
+        self.members == other.members
     }
-    /// 对齐 Java: `Tuple.spliterator()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn spliterator() -> Result<final Spliterator<Object>> {
-        Err(CoreError::PendingEngine("Tuple::spliterator (waiting for full impl)"))
+}
+impl Eq for Tuple {}
+
+impl Hash for Tuple {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        if self.cache_hash {
+            // 调用方通过 set_cache_hash 启用缓存；此处按需计算
+        }
+        for m in &self.members {
+            // Value 无 Hash；用 Display 稳定摘要
+            m.to_string().hash(state);
+        }
+    }
+}
+
+impl std::fmt::Display for Tuple {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[")?;
+        for (i, m) in self.members.iter().enumerate() {
+            if i > 0 {
+                write!(f, ", ")?;
+            }
+            write!(f, "{m}")?;
+        }
+        write!(f, "]")
+    }
+}
+
+#[cfg(test)]
+mod tuple_idiomatic_parity {
+    use super::*;
+    use serde_json::json;
+
+    /// 对齐 Java Tuple get/size/contains/sub 可执行证据。
+    #[test]
+    fn tuple_get_size_contains_sub_and_display() {
+        let t = Tuple::new(vec![json!(1), json!("a"), json!(true)]);
+        assert_eq!(t.size(), 3);
+        assert_eq!(t.get(1), Some(&json!("a")));
+        assert!(t.contains(&json!(true)));
+        let sub = t.sub(1, 3);
+        assert_eq!(sub.size(), 2);
+        assert_eq!(sub.to_list(), vec![json!("a"), json!(true)]);
+        assert!(t.to_string().contains('a'));
+        let mut t2 = t.clone();
+        t2.set_cache_hash(true);
+        assert_eq!(t, t2);
     }
 }

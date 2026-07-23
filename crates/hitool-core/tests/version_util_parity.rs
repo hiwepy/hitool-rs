@@ -6,10 +6,10 @@
 //! # API 命名映射
 //! | Java                                  | Rust                                       |
 //! |---------------------------------------|--------------------------------------------|
-//! | `isGreaterThan(a, b)`                 | `is_greater_than(a, b)`                    |
-//! | `isGreaterThanOrEqual(a, b)`          | `is_greater_than_or_equal(a, b)`           |
-//! | `isLessThan(a, b)`                    | `is_less_than(a, b)`                       |
-//! | `isLessThanOrEqual(a, b)`             | `is_less_than_or_equal(a, b)`              |
+//! | `isGreaterThan(a, b)`                 | `is_greater_than(Option, Option)` / `_str`  |
+//! | `isGreaterThanOrEqual(a, b)`          | `is_greater_than_or_equal(Option, Option)`  |
+//! | `isLessThan(a, b)`                    | `is_less_than(Option, Option)` / `_str`     |
+//! | `isLessThanOrEqual(a, b)`             | `is_less_than_or_equal(Option, Option)`     |
 //! | `matchEl(cur, el)`                    | `match_el(cur, el) -> Result<bool>`        |
 //! | `matchEl(cur, el, delimiter)`         | `match_el_with_delimiter(cur, el, delim)`  |
 //! | `anyMatch(cur, list)`                 | `any_match(cur, iter)`                     |
@@ -17,8 +17,7 @@
 //! # Java null 处理
 //!
 //! Java `VersionUtil.isGreaterThan("1.0", null)` 将 null 视为"小于任何版本"。
-//! Rust 中 `&str` 无法表达 null,本测试使用空字符串 `""` 近似,并在 issue 测试中
-//! 显式标注该差异。
+//! Rust 中使用 `Option<&str>` 表达，`None` 与 Java `null` 对齐。
 
 use hitool_core::VersionUtil;
 
@@ -28,37 +27,37 @@ use hitool_core::VersionUtil;
 #[test]
 fn is_greater_than_test() {
     let cur = " 1.0.2";
-    assert!(VersionUtil::is_greater_than(cur, "1.0.1"), "(对齐 Java isGreaterThan 第 1 组)");
-    assert!(VersionUtil::is_greater_than(cur, "1"), "(对齐 Java isGreaterThan 第 2 组)");
-    assert!(!VersionUtil::is_greater_than(cur, "1.1"), "(对齐 Java isGreaterThan 第 3 组)");
+    assert!(VersionUtil::is_greater_than_str(cur, "1.0.1"), "(对齐 Java isGreaterThan 第 1 组)");
+    assert!(VersionUtil::is_greater_than_str(cur, "1"), "(对齐 Java isGreaterThan 第 2 组)");
+    assert!(!VersionUtil::is_greater_than_str(cur, "1.1"), "(对齐 Java isGreaterThan 第 3 组)");
 }
 
 /// 对齐 Java: `VersionUtilTest.isGreaterThanOrEqual()` (行 22-28)
 #[test]
 fn is_greater_than_or_equal_test() {
     let cur = "1.0.2 ";
-    assert!(VersionUtil::is_greater_than_or_equal(cur, "1.0.1"), "(对齐 Java)");
-    assert!(VersionUtil::is_greater_than_or_equal(cur, "1.0.2"), "(对齐 Java)");
-    assert!(!VersionUtil::is_greater_than_or_equal(cur, "1.1"), "(对齐 Java)");
+    assert!(VersionUtil::is_greater_than_or_equal_str(cur, "1.0.1"), "(对齐 Java)");
+    assert!(VersionUtil::is_greater_than_or_equal_str(cur, "1.0.2"), "(对齐 Java)");
+    assert!(!VersionUtil::is_greater_than_or_equal_str(cur, "1.1"), "(对齐 Java)");
 }
 
 /// 对齐 Java: `VersionUtilTest.isLessThan()` (行 30-37)
 #[test]
 fn is_less_than_test() {
     let cur = "1.0.2";
-    assert!(VersionUtil::is_less_than(cur, "1.0.3"), "(对齐 Java)");
-    assert!(!VersionUtil::is_less_than(cur, "1"), "(对齐 Java)");
-    assert!(VersionUtil::is_less_than(cur, "1.1"), "(对齐 Java)");
-    assert!(!VersionUtil::is_less_than(cur, "1.0.2"), "(对齐 Java)");
+    assert!(VersionUtil::is_less_than_str(cur, "1.0.3"), "(对齐 Java)");
+    assert!(!VersionUtil::is_less_than_str(cur, "1"), "(对齐 Java)");
+    assert!(VersionUtil::is_less_than_str(cur, "1.1"), "(对齐 Java)");
+    assert!(!VersionUtil::is_less_than_str(cur, "1.0.2"), "(对齐 Java)");
 }
 
 /// 对齐 Java: `VersionUtilTest.isLessThanOrEqual()` (行 39-45)
 #[test]
 fn is_less_than_or_equal_test() {
     let cur = "1.0.2";
-    assert!(VersionUtil::is_less_than_or_equal(cur, "1.0.2"), "(对齐 Java)");
-    assert!(!VersionUtil::is_less_than_or_equal(cur, "1.0.1"), "(对齐 Java)");
-    assert!(VersionUtil::is_less_than_or_equal(cur, "1.1"), "(对齐 Java)");
+    assert!(VersionUtil::is_less_than_or_equal_str(cur, "1.0.2"), "(对齐 Java)");
+    assert!(!VersionUtil::is_less_than_or_equal_str(cur, "1.0.1"), "(对齐 Java)");
+    assert!(VersionUtil::is_less_than_or_equal_str(cur, "1.1"), "(对齐 Java)");
 }
 
 /// 对齐 Java: `VersionUtilTest.matchEl()` (行 47-56)
@@ -146,16 +145,10 @@ fn match_el_range_boundary_cases() {
 /// `VersionComparator.INSTANCE.compare("1.0", null)` = 1(null 视为最小)
 /// `StrUtil.compareVersion("1.0", null)` = 1
 /// `VersionUtil.isGreaterThan("1.0", null)` = true
-///
-/// **Java↔Rust 差异**:Java `null` 在 Rust 中无直接对应,
-/// 此处用空字符串 `""` 近似(空字符串在版本比较中等价于 0.0.0,小于 1.0)。
-/// 完全对齐 null 语义需要把 API 改为 `Option<&str>`,这是未来的工作。
 #[test]
-#[ignore = "Java null 入参在 Rust 中无直接对应,待 API 改造为 Option<&str> 后启用"]
 fn issue_ijnfqz_test() {
-    // 此测试对应 Java:
-    //   VersionComparator.INSTANCE.compare("1.0", null) == 1
-    //   StrUtil.compareVersion("1.0", null) == 1
-    //   VersionUtil.isGreaterThan("1.0", null) == true
-    // Rust 中暂时无法表达 null 入参,标注 ignore。
+    assert!(
+        VersionUtil::is_greater_than(Some("1.0"), None),
+        "isGreaterThan(\"1.0\", null) == true (对齐 Java issueIJNFQZTest)"
+    );
 }

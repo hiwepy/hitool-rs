@@ -1,20 +1,33 @@
 //! 对齐: `cn.hutool.core.map.MapProxy`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/map/MapProxy.java
 //!
-//! 状态: 对齐桩,等待完整实现。
+//! JVM 动态代理无安全 1:1 映射；保留类型占位并标记 planned。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::collections::HashMap;
+use std::hash::Hash;
 
-/// 对齐 Java 类: `cn.hutool.core.map.MapProxy`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct MapProxy;
+use crate::{CoreError, Result};
 
-impl MapProxy {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+/// 对齐 Java 类: `cn.hutool.core.map.MapProxy`（planned：无反射代理）。
+#[derive(Debug, Clone)]
+pub struct MapProxy<K, V> {
+    raw: HashMap<K, V>,
+}
+
+impl<K: Eq + Hash, V> MapProxy<K, V> {
+    /// 对齐 Java: `MapProxy.create(Map)` —— 仅包装，不提供 Bean 式 getter 代理。
+    pub fn create(map: HashMap<K, V>) -> Self {
+        Self { raw: map }
+    }
+
+    /// 底层 map。
+    pub fn raw(&self) -> &HashMap<K, V> {
+        &self.raw
+    }
+
+    /// Bean 风格属性访问 —— planned。
+    pub fn get_property(&self, _name: &str) -> Result<()> {
+        Err(CoreError::PendingEngine(
+            "MapProxy reflective property access (Java Proxy)",
+        ))
     }
 }

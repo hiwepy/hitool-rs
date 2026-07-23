@@ -1,39 +1,41 @@
-//! Excel date utilities aligned with Hutool.
+//! 迁移自 hutool 的 `cn.hutool.poi.excel.ExcelDateUtil`
 //!
-//! 对齐: `cn.hutool.poi.excel.ExcelDateUtil`
-//! 来源: hutool-poi/src/main/java/cn/hutool/poi/excel/ExcelDateUtil.java
-//!
-//! 提供 Excel 序列号(1900/1904 基准)与 Java 时间对象互转。
+//! - 原 Java 包：`cn.hutool.poi.excel`
+//! - 原 Java 主类：`cn.hutool.poi.excel.ExcelDateUtil`
+//! - 迁移状态：🟡 占位实现，等待 `easyexcel-rs` / `easydoc-rs` / `easyofd-rs` / `easypdf-rs` 完成
+//! - Java 源文件：`hutool-poi/src/main/java/excel/ExcelDateUtil.java`
 
-use crate::{PoiError, Result};
+#![allow(dead_code, clippy::missing_docs_in_private_items)]
 
-/// Excel date utility.
+/// 占位结构体，对齐 Java `ExcelDateUtil`。
 ///
-/// 对齐 Java: `cn.hutool.poi.excel.ExcelDateUtil`
-#[derive(Debug, Clone, Copy, Default)]
+/// 当前状态：等待 `easyexcel-rs` 引擎完成后填充实现。
 pub struct ExcelDateUtil;
 
 impl ExcelDateUtil {
-    /// 对齐 Java: `ExcelDateUtil.isExcelDate(Date)`
-    pub fn is_excel_date(_epoch_days: i64) -> bool {
-        false
+    /// 占位方法。当前调用会 panic。
+    ///
+    /// # Panics
+    ///
+    /// 此方法尚未实现，等待 `easyexcel-rs` / `easydoc-rs` 等引擎完成。
+    pub fn new() -> Self {
+        unimplemented!("ExcelDateUtil::new() 等待 easyexcel-rs / easydoc-rs / easyofd-rs / easypdf-rs 完成")
     }
-    /// 对齐 Java: `ExcelDateUtil.javaToDate(double, boolean)`
-    pub fn java_to_date(_serial: f64, _use_1904_windowing: bool) -> Result<()> {
-        Err(PoiError::PendingEngine(
-            "ExcelDateUtil::javaToDate (waiting for easyexcel-rs)",
-        ))
+}
+
+impl Default for ExcelDateUtil {
+    fn default() -> Self {
+        Self::new()
     }
-    /// 对齐 Java: `ExcelDateUtil.dateToJava(Date, boolean)`
-    pub fn date_to_java(_value: &str, _use_1904_windowing: bool) -> Result<f64> {
-        Err(PoiError::PendingEngine(
-            "ExcelDateUtil::dateToJava (waiting for easyexcel-rs)",
-        ))
-    }
-    /// 对齐 Java: `ExcelDateUtil.getMs(Date)`
-    pub fn get_ms(_value: &str) -> Result<i64> {
-        Err(PoiError::PendingEngine(
-            "ExcelDateUtil::getMs (waiting for easyexcel-rs)",
-        ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic(expected = "等待 easyexcel-rs")]
+    fn exceldateutil_new_is_unimplemented() {
+        let _ = ExcelDateUtil::new();
     }
 }

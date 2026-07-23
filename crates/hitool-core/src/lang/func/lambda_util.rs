@@ -1,20 +1,29 @@
 //! 对齐: `cn.hutool.core.lang.func.LambdaUtil`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/lang/func/LambdaUtil.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
-
-/// 对齐 Java 类: `cn.hutool.core.lang.func.LambdaUtil`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
+/// 对齐 Java: `LambdaUtil` — Rust 无方法引用，提供可断言的名称解析辅助
 pub struct LambdaUtil;
 
 impl LambdaUtil {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 对齐 `getMethodName` — 传入已解析名
+    pub fn get_method_name(name: &str) -> &str {
+        name
+    }
+
+    /// 对齐 `getFieldName` — 去掉 get/is 前缀并小写首字母
+    pub fn get_field_name(method_name: &str) -> String {
+        let rest = method_name
+            .strip_prefix("get")
+            .or_else(|| method_name.strip_prefix("is"))
+            .unwrap_or(method_name);
+        let mut chars = rest.chars();
+        match chars.next() {
+            None => String::new(),
+            Some(c) => c.to_lowercase().collect::<String>() + chars.as_str(),
+        }
+    }
+
+    /// 对齐 `resolve` 引用种类标签
+    pub fn resolve_kind(kind: &str) -> &str {
+        kind
     }
 }

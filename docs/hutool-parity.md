@@ -35,3 +35,32 @@ model. Status values are `native`, `idiomatic`, `compatible`,
 The ledger records capability direction, not a claim of method-for-method API
 completion. New compatibility APIs must delegate to the idiomatic crate and
 must not introduce a second implementation.
+
+## Unportable matrix
+
+HiTool forbids `unsafe` and does not embed a JVM. The following surfaces are
+**registered** as `planned` or `unsafe-to-copy` and are excluded from the
+`feasible_covered` KPI (`python3 scripts/verify-parity.py --feasible`).
+
+| Tag | Typical Hutool area | HiTool disposition |
+|---|---|---|
+| `awt_swing` | `core.swing`, desktop UI | planned — no AWT |
+| `javax_servlet` | `extra.servlet` | planned — no Servlet container |
+| `jndi` | JNDI factories | planned — explicit injection instead |
+| `reflection` | ReflectUtil, ClassUtil, BeanDesc, proxies | unsafe-to-copy — Serde / `From` / macros |
+| `javax_sql_spi` | JDBC Statement/Connection wrappers, globals | planned — SQLx pools only |
+| `bouncycastle_only` | ZUC, Cipher SPI, pure-BC param types | planned — RustCrypto subset |
+| `soap_server` | SOAP clients, SimpleServer, HttpConnection | planned — reqwest client model |
+| `jvm_only` | SSH/FTP/Spring/CGLIB/template/tokenizer, poi engines | planned — or deferred to `easy*` for poi |
+| `portable` | everything else | idiomatic when implemented; planned only as a temporary Wave ledger row |
+
+Classifier: `python3 scripts/classify-unportable.py --summary`
+Tags CSV: `python3 scripts/classify-unportable.py --write-csv parity/unportable-tags.csv`
+
+### Migration DoD (ledger)
+
+1. **registered = 100%** of pinned v5.8.46 APIs
+2. Maximize **idiomatic** for `portable` tags
+3. Keep TEST registration 100%; behavioral planned only for declared unportable tests
+4. Never delete existing idiomatic implementations; facades must delegate
+5. `hutool-poi` stays planned stubs until `easyexcel-rs` / `easydoc-rs` / `easyofd-rs` / `easypdf-rs`

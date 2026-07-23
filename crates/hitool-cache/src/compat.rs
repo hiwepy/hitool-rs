@@ -219,6 +219,30 @@ where
             .collect()
     }
 
+    /// Hutool `LFUCache.pruneCache`: subtract the minimum access count from every
+    /// entry and remove those that reach zero so new inserts share a fair counter.
+    fn prune_lfu_when_full_locked(state: &mut State<K, V>) -> Vec<(K, Arc<V>)> {
+        let Some(min_access) = state.entries.values().map(|entry| entry.accesses).min() else {
+            return Vec::new();
+        };
+        let keys: Vec<_> = state.entries.keys().cloned().collect();
+        let mut removed = Vec::new();
+        for key in keys {
+            let Some(entry) = state.entries.get_mut(&key) else {
+                continue;
+            };
+            entry.accesses = entry.accesses.saturating_sub(min_access);
+            if entry.accesses == 0 {
+                let entry = state
+                    .entries
+                    .remove(&key)
+                    .expect("LFU victim key was present under exclusive lock");
+                removed.push((key, entry.value));
+            }
+        }
+        removed
+    }
+
     /// Inserts using the default timeout.
     pub fn put(&self, key: K, value: V) {
         self.put_arc_with_timeout(key, Arc::new(value), self.inner.timeout);
@@ -246,15 +270,24 @@ where
         if let Some(previous) = state.entries.remove(&key) {
             removed.push((key.clone(), previous.value));
         }
+        // Hutool: when full, prune before insert. LFU subtracts min access and
+        // removes every entry that reaches zero (not a single victim).
         if self.inner.capacity > 0 && state.entries.len() >= self.inner.capacity {
-            let victim = self
-                .victim_key(&state)
-                .expect("a cache at positive capacity has an eviction victim");
-            let entry = state
-                .entries
-                .remove(&victim)
-                .expect("the selected eviction victim is present");
-            removed.push((victim, entry.value));
+            match self.inner.policy {
+                CachePolicy::Lfu => {
+                    removed.extend(Self::prune_lfu_when_full_locked(&mut state));
+                }
+                _ => {
+                    let victim = self
+                        .victim_key(&state)
+                        .expect("a cache at positive capacity has an eviction victim");
+                    let entry = state
+                        .entries
+                        .remove(&victim)
+                        .expect("the selected eviction victim is present");
+                    removed.push((victim, entry.value));
+                }
+            }
         }
         state.entries.insert(
             key,
@@ -687,6 +720,8 @@ pub struct WeakCache<K, V> {
     timeout: Option<Duration>,
     entries: Mutex<HashMap<K, WeakEntry<V>>>,
     listener: RwLock<Option<Arc<dyn CacheListener<K, V>>>>,
+    /// Per-key locks for Hutool-aligned `get(key, supplier)` double-checked loading.
+    key_locks: Mutex<HashMap<K, Arc<Mutex<()>>>>,
 }
 
 impl<K, V> WeakCache<K, V>
@@ -700,6 +735,7 @@ where
             timeout: timeout.filter(|value| !value.is_zero()),
             entries: Mutex::new(HashMap::new()),
             listener: RwLock::new(None),
+            key_locks: Mutex::new(HashMap::new()),
         }
     }
 
@@ -737,6 +773,35 @@ where
             entry.last_access = now;
             entry.value.upgrade()
         })
+    }
+
+    /// Hutool `Cache.get(key, supplier)`: load-or-compute under a per-key lock.
+    ///
+    /// The returned [`Arc`] must be retained by the caller; dropping every strong
+    /// reference lets the weak entry evaporate (Rust ownership vs Java GC).
+    pub fn get_or_insert_with<F>(&self, key: K, factory: F) -> Arc<V>
+    where
+        F: FnOnce() -> V,
+        V: Send + Sync + 'static,
+    {
+        if let Some(value) = self.get(&key) {
+            return value;
+        }
+        let lock = {
+            let mut locks = self.key_locks.lock();
+            Arc::clone(
+                locks
+                    .entry(key.clone())
+                    .or_insert_with(|| Arc::new(Mutex::new(()))),
+            )
+        };
+        let _guard = lock.lock();
+        if let Some(value) = self.get(&key) {
+            return value;
+        }
+        let value = Arc::new(factory());
+        self.put(key, &value);
+        value
     }
 
     /// Returns whether a live weak entry exists.

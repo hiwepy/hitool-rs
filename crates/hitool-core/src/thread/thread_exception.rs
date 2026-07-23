@@ -1,24 +1,47 @@
 //! 对齐: `cn.hutool.core.thread.ThreadException`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/thread/ThreadException.java
-//!
-//! 状态: 对齐桩,等待完整实现。
-
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
 
 /// 对齐 Java 异常类: `cn.hutool.core.thread.ThreadException`
-///
-/// 在 Rust 中异常类映射为 [`thiserror::Error`] 枚举变体或独立 Error 类型。
-/// 该桩保留类型命名,等待完整实现。
 #[derive(Debug, thiserror::Error)]
-#[error("ThreadException: 对齐桩,等待完整实现")]
+#[error("{message}")]
 pub struct ThreadException {
     /// 错误消息。
     pub message: String,
+    /// 可选根因。
+    #[source]
+    pub source: Option<Box<dyn std::error::Error + Send + Sync>>,
 }
 
 impl ThreadException {
-    /// 创建新的错误实例。
+    /// 对齐 `ThreadException(String message)`。
     pub fn new(message: impl Into<String>) -> Self {
-        Self { message: message.into() }
+        Self {
+            message: message.into(),
+            source: None,
+        }
+    }
+
+    /// 对齐 `ThreadException(Throwable e)`。
+    pub fn from_error(err: impl std::error::Error + Send + Sync + 'static) -> Self {
+        Self {
+            message: err.to_string(),
+            source: Some(Box::new(err)),
+        }
+    }
+
+    /// 对齐 `ThreadException(String message, Throwable throwable)`。
+    pub fn with_cause(
+        message: impl Into<String>,
+        err: impl std::error::Error + Send + Sync + 'static,
+    ) -> Self {
+        Self {
+            message: message.into(),
+            source: Some(Box::new(err)),
+        }
+    }
+
+    /// 对齐 `ThreadException(String messageTemplate, Object... params)`。
+    pub fn template(message: impl Into<String>) -> Self {
+        Self::new(message)
     }
 }

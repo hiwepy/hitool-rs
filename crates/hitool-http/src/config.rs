@@ -187,6 +187,20 @@ pub struct HttpConfig {
     pub redirect_limit: usize,
     /// Whether request-cache headers are disabled explicitly.
     pub disable_cache: bool,
+    /// Preferred multipart / streaming block size hint (Hutool `blockSize`).
+    pub block_size: usize,
+    /// Whether truncated EOF bodies are tolerated when copying (stored for parity).
+    pub ignore_eof_error: bool,
+    /// Whether URL query decoding is requested before send (stored for parity).
+    pub decode_url: bool,
+    /// Whether interceptors run on redirect hops (stored for parity).
+    pub interceptor_on_redirect: bool,
+    /// Whether cookies are forwarded across redirects.
+    pub follow_redirects_cookie: bool,
+    /// Whether a default Content-Type is injected when missing.
+    pub use_default_content_type_if_null: bool,
+    /// Whether declared Content-Length should be ignored by helpers.
+    pub ignore_content_length: bool,
     pub(crate) proxy_url: Option<String>,
     pub(crate) hostname_verification: HostnameVerification,
     pub(crate) tls_identity: Option<reqwest::Identity>,
@@ -206,6 +220,16 @@ impl fmt::Debug for HttpConfig {
             .field("user_agent", &self.user_agent)
             .field("redirect_limit", &self.redirect_limit)
             .field("disable_cache", &self.disable_cache)
+            .field("block_size", &self.block_size)
+            .field("ignore_eof_error", &self.ignore_eof_error)
+            .field("decode_url", &self.decode_url)
+            .field("interceptor_on_redirect", &self.interceptor_on_redirect)
+            .field("follow_redirects_cookie", &self.follow_redirects_cookie)
+            .field(
+                "use_default_content_type_if_null",
+                &self.use_default_content_type_if_null,
+            )
+            .field("ignore_content_length", &self.ignore_content_length)
             .field("proxy_url", &self.proxy_url.as_ref().map(|_| "<redacted>"))
             .field("hostname_verification", &self.hostname_verification)
             .field(
@@ -229,6 +253,13 @@ impl Default for HttpConfig {
             user_agent: concat!("hitool-http/", env!("CARGO_PKG_VERSION")).to_owned(),
             redirect_limit: 5,
             disable_cache: false,
+            block_size: 8192,
+            ignore_eof_error: false,
+            decode_url: false,
+            interceptor_on_redirect: false,
+            follow_redirects_cookie: true,
+            use_default_content_type_if_null: true,
+            ignore_content_length: false,
             proxy_url: None,
             hostname_verification: HostnameVerification::Strict,
             tls_identity: None,
@@ -274,8 +305,66 @@ impl HttpConfig {
     }
 
     /// Disables caches through standard request headers.
+    ///
+    /// Java: `HttpConfig.disableCache()`
     pub const fn disable_cache(&mut self) -> &mut Self {
         self.disable_cache = true;
+        self
+    }
+
+    /// Sets the preferred block size hint used by streaming helpers.
+    ///
+    /// Java: `HttpConfig.setBlockSize(int blockSize)`
+    pub const fn set_block_size(&mut self, block_size: usize) -> &mut Self {
+        self.block_size = block_size;
+        self
+    }
+
+    /// Controls whether truncated EOF copy errors are ignored.
+    ///
+    /// Java: `HttpConfig.setIgnoreEOFError(boolean ignoreEOFError)`
+    pub const fn set_ignore_eof_error(&mut self, ignore: bool) -> &mut Self {
+        self.ignore_eof_error = ignore;
+        self
+    }
+
+    /// Controls whether URL query decoding is requested before send.
+    ///
+    /// Java: `HttpConfig.setDecodeUrl(boolean decodeUrl)`
+    pub const fn set_decode_url(&mut self, decode_url: bool) -> &mut Self {
+        self.decode_url = decode_url;
+        self
+    }
+
+    /// Controls whether interceptors run on redirect hops.
+    ///
+    /// Java: `HttpConfig.setInterceptorOnRedirect(boolean interceptorOnRedirect)`
+    pub const fn set_interceptor_on_redirect(&mut self, enabled: bool) -> &mut Self {
+        self.interceptor_on_redirect = enabled;
+        self
+    }
+
+    /// Controls whether cookies follow redirects.
+    ///
+    /// Java: `HttpConfig.setFollowRedirectsCookie(boolean followRedirectsCookie)`
+    pub const fn set_follow_redirects_cookie(&mut self, follow: bool) -> &mut Self {
+        self.follow_redirects_cookie = follow;
+        self
+    }
+
+    /// Controls default Content-Type injection when the header is absent.
+    ///
+    /// Java: `HttpConfig.setUseDefaultContentTypeIfNull(boolean)`
+    pub const fn set_use_default_content_type_if_null(&mut self, enabled: bool) -> &mut Self {
+        self.use_default_content_type_if_null = enabled;
+        self
+    }
+
+    /// Controls whether helpers ignore declared Content-Length.
+    ///
+    /// Java: `HttpConfig.setIgnoreContentLength(boolean ignoreContentLength)`
+    pub const fn set_ignore_content_length(&mut self, ignore: bool) -> &mut Self {
+        self.ignore_content_length = ignore;
         self
     }
 

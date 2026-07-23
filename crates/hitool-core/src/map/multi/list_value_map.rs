@@ -1,20 +1,193 @@
-//! 对齐: `cn.hutool.core.map.multi.ListValueMap`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/map/multi/ListValueMap.java
-//!
-//! 状态: 对齐桩,等待完整实现。
+//! 对齐: `cn.hutool.core.map.multi.AbsCollValueMap`
+//! 来源: hutool-core/src/main/java/cn/hutool/core/map/multi/AbsCollValueMap.java
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::collections::HashMap;
+use std::hash::Hash;
 
-/// 对齐 Java 类: `cn.hutool.core.map.multi.ListValueMap`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
+/// 值集合 Map 的公共行为 —— 对齐 `AbsCollValueMap`。
+pub trait CollValueMapOps<K, V> {
+    /// 对齐 Java: `putValue`
+    fn put_value(&mut self, key: K, value: V);
+    /// 对齐 Java: `getValues` / get collection
+    fn get_values(&self, key: &K) -> Option<&[V]>;
+    /// 对齐 Java: `removeValue`
+    fn remove_value(&mut self, key: &K, value: &V) -> bool
+    where
+        V: PartialEq;
+}
+
+/// 对齐 Java: `ListValueMap`
 #[derive(Debug, Clone, Default)]
-pub struct ListValueMap;
+pub struct ListValueMap<K, V> {
+    inner: HashMap<K, Vec<V>>,
+}
 
-impl ListValueMap {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+impl<K: Eq + Hash, V> ListValueMap<K, V> {
+    /// 默认构造。
+    pub fn new() -> Self {
+        Self {
+            inner: HashMap::new(),
+        }
+    }
+
+    /// 带容量。
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            inner: HashMap::with_capacity(capacity),
+        }
+    }
+
+    /// 对齐 Java: `putValue`
+    pub fn put_value(&mut self, key: K, value: V) {
+        self.inner.entry(key).or_default().push(value);
+    }
+
+    /// 对齐 Java: `putAllValues`
+    pub fn put_all_values(&mut self, other: HashMap<K, Vec<V>>)
+    where
+        K: Clone,
+    {
+        for (k, values) in other {
+            for v in values {
+                self.put_value(k.clone(), v);
+            }
+        }
+    }
+
+    /// 获取值列表。
+    pub fn get(&self, key: &K) -> Option<&Vec<V>> {
+        self.inner.get(key)
+    }
+
+    /// 对齐 Java: `getValues` —— 切片视图。
+    pub fn get_values(&self, key: &K) -> Option<&[V]> {
+        self.inner.get(key).map(|v| v.as_slice())
+    }
+
+    /// 对齐 Java: `removeValue`
+    pub fn remove_value(&mut self, key: &K, value: &V) -> bool
+    where
+        V: PartialEq,
+    {
+        if let Some(list) = self.inner.get_mut(key) {
+            let before = list.len();
+            list.retain(|v| v != value);
+            return list.len() != before;
+        }
+        false
+    }
+
+    /// 对齐 Java: `removeValues`
+    pub fn remove_values(&mut self, key: &K, values: &[V]) -> bool
+    where
+        V: PartialEq,
+    {
+        if let Some(list) = self.inner.get_mut(key) {
+            let before = list.len();
+            list.retain(|v| !values.contains(v));
+            return list.len() != before;
+        }
+        false
+    }
+
+    /// 清空某键。
+    pub fn remove(&mut self, key: &K) -> Option<Vec<V>> {
+        self.inner.remove(key)
+    }
+
+    /// 是否包含键。
+    pub fn contains_key(&self, key: &K) -> bool {
+        self.inner.contains_key(key)
+    }
+
+    /// 清空。
+    pub fn clear(&mut self) {
+        self.inner.clear();
+    }
+
+    /// 条目数（键数）。
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    /// 是否为空。
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
+    /// 内层。
+    pub fn raw(&self) -> &HashMap<K, Vec<V>> {
+        &self.inner
     }
 }
+
+impl<K: Eq + Hash, V> CollValueMapOps<K, V> for ListValueMap<K, V> {
+    /// 对齐 Java: `putValue`
+    fn put_value(&mut self, key: K, value: V) {
+        ListValueMap::put_value(self, key, value);
+    }
+
+    /// 对齐 Java: `getValues`
+    fn get_values(&self, key: &K) -> Option<&[V]> {
+        ListValueMap::get_values(self, key)
+    }
+
+    /// 对齐 Java: `removeValue`
+    fn remove_value(&mut self, key: &K, value: &V) -> bool
+    where
+        V: PartialEq,
+    {
+        ListValueMap::remove_value(self, key, value)
+    }
+}
+
+/// 对齐 Java: `SetValueMap`
+#[derive(Debug, Clone, Default)]
+pub struct SetValueMap<K, V> {
+    inner: HashMap<K, Vec<V>>,
+}
+
+impl<K: Eq + Hash, V: PartialEq> SetValueMap<K, V> {
+    /// 默认构造。
+    pub fn new() -> Self {
+        Self {
+            inner: HashMap::new(),
+        }
+    }
+
+    /// 放入（去重）。
+    pub fn put_value(&mut self, key: K, value: V) {
+        let list = self.inner.entry(key).or_default();
+        if !list.contains(&value) {
+            list.push(value);
+        }
+    }
+
+    /// 获取。
+    pub fn get(&self, key: &K) -> Option<&Vec<V>> {
+        self.inner.get(key)
+    }
+
+    /// 移除单个值。
+    pub fn remove_value(&mut self, key: &K, value: &V) -> bool {
+        if let Some(list) = self.inner.get_mut(key) {
+            let before = list.len();
+            list.retain(|v| v != value);
+            return list.len() != before;
+        }
+        false
+    }
+
+    /// 键数。
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    /// 是否为空。
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+}
+
+/// 对齐 Java: `CollectionValueMap` —— 与 ListValueMap 同构的显式别名类型。
+pub type CollectionValueMap<K, V> = ListValueMap<K, V>;

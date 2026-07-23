@@ -1,20 +1,31 @@
 //! 对齐: `cn.hutool.core.thread.FinalizableDelegatedExecutorService`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/thread/FinalizableDelegatedExecutorService.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use crate::thread::delegated_executor_service::DelegatedExecutorService;
+use crate::thread::executor_builder::SimpleExecutor;
+use std::sync::Arc;
 
-/// 对齐 Java 类: `cn.hutool.core.thread.FinalizableDelegatedExecutorService`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct FinalizableDelegatedExecutorService;
+/// 对齐 Java 类: 析构时自动 shutdown 的委托执行器。
+pub struct FinalizableDelegatedExecutorService {
+    inner: DelegatedExecutorService,
+}
 
 impl FinalizableDelegatedExecutorService {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 包装执行器。
+    pub fn new(inner: Arc<SimpleExecutor>) -> Self {
+        Self {
+            inner: DelegatedExecutorService::new(inner),
+        }
+    }
+
+    /// 访问内部委托。
+    pub fn delegate(&self) -> &DelegatedExecutorService {
+        &self.inner
+    }
+}
+
+impl Drop for FinalizableDelegatedExecutorService {
+    fn drop(&mut self) {
+        self.inner.shutdown();
     }
 }

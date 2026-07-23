@@ -41,12 +41,27 @@ mod page_util;
 mod phone_util;
 mod radix_codec;
 mod radix_util;
+pub mod serialize_util;
 mod stream;
 mod string;
 #[cfg(feature = "swing")]
 pub mod swing;
 mod text;
 mod version_util;
+mod lang;
+mod net;
+#[cfg(feature = "img")]
+pub mod img;
+pub mod exceptions;
+/// Hutool `cn.hutool.core.comparator` 对齐（Fn/Ord 包装；反射 Field 构造为 planned）。
+pub mod comparator;
+/// Hutool `cn.hutool.core.math` 对齐（排列组合 / Money / Calculator / BitStatus）。
+pub mod math;
+/// Hutool `cn.hutool.core.io` 子包（File/Path 工具等）。
+pub mod io;
+/// Hutool `cn.hutool.core.thread` 对齐（std::thread / 显式线程池构建；无 JVM ThreadLocal 全局）。
+pub mod thread;
+pub mod annotation;
 
 pub use advanced_codec::{
     HashIds, MorseCodec, base32_decode, base32_encode, base32_hex_decode, base32_hex_encode,
@@ -132,6 +147,10 @@ pub use radix_codec::{
     base62_encode_text, bcd_encode_ascii_prefix,
 };
 pub use radix_util::{RadixError, RadixUtil};
+pub use serialize_util::{
+    EnvelopeOptions, Frame, FrameMetadata, MusliDescriptive, MusliPacked, MusliStorage, MusliWire,
+    SerializationCodec, SerializeError, SerializeResult, SerializeUtil,
+};
 pub use stream::{CollectorCharacteristic, CollectorUtil, SimpleCollector, StreamUtil};
 pub use string::{
     StrExt, clean_blank, contains, contains_ignore_case, cut, end_with, equals,
@@ -148,7 +167,7 @@ pub mod prelude {
         CoordinateUtil, CreditCodeUtil, DateUtil, DesensitizedType, DesensitizedUtil, HashUtil,
         HexUtil, IdUtil, Idcard, IdcardUtil, Mutable, MutableBool, MutableByte, MutableDouble,
         MutableFloat, MutableInt, MutableLong, MutableObj, MutablePair, MutableShort, PageUtil,
-        PhoneUtil, RadixUtil, RgbColor, StrExt, VersionUtil,
+        PhoneUtil, RadixUtil, RgbColor, SerializationCodec, SerializeUtil, StrExt, VersionUtil,
     };
 }
 
@@ -186,3 +205,4 @@ mod io_util;
 pub use io_util::IoUtil;
 mod random_util;
 pub use random_util::RandomUtil;
+pub use net::rfc3986::Rfc3986;

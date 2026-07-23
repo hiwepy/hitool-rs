@@ -1,38 +1,41 @@
-//! Formula cell value aligned with Hutool.
+//! 迁移自 hutool 的 `cn.hutool.poi.excel.cell.FormulaCellValue`
 //!
-//! 对齐: `cn.hutool.poi.excel.cell.FormulaCellValue`
-//! 来源: hutool-poi/src/main/java/cn/hutool/poi/excel/cell/FormulaCellValue.java
-//!
-//! Hutool 的 `FormulaCellValue` 是 `CellValue` 接口实现,封装 POI 公式求值结果。
+//! - 原 Java 包：`cn.hutool.poi.excel.cell`
+//! - 原 Java 主类：`cn.hutool.poi.excel.cell.FormulaCellValue`
+//! - 迁移状态：🟡 占位实现，等待 `easyexcel-rs` / `easydoc-rs` / `easyofd-rs` / `easypdf-rs` 完成
+//! - Java 源文件：`hutool-poi/src/main/java/excel/cell/FormulaCellValue.java`
 
-use crate::{PoiError, Result};
+#![allow(dead_code, clippy::missing_docs_in_private_items)]
 
-/// Formula cell value.
+/// 占位结构体，对齐 Java `FormulaCellValue`。
 ///
-/// 对齐 Java: `cn.hutool.poi.excel.cell.FormulaCellValue`
-#[derive(Debug, Clone, Default)]
-pub struct FormulaCellValue {
-    /// Cached formula evaluation result (string form).
-    pub result: String,
-}
+/// 当前状态：等待 `easyexcel-rs` 引擎完成后填充实现。
+pub struct FormulaCellValue;
 
 impl FormulaCellValue {
-    /// 对齐 Java: `new FormulaCellValue(String formula)`
-    pub fn new_formula(_formula: &str) -> Result<Self> {
-        Err(PoiError::PendingEngine(
-            "FormulaCellValue::new (waiting for easyexcel-rs)",
-        ))
+    /// 占位方法。当前调用会 panic。
+    ///
+    /// # Panics
+    ///
+    /// 此方法尚未实现，等待 `easyexcel-rs` / `easydoc-rs` 等引擎完成。
+    pub fn new() -> Self {
+        unimplemented!("FormulaCellValue::new() 等待 easyexcel-rs / easydoc-rs / easyofd-rs / easypdf-rs 完成")
     }
-    /// 对齐 Java: `new FormulaCellValue(String formula, CellValue fallback)`
-    pub fn new_with_fallback(_formula: &str, _fallback: ()) -> Result<Self> {
-        Err(PoiError::PendingEngine(
-            "FormulaCellValue::new (waiting for easyexcel-rs)",
-        ))
+}
+
+impl Default for FormulaCellValue {
+    fn default() -> Self {
+        Self::new()
     }
-    /// 对齐 Java: `FormulaCellValue.getValue()`
-    pub fn get_value(&self) -> &str {
-        &self.result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic(expected = "等待 easyexcel-rs")]
+    fn formulacellvalue_new_is_unimplemented() {
+        let _ = FormulaCellValue::new();
     }
-    /// 对齐 Java: `FormulaCellValue.setValue(Object)`
-    pub fn set_value(&mut self, _value: &str) {}
 }

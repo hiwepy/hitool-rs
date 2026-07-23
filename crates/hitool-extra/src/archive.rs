@@ -1,4 +1,7 @@
 //! ZIP creation and bounded, path-safe extraction.
+//!
+//! 对齐: `cn.hutool.extra.compress.CompressUtil`
+//! 对齐: `cn.hutool.core.util.ZipUtil`（extra 侧安全 ZIP 子集）
 
 use crate::{ExtraError, Result};
 use std::{
@@ -123,6 +126,55 @@ fn ensure_beneath_root(root: &Path, path: &Path) -> Result<()> {
     Ok(())
 }
 
+/// Hutool `CompressUtil` — ZIP archiver/extractor factory over safe helpers.
+///
+/// 对齐 Java 类: `cn.hutool.extra.compress.CompressUtil`
+///
+/// 7z/tar engines remain planned; ZIP maps to [`create_zip`] / [`extract_zip`].
+pub struct CompressUtil;
+
+impl CompressUtil {
+    /// Creates a ZIP byte archive (Hutool `createArchiver` ZIP path).
+    pub fn create_archiver(entries: &[(&str, &[u8])]) -> Result<Vec<u8>> {
+        create_zip(entries)
+    }
+
+    /// Extracts a ZIP beneath `destination` (Hutool `createExtractor` ZIP path).
+    pub fn create_extractor<R: Read + Seek>(
+        reader: R,
+        destination: impl AsRef<Path>,
+        limits: ExtractionLimits,
+    ) -> Result<()> {
+        extract_zip(reader, destination, limits)
+    }
+}
+
+/// Hutool-aligned ZIP helpers mirroring core `ZipUtil` names for extra users.
+///
+/// 对齐 Java 类: `cn.hutool.core.util.ZipUtil`（内存条目 / 安全解压子集）
+pub struct ZipUtil;
+
+impl ZipUtil {
+    /// Zips in-memory named entries (Hutool `zip(paths, streams)` subset).
+    pub fn zip(entries: &[(&str, &[u8])]) -> Result<Vec<u8>> {
+        create_zip(entries)
+    }
+
+    /// Unzips bytes into a directory with default limits (Hutool `unzip`).
+    pub fn unzip(bytes: &[u8], destination: impl AsRef<Path>) -> Result<()> {
+        extract_zip(Cursor::new(bytes), destination, ExtractionLimits::default())
+    }
+
+    /// Unzips with explicit resource limits.
+    pub fn unzip_with_limits(
+        bytes: &[u8],
+        destination: impl AsRef<Path>,
+        limits: ExtractionLimits,
+    ) -> Result<()> {
+        extract_zip(Cursor::new(bytes), destination, limits)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -163,5 +215,16 @@ mod tests {
             ),
             Err(ExtraError::ArchiveLimit(_))
         ));
+    }
+
+    #[test]
+    fn compress_and_zip_util_roundtrip() {
+        let bytes = CompressUtil::create_archiver(&[("facade.txt", b"ok")]).unwrap();
+        let directory = tempfile::tempdir().unwrap();
+        ZipUtil::unzip(&bytes, directory.path()).unwrap();
+        assert_eq!(
+            fs::read(directory.path().join("facade.txt")).unwrap(),
+            b"ok"
+        );
     }
 }

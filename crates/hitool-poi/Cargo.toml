@@ -8,24 +8,10 @@ authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
 readme.workspace = true
-description = "Office document reading and writing utilities for HiTool."
+description = "Office document (Excel/Word/OFD) utilities for HiTool — placeholder stubs pending easyexcel-rs/easydoc-rs engines."
 
 [lints]
 workspace = true
 
-[features]
-default = ["csv", "xlsx"]
-csv = ["dep:csv", "dep:serde"]
-xlsx = ["dep:quick-xml", "dep:rust_xlsxwriter", "dep:zip"]
-docx = ["dep:zip"]
-
 [dependencies]
-csv = { workspace = true, optional = true }
-quick-xml = { workspace = true, optional = true }
-rust_xlsxwriter = { workspace = true, optional = true }
-serde = { workspace = true, optional = true }
 thiserror.workspace = true
-zip = { workspace = true, optional = true }
-
-[dev-dependencies]
-zip.workspace = true

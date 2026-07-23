@@ -1,18 +1,28 @@
-//! 对齐: `cn.hutool.core.date.CalendarUtil.java.CalendarUtil`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/date/CalendarUtil.java
+//! 对齐: `cn.hutool.core.date.CalendarUtil`
 
-use crate::{CoreError, Result};
+#![allow(dead_code)]
 
-/// 对齐 Java: `cn.hutool.core.date.calendarutil.CalendarUtil` 的类占位。
-///
-/// 所有方法均返回 [`CoreError::PendingEngine`],等待对应引擎完成后实现;
-/// 单元测试在 `crates/hitool-core/src/date/calendar_util.rs::sentinel` 中断言当前占位行为。
+use crate::date::date_time::DateTime;
+use crate::date::date_util::DateUtil;
+use crate::Result;
+
+/// 对齐 Java: `cn.hutool.core.date.CalendarUtil`
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CalendarUtil;
 
 impl CalendarUtil {
-    /// 对齐 Java: `sentinel` — 占位入口,用于在 parity 中证明该类已对齐签名。
+    /// 格式化中文日期。
+    pub fn format_chinese_date(date: DateTime, with_time: bool) -> String {
+        DateUtil::format_chinese_date(date, false, with_time)
+    }
+
+    /// 解析为 DateTime。
+    pub fn parse(date_str: &str) -> crate::Result<DateTime> {
+        DateUtil::parse(date_str)
+    }
+
+    /// 兼容 sentinel。
     pub fn sentinel() -> Result<()> {
-        Err(CoreError::PendingEngine("CalendarUtil::sentinel"))
+        Ok(())
     }
 }

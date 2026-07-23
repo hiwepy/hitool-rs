@@ -1,9 +1,4 @@
 //! `cn.hutool.core.lang.hash` 子包对齐
-//!
-//! 自动生成的模块入口,1:1 镜像 Java 包结构。
-//! 每个子模块对应一个 Java 类(`.java` → `.rs`),命名遵循 snake_case。
-//! 详细对齐信息见各 `.rs` 文件头注释。
-
 pub mod city_hash;
 pub mod hash;
 pub mod hash128;
@@ -13,3 +8,12 @@ pub mod ketama_hash;
 pub mod metro_hash;
 pub mod murmur_hash;
 pub mod number128;
+
+pub use city_hash::CityHash;
+pub use hash::Hash;
+pub use hash128::Hash128;
+pub use hash32::Hash32;
+pub use hash64::Hash64;
+pub use ketama_hash::KetamaHash;
+pub use metro_hash::{MetroHash, Number128};
+pub use murmur_hash::MurmurHash;

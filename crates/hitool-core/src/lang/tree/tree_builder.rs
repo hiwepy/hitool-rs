@@ -1,20 +1,36 @@
 //! 对齐: `cn.hutool.core.lang.tree.TreeBuilder`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/lang/tree/TreeBuilder.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use crate::lang::tree::tree::Tree;
 
-/// 对齐 Java 类: `cn.hutool.core.lang.tree.TreeBuilder`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct TreeBuilder;
+/// 对齐 Java: `TreeBuilder`
+pub struct TreeBuilder<T: Clone> {
+    root: Tree<T>,
+    built: bool,
+}
 
-impl TreeBuilder {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+impl<T: Clone + PartialEq> TreeBuilder<T> {
+    /// 创建
+    pub fn of(root_id: T) -> Self {
+        Self {
+            root: Tree::new(root_id.clone(), root_id),
+            built: false,
+        }
+    }
+
+    /// 追加子节点
+    pub fn append(&mut self, child: Tree<T>) -> &mut Self {
+        self.root.children.push(child);
+        self
+    }
+
+    /// 构建
+    pub fn build(mut self) -> Tree<T> {
+        self.built = true;
+        self.root
+    }
+
+    /// 是否已构建
+    pub fn is_built(&self) -> bool {
+        self.built
     }
 }

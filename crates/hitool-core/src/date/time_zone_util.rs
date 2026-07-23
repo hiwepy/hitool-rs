@@ -1,18 +1,20 @@
-//! 对齐: `cn.hutool.core.date.TimeZoneUtil.java.TimeZoneUtil`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/date/TimeZoneUtil.java
+//! 对齐: `cn.hutool.core.date.TimeZone`
 
-use crate::{CoreError, Result};
+use crate::date::zone_util::ZoneUtil;
+use crate::Result;
 
-/// 对齐 Java: `cn.hutool.core.date.timezoneutil.TimeZoneUtil` 的类占位。
-///
-/// 所有方法均返回 [`CoreError::PendingEngine`],等待对应引擎完成后实现;
-/// 单元测试在 `crates/hitool-core/src/date/time_zone_util.rs::sentinel` 中断言当前占位行为。
+/// 对齐 Java TimeZone 相关工具（委托 ZoneUtil）。
 #[derive(Debug, Clone, Copy, Default)]
 pub struct TimeZoneUtil;
 
 impl TimeZoneUtil {
-    /// 对齐 Java: `sentinel` — 占位入口,用于在 parity 中证明该类已对齐签名。
+    /// 默认 +08。
+    pub fn get_default() -> chrono::FixedOffset {
+        ZoneUtil::to_default()
+    }
+
+    /// 兼容 sentinel。
     pub fn sentinel() -> Result<()> {
-        Err(CoreError::PendingEngine("TimeZoneUtil::sentinel"))
+        Ok(())
     }
 }

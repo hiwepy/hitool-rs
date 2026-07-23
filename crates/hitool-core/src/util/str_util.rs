@@ -1,9 +1,17 @@
 //! 对齐: `cn.hutool.core.util.StrUtil`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/util/StrUtil.java
 //!
-//! Rust 版本按 idiomatic 风格对每个公开方法提供关联函数桩;具体实现
-//! 等待各 `hitool-rs` 引擎完成后回填,所有桩在调用时统一返回
-//! `CoreError::PendingEngine`。
+//! Hutool 的 `StrUtil` 继承 `CharSequenceUtil`。本文件仅保留 **StrUtil 特有**、
+//! 且签名依赖 Java `Object`/`Charset`/`String[]` 等无法无损映射的重载桩
+//! （调用时返回 `CoreError::PendingEngine`，勿假实现）。
+//!
+//! 本模块位于 `util/` 包镜像中，**默认未接入** `lib.rs` 编译树。
+//!
+//! **请优先使用：**
+//! - 惯用 API：`crate::string`（`is_blank` / `trim` / `format_template` 等）
+//! - Hutool 命名表面：`crate::text::CharSequenceUtil`（已委托到 `string`）
+//! - 迁移门面：`hitool-compat-hutool::StrUtil`
+//! - UUID：`crate::IdUtil::uuid`（对齐 `StrUtil.uuid`）
 //!
 //! 重载的 Java 方法通过 `<name>_<n>` 后缀区分,避免 Rust 关联函数重名冲突。
 

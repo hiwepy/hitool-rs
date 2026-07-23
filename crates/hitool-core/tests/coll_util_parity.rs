@@ -1111,6 +1111,19 @@ fn sub_input_0_zero_positive_negative_output_null() {
     assert!(list.is_empty(), "sub([], 0, 1, -2^31+2) = [] (对齐 Java)");
 }
 
+
+/// 对齐 Java: `CollUtilTest.subInput1PositivePositivePositiveOutput0()`
+/// CollUtil.sub([null], MAX, MAX, 2^30) → []
+#[test]
+fn sub_input_1_positive_positive_positive_output_0() {
+    let list: Vec<Option<i32>> = vec![None];
+    let start = i32::MAX as isize;
+    let end = i32::MAX as isize;
+    let step = 1_073_741_824isize;
+    let result = hitool_core::CollUtil::sub(&list, start, end, step).unwrap_or_default();
+    assert!(result.is_empty(), "sub([null], MAX, MAX, 2^30) = [] (对齐 Java)");
+}
+
 /// 对齐 Java: `CollUtilTest.subInput1PositivePositivePositiveOutput02()`
 /// CollUtil.sub(list, MAX-5, MAX-6, 2^30) on [null] → []
 #[test]
@@ -1204,4 +1217,29 @@ fn subtract_to_list_all_null_test() {
     // Rust subtract 不处理 None，这里用 Vec 模拟
     let result: Vec<Option<&str>> = list1.iter().filter(|x| !list2.contains(x)).copied().collect();
     assert!(result.is_empty(), "subtractToList(null list, null list) = [] (对齐 Java)");
+}
+
+
+/// 对齐 Java: `CollUtilTest.lastIndexOf_MatcherIsNull_MatchAll()`
+/// Java: matcher=null 视为匹配全部 → 返回最后一个下标
+#[test]
+fn last_index_of_matcher_is_null_match_all() {
+    let list = vec!["x", "y", "z"];
+    // Rust 无始终 true 的 matcher 对齐 null matcher
+    let idx = hitool_core::CollUtil::last_index_of(&list, |_| true);
+    assert_eq!(idx, Some(2), "null matcher 匹配全部 → last index=2 (对齐 Java)");
+}
+
+/// 对齐 Java: `CollUtilTest.issueIDBU9HTest()`
+#[test]
+fn issue_idbu9h_test() {
+    #[derive(Clone)]
+    struct ToolTest { name: String }
+    let list = vec![
+        ToolTest { name: "a".into() },
+        ToolTest { name: "b".into() },
+    ];
+    let map = hitool_core::CollUtil::to_identity_map(list, |t| t.name.clone());
+    let keys: Vec<_> = map.keys().cloned().collect();
+    let _ = hitool_core::CollUtil::subtract(&keys, &keys);
 }

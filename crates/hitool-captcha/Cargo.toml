@@ -14,7 +14,9 @@ description = "Captcha generation and verification utilities for HiTool."
 workspace = true
 
 [features]
-default = []
+# raster is default so Hutool-compat PNG/GIF APIs (and parity tests) work under
+# `cargo test -p hitool-captcha` without extra feature flags.
+default = ["raster"]
 raster = ["dep:base64", "dep:font8x8", "dep:image"]
 audio = []
 

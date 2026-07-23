@@ -83,7 +83,7 @@ fn argon2_wrong_password() {
 //  AESTest — AES-256-GCM
 // ════════════════════════════════════════════════════════════
 
-/// 对齐 Java: `AESTest.aesTest()`
+/// 对齐 Java: `SymmetricTest.aesTest()`
 #[test]
 fn aes256_gcm_round_trip() {
     let key = [0u8; 32];
@@ -94,7 +94,7 @@ fn aes256_gcm_round_trip() {
     assert_eq!(decrypted, plaintext, "AES-256-GCM 解密后应等于原文 (对齐 Java)");
 }
 
-/// 对齐 Java: `AESTest.aesTest()` — 错误密钥应解密失败
+/// 对齐 Java: `SymmetricTest.aesTest()` — 错误密钥应解密失败
 #[test]
 fn aes256_gcm_wrong_key() {
     let key1 = [0u8; 32];
@@ -105,7 +105,7 @@ fn aes256_gcm_wrong_key() {
     assert!(result.is_err(), "错误密钥应解密失败 (对齐 Java)");
 }
 
-/// 对齐 Java: `AESTest.aesTest()` — 空明文
+/// 对齐 Java: `SymmetricTest.aesTest()` — 空明文
 #[test]
 fn aes256_gcm_empty_plaintext() {
     let key = [0u8; 32];

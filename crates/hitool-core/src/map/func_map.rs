@@ -1,20 +1,54 @@
 //! 对齐: `cn.hutool.core.map.FuncMap`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/map/FuncMap.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::collections::HashMap;
+use std::hash::Hash;
 
 /// 对齐 Java 类: `cn.hutool.core.map.FuncMap`
 ///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct FuncMap;
+/// 空值时通过工厂函数生成默认值。
+#[derive(Debug, Clone)]
+pub struct FuncMap<K, V, F>
+where
+    F: Fn(&K) -> V,
+{
+    inner: HashMap<K, V>,
+    default_func: F,
+}
 
-impl FuncMap {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+impl<K: Eq + Hash + Clone, V: Clone, F> FuncMap<K, V, F>
+where
+    F: Fn(&K) -> V,
+{
+    /// 对齐 Java: `FuncMap(Map, Function)`
+    pub fn new(inner: HashMap<K, V>, default_func: F) -> Self {
+        Self {
+            inner,
+            default_func,
+        }
+    }
+
+    /// 对齐 Java: `get` —— 缺失时用工厂生成并缓存。
+    pub fn get(&mut self, key: &K) -> &V {
+        if !self.inner.contains_key(key) {
+            let v = (self.default_func)(key);
+            self.inner.insert(key.clone(), v);
+        }
+        self.inner.get(key).expect("inserted")
+    }
+
+    /// 放入。
+    pub fn put(&mut self, key: K, value: V) -> Option<V> {
+        self.inner.insert(key, value)
+    }
+
+    /// 条目数。
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    /// 是否为空。
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
     }
 }

@@ -1,32 +1,29 @@
-//! `cn.hutool.core.math` 子包对比验证测试 (4 个测试文件, 38 个 @Test)
+//! `cn.hutool.core.math` 子包对比验证测试
 //! 来源: hutool-core/src/test/java/cn/hutool/core/math/
 
-use hitool_core::{CoreError, Result};
+use hitool_core::math::{Arrangement, Calculator, Combination, MathUtil, Money};
 
-// ===== CalculatorTest (12 个 @Test) =====
-/// 对齐 Java: `CalculatorTest.calculateTest`
+/// 对齐 Java: `cn.hutool.core.math.CalculatorTest.conversationTest()`
 #[test]
-fn calculator_calculate_test() {
-    assert!(true, "Calculator::calculate 占位 (对齐 Java CalculatorTest)");
+fn calculator_conversation_test() {
+    assert!((Calculator::conversion("77 * 12") - 924.0).abs() < 0.001);
 }
 
-// ===== CombinationTest (14 个 @Test) =====
-/// 对齐 Java: `CombinationTest.combinationTest`
+/// 对齐 Java: `cn.hutool.core.math.CombinationTest.countTest()`
 #[test]
-fn combination_test() {
-    assert!(true, "Combination 占位 (对齐 Java CombinationTest)");
+fn combination_count_test() {
+    assert_eq!(Combination::count(5, 2), 10);
 }
 
-// ===== ArrangementTest (9 个 @Test) =====
-/// 对齐 Java: `ArrangementTest.arrangementTest`
+/// 对齐 Java: `cn.hutool.core.math.ArrangementTest.arrangementTest()`
 #[test]
 fn arrangement_test() {
-    assert!(true, "Arrangement 占位 (对齐 Java ArrangementTest)");
+    assert_eq!(Arrangement::count(4, 2), 12);
 }
 
-// ===== MoneyTest (3 个 @Test) =====
-/// 对齐 Java: `MoneyTest.addTest`
+/// 对齐 Java: `cn.hutool.core.math.MoneyTest.yuanToCentTest()`
 #[test]
-fn money_add_test() {
-    assert!(true, "Money::add 占位 (对齐 Java MoneyTest)");
+fn money_yuan_to_cent_test() {
+    assert_eq!(Money::from_yuan_str("1234.56").get_cent(), 123_456);
+    assert_eq!(MathUtil::yuan_to_cent(1234.56), 123_456);
 }

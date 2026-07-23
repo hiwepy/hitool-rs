@@ -1,20 +1,66 @@
 //! 对齐: `cn.hutool.core.annotation.Link`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/annotation/Link.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::sync::Arc;
 
-/// 对齐 Java 类: `cn.hutool.core.annotation.Link`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct Link;
+use super::mirror::AnnotationMirror;
+use super::relation_type::RelationType;
+
+/// `@Link` 元注解类型名。
+pub const LINK_TYPE: &str = "cn.hutool.core.annotation.Link";
+
+/// 对齐 Java `@interface Link` 的运行时表示。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Link {
+    annotation_type: String,
+    attribute: String,
+    relation_type: RelationType,
+}
 
 impl Link {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 从注解镜像解析 Link。
+    pub fn from_mirror(mirror: Arc<AnnotationMirror>) -> Self {
+        let annotation_type = mirror
+            .get_raw("annotation")
+            .and_then(|v| v.as_str())
+            .unwrap_or("java.lang.annotation.Annotation")
+            .to_string();
+        let attribute = mirror
+            .get_raw("attribute")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let relation_type = mirror
+            .get_raw("type")
+            .and_then(|v| v.as_str())
+            .map(parse_relation)
+            .unwrap_or(RelationType::AliasFor);
+        Self {
+            annotation_type,
+            attribute,
+            relation_type,
+        }
+    }
+
+    /// 目标注解类型。
+    pub fn annotation_type(&self) -> &str {
+        &self.annotation_type
+    }
+
+    /// 目标属性名。
+    pub fn attribute(&self) -> &str {
+        &self.attribute
+    }
+
+    /// 关系类型。
+    pub fn relation_type(&self) -> RelationType {
+        self.relation_type
+    }
+}
+
+fn parse_relation(s: &str) -> RelationType {
+    match s {
+        "MIRROR_FOR" | "MirrorFor" | "MIRROR" => RelationType::MirrorFor,
+        "FORCE_ALIAS_FOR" | "ForceAliasFor" => RelationType::ForceAliasFor,
+        _ => RelationType::AliasFor,
     }
 }

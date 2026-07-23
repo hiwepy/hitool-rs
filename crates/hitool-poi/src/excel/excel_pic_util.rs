@@ -1,32 +1,41 @@
-//! Excel picture utilities aligned with Hutool.
+//! 迁移自 hutool 的 `cn.hutool.poi.excel.ExcelPicUtil`
 //!
-//! 对齐: `cn.hutool.poi.excel.ExcelPicUtil`
-//! 来源: hutool-poi/src/main/java/cn/hutool/poi/excel/ExcelPicUtil.java
-//!
-//! 提供 `getPictures(File)` 等从工作簿抽取图片字节的方法。
+//! - 原 Java 包：`cn.hutool.poi.excel`
+//! - 原 Java 主类：`cn.hutool.poi.excel.ExcelPicUtil`
+//! - 迁移状态：🟡 占位实现，等待 `easyexcel-rs` / `easydoc-rs` / `easyofd-rs` / `easypdf-rs` 完成
+//! - Java 源文件：`hutool-poi/src/main/java/excel/ExcelPicUtil.java`
 
-use crate::{PoiError, Result};
+#![allow(dead_code, clippy::missing_docs_in_private_items)]
 
-/// Picture bytes extracted from an Excel workbook.
-#[derive(Debug, Clone, Default)]
-pub struct ExcelPicture {
-    /// Raw picture bytes.
-    pub bytes: Vec<u8>,
-    /// Suggested extension (e.g. `png`, `jpeg`).
-    pub extension: String,
-}
-
-/// Excel picture utility.
+/// 占位结构体，对齐 Java `ExcelPicUtil`。
 ///
-/// 对齐 Java: `cn.hutool.poi.excel.ExcelPicUtil`
-#[derive(Debug, Clone, Copy, Default)]
+/// 当前状态：等待 `easyexcel-rs` 引擎完成后填充实现。
 pub struct ExcelPicUtil;
 
 impl ExcelPicUtil {
-    /// 对齐 Java: `ExcelPicUtil.getPictures(File)`
-    pub fn get_pictures(_path: &str) -> Result<Vec<ExcelPicture>> {
-        Err(PoiError::PendingEngine(
-            "ExcelPicUtil::getPictures (waiting for easyexcel-rs)",
-        ))
+    /// 占位方法。当前调用会 panic。
+    ///
+    /// # Panics
+    ///
+    /// 此方法尚未实现，等待 `easyexcel-rs` / `easydoc-rs` 等引擎完成。
+    pub fn new() -> Self {
+        unimplemented!("ExcelPicUtil::new() 等待 easyexcel-rs / easydoc-rs / easyofd-rs / easypdf-rs 完成")
+    }
+}
+
+impl Default for ExcelPicUtil {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic(expected = "等待 easyexcel-rs")]
+    fn excelpicutil_new_is_unimplemented() {
+        let _ = ExcelPicUtil::new();
     }
 }

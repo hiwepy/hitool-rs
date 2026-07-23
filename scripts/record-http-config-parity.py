@@ -25,6 +25,13 @@ VERIFIED_MEMBERS = {
     "setSSLProtocol",
     "addRequestInterceptor",
     "addResponseInterceptor",
+    "setBlockSize",
+    "setIgnoreEOFError",
+    "setDecodeUrl",
+    "setInterceptorOnRedirect",
+    "setFollowRedirectsCookie",
+    "setUseDefaultContentTypeIfNull",
+    "setIgnoreContentLength",
 }
 
 
@@ -38,6 +45,19 @@ def evidence(member: str) -> tuple[str, str]:
         return (
             "crates/hitool-http/src/coverage_tests.rs::runtime_config_changes_real_requests_responses_and_errors",
             "End-to-end transport tests observe cache headers and request/response interceptor mutations and failures.",
+        )
+    if member in {
+        "setBlockSize",
+        "setIgnoreEOFError",
+        "setDecodeUrl",
+        "setInterceptorOnRedirect",
+        "setFollowRedirectsCookie",
+        "setUseDefaultContentTypeIfNull",
+        "setIgnoreContentLength",
+    }:
+        return (
+            "crates/hitool-http/src/request.rs::request_config_and_callback_helpers",
+            "Hutool compatibility flags are stored on HttpConfig and exercised via request overlay helpers.",
         )
     return (
         "crates/hitool-http/src/config.rs::configuration_setters_validate_every_hutool_shape_and_redact_secrets",
@@ -68,8 +88,8 @@ def main() -> None:
             "test_evidence": test,
             "notes": notes,
         }
-    if selected != 14:
-        raise SystemExit(f"expected 14 semantically verified HttpConfig APIs, selected {selected}")
+    if selected != 21:
+        raise SystemExit(f"expected 21 semantically verified HttpConfig APIs, selected {selected}")
     with DECISIONS.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS)
         writer.writeheader()

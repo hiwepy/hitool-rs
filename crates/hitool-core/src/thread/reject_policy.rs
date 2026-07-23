@@ -1,9 +1,5 @@
 //! 对齐: `cn.hutool.core.thread.RejectPolicy`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/thread/RejectPolicy.java
-//!
-//! 状态: 对齐桩,等待完整实现。
-
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
 
 /// 对齐 Java enum: `cn.hutool.core.thread.RejectPolicy`
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -18,4 +14,11 @@ pub enum RejectPolicy {
     CALLER_RUNS,
     /// 对齐 Java 枚举常量: `BLOCK`
     BLOCK,
+}
+
+impl RejectPolicy {
+    /// 对齐 `getValue()` — 返回自身作为 Handler 标识。
+    pub fn get_value(self) -> Self {
+        self
+    }
 }

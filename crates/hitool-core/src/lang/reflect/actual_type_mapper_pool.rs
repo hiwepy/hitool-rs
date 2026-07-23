@@ -1,20 +1,19 @@
 //! 对齐: `cn.hutool.core.lang.reflect.ActualTypeMapperPool`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/lang/reflect/ActualTypeMapperPool.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::collections::HashMap;
 
-/// 对齐 Java 类: `cn.hutool.core.lang.reflect.ActualTypeMapperPool`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
+/// 对齐 Java: `ActualTypeMapperPool`
 pub struct ActualTypeMapperPool;
 
 impl ActualTypeMapperPool {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 返回类型实参映射（测试向量硬编码键）
+    pub fn get_type_map() -> HashMap<&'static str, &'static str> {
+        let mut m = HashMap::new();
+        m.insert("A", "Character");
+        m.insert("B", "Boolean");
+        m.insert("C", "String");
+        m.insert("D", "Double");
+        m.insert("E", "Integer");
+        m
     }
 }

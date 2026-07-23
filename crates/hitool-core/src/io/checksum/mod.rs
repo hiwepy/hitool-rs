@@ -6,4 +6,3 @@
 
 pub mod crc16;
 pub mod crc8;
-pub mod crc16;

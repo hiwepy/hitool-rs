@@ -1,10 +1,20 @@
-//! `cn.hutool.core.map.reference` 子包对齐
-//!
-//! 自动生成的模块入口,1:1 镜像 Java 包结构。
-//! 每个子模块对应一个 Java 类(`.java` → `.rs`),命名遵循 snake_case。
-//! 详细对齐信息见各 `.rs` 文件头注释。
+//! `cn.hutool.core.map.reference` 子包 —— 弱/软引用 Map（planned）
 
 pub mod reference_concurrent_map;
 pub mod soft_concurrent_map;
 pub mod weak_key_concurrent_map;
 pub mod weak_key_value_concurrent_map;
+
+pub use crate::map::ReferenceConcurrentMap;
+pub use soft_concurrent_map::SoftConcurrentMap;
+pub use weak_key_concurrent_map::WeakKeyConcurrentMap;
+pub use weak_key_value_concurrent_map::WeakKeyValueConcurrentMap;
+
+use crate::{CoreError, Result};
+
+/// Soft / Weak 引用并发 map 的公共说明。
+pub fn reference_map_status() -> Result<()> {
+    Err(CoreError::PendingEngine(
+        "JVM SoftReference / WeakReference concurrent maps",
+    ))
+}

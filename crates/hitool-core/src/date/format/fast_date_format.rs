@@ -1,18 +1,35 @@
-//! 对齐: `cn.hutool.core.date.format.FastDateFormat.java.FastDateFormat`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/date/format.FastDateFormat.java
+//! 对齐: `cn.hutool.core.date.format.FastDateFormat`
 
-use crate::{CoreError, Result};
+use crate::date::date_time::DateTime;
+use crate::date::date_util::DateUtil;
+use crate::Result;
 
-/// 对齐 Java: `cn.hutool.core.date.format.FastDateFormat` 的类占位。
-///
-/// 所有方法均返回 [`CoreError::PendingEngine`],等待对应引擎完成后实现;
-/// 单元测试在 `crates/hitool-core/src/date/format/fast_date_format.rs::sentinel` 中断言当前占位行为。
-#[derive(Debug, Clone, Copy, Default)]
-pub struct FastDateFormat;
+/// 对齐 Java: `FastDateFormat`
+#[derive(Debug, Clone)]
+pub struct FastDateFormat {
+    pattern: String,
+}
 
 impl FastDateFormat {
-    /// 对齐 Java: `sentinel` — 占位入口,用于在 parity 中证明该类已对齐签名。
+    /// 获取实例。
+    pub fn get_instance(pattern: &str) -> Self {
+        Self {
+            pattern: pattern.to_string(),
+        }
+    }
+
+    /// 格式化。
+    pub fn format(&self, date: DateTime) -> String {
+        DateUtil::format(date, &self.pattern)
+    }
+
+    /// 解析。
+    pub fn parse(&self, date_str: &str) -> Result<DateTime> {
+        DateUtil::parse_with_format(date_str, &self.pattern)
+    }
+
+    /// 兼容 sentinel。
     pub fn sentinel() -> Result<()> {
-        Err(CoreError::PendingEngine("FastDateFormat::sentinel"))
+        Ok(())
     }
 }

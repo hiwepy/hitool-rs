@@ -4,12 +4,62 @@
 
 #[cfg(feature = "archive")]
 pub mod archive;
+pub mod exceptions;
+pub mod expression;
+pub mod ftp;
 #[cfg(feature = "image")]
 pub mod image;
 #[cfg(feature = "mail")]
 pub mod mail;
+#[cfg(feature = "mail")]
+pub mod mail_facade;
 #[cfg(feature = "qrcode")]
 pub mod qrcode;
+pub mod spring;
+pub mod ssh;
+pub mod template;
+pub mod tokenizer;
+pub mod validation;
+
+#[cfg(feature = "emoji")]
+pub mod emoji;
+#[cfg(feature = "pinyin")]
+pub mod pinyin;
+
+#[cfg(feature = "emoji")]
+pub use emoji::{Emoji, EmojiUtil, FitzpatrickAction};
+#[cfg(feature = "pinyin")]
+pub use pinyin::{
+    Bopomofo4jEngine, DefaultPinyinEngine, HoubbPinyinEngine, JPinyinEngine, Pinyin4jEngine,
+    PinyinEngine, PinyinException, PinyinFactory, PinyinUtil, TinyPinyinEngine,
+};
+
+#[cfg(feature = "mail")]
+pub use mail_facade::{Mail, MailAccount, MailUtil};
+#[cfg(feature = "qrcode")]
+pub use qrcode::{QrCodeUtil, QrConfig};
+#[cfg(feature = "image")]
+pub use image::ImgUtil;
+#[cfg(feature = "archive")]
+pub use archive::{CompressUtil, ZipUtil};
+pub use validation::{BeanValidationResult, ErrorMessage, ValidationUtil};
+pub use template::{
+    AbstractTemplate, ResourceMode, Template, TemplateBinding, TemplateConfig, TemplateEngine,
+    TemplateException, TemplateFactory, TemplateUtil, TemplateValue, default_config,
+};
+pub use exceptions::{
+    CompressException, ExpressionException, HutoolException, MailException,
+    QrCodeException, TokenizerException,
+};
+pub use expression::{ExpressionEngine, ExpressionUtil};
+pub use ftp::{AbstractFtp, FtpConfig, FtpException, FtpMode};
+pub use ssh::{ChannelType, Connector, GanymedUtil, JschRuntimeException, JschSessionPool, JschUtil};
+pub use spring::{
+    ApplicationContext, ApplicationContextExt, ConfigurableBeanFactory, SpringUtil, enable_spring_util,
+};
+pub use tokenizer::{
+    AbstractResult, TokenizerEngine, TokenizerResult, TokenizerUtil, Word,
+};
 
 /// Errors returned by extra utilities.
 #[derive(Debug, thiserror::Error)]

@@ -45,6 +45,5 @@ mod swing_tests {
 #[cfg(not(feature = "swing"))]
 #[test]
 fn swing_feature_not_enabled() {
-    // swing feature 未启用时的占位测试
-    assert!(true, "swing feature not enabled, skipping GUI tests");
+    assert!(!cfg!(feature = "swing"));
 }

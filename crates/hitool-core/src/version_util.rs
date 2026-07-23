@@ -31,31 +31,92 @@ impl VersionUtil {
     }
 
     /// Returns whether the current version is greater than the comparison version.
+    ///
+    /// `None` aligns with Java `null` and sorts as the smallest version.
     #[must_use]
-    pub fn is_greater_than(current_version: &str, compare_version: &str) -> bool {
-        compare_nullable(current_version.trim(), comparison_target(compare_version))
-            == Ordering::Greater
+    pub fn is_greater_than(
+        current_version: Option<&str>,
+        compare_version: Option<&str>,
+    ) -> bool {
+        compare_nullable(current_version, compare_version) == Ordering::Greater
     }
 
     /// Returns whether the current version is greater than or equal to the comparison version.
+    ///
+    /// `None` aligns with Java `null` and sorts as the smallest version.
     #[must_use]
-    pub fn is_greater_than_or_equal(current_version: &str, compare_version: &str) -> bool {
-        compare_nullable(current_version.trim(), comparison_target(compare_version))
-            != Ordering::Less
+    pub fn is_greater_than_or_equal(
+        current_version: Option<&str>,
+        compare_version: Option<&str>,
+    ) -> bool {
+        compare_nullable(current_version, compare_version) != Ordering::Less
     }
 
     /// Returns whether the current version is less than the comparison version.
+    ///
+    /// `None` aligns with Java `null` and sorts as the smallest version.
     #[must_use]
-    pub fn is_less_than(current_version: &str, compare_version: &str) -> bool {
-        compare_nullable(current_version.trim(), comparison_target(compare_version))
-            == Ordering::Less
+    pub fn is_less_than(current_version: Option<&str>, compare_version: Option<&str>) -> bool {
+        compare_nullable(current_version, compare_version) == Ordering::Less
     }
 
     /// Returns whether the current version is less than or equal to the comparison version.
+    ///
+    /// `None` aligns with Java `null` and sorts as the smallest version.
     #[must_use]
-    pub fn is_less_than_or_equal(current_version: &str, compare_version: &str) -> bool {
-        compare_nullable(current_version.trim(), comparison_target(compare_version))
-            != Ordering::Greater
+    pub fn is_less_than_or_equal(
+        current_version: Option<&str>,
+        compare_version: Option<&str>,
+    ) -> bool {
+        compare_nullable(current_version, compare_version) != Ordering::Greater
+    }
+
+    /// Convenience wrapper for non-null `&str` arguments.
+    ///
+    /// Treats the literal strings `"null"` / `"NULL"` like Java `null` on the compare side.
+    #[must_use]
+    #[inline]
+    pub fn is_greater_than_str(current_version: &str, compare_version: &str) -> bool {
+        Self::is_greater_than(
+            Some(current_version),
+            comparison_target(compare_version),
+        )
+    }
+
+    /// Convenience wrapper for non-null `&str` arguments.
+    ///
+    /// Treats the literal strings `"null"` / `"NULL"` like Java `null` on the compare side.
+    #[must_use]
+    #[inline]
+    pub fn is_greater_than_or_equal_str(current_version: &str, compare_version: &str) -> bool {
+        Self::is_greater_than_or_equal(
+            Some(current_version),
+            comparison_target(compare_version),
+        )
+    }
+
+    /// Convenience wrapper for non-null `&str` arguments.
+    ///
+    /// Treats the literal strings `"null"` / `"NULL"` like Java `null` on the compare side.
+    #[must_use]
+    #[inline]
+    pub fn is_less_than_str(current_version: &str, compare_version: &str) -> bool {
+        Self::is_less_than(
+            Some(current_version),
+            comparison_target(compare_version),
+        )
+    }
+
+    /// Convenience wrapper for non-null `&str` arguments.
+    ///
+    /// Treats the literal strings `"null"` / `"NULL"` like Java `null` on the compare side.
+    #[must_use]
+    #[inline]
+    pub fn is_less_than_or_equal_str(current_version: &str, compare_version: &str) -> bool {
+        Self::is_less_than_or_equal(
+            Some(current_version),
+            comparison_target(compare_version),
+        )
     }
 
     /// Matches one or more `;`-separated exact, comparison, or inclusive range expressions.
@@ -85,7 +146,7 @@ impl VersionUtil {
                 } else {
                     Some(version)
                 };
-                let ordering = compare_nullable(current, version);
+                let ordering = compare_nullable(Some(current), version);
                 let matches = match operator {
                     ">=" | "≥" => ordering != Ordering::Less,
                     "<=" | "≤" => ordering != Ordering::Greater,
@@ -133,10 +194,15 @@ fn split_operator(expression: &str) -> Option<(&str, &str)> {
     None
 }
 
-fn compare_nullable(current: &str, compare: Option<&str>) -> Ordering {
-    compare.map_or(Ordering::Greater, |version| {
-        compare_versions(current, version)
-    })
+/// Compares two nullable version strings; `None` sorts as smallest (Java `null`).
+fn compare_nullable(current: Option<&str>, compare: Option<&str>) -> Ordering {
+    let current = current.map(str::trim);
+    match (current, compare) {
+        (None, None) => Ordering::Equal,
+        (None, Some(_)) => Ordering::Less,
+        (Some(_), None) => Ordering::Greater,
+        (Some(a), Some(b)) => compare_versions(a, b),
+    }
 }
 
 fn comparison_target(version: &str) -> Option<&str> {
@@ -291,12 +357,12 @@ mod tests {
 
     #[test]
     fn comparisons_support_hutool_loose_versions_and_null_expression() {
-        assert!(VersionUtil::is_greater_than(" 1.0.2", "1.0.1"));
-        assert!(VersionUtil::is_greater_than("1.0.2", "1"));
-        assert!(!VersionUtil::is_greater_than("1.0.2", "1.1"));
-        assert!(VersionUtil::is_greater_than_or_equal("1.0.2 ", "1.0.2"));
-        assert!(VersionUtil::is_less_than("1.0.2", "1.0.3"));
-        assert!(VersionUtil::is_less_than_or_equal("1.0.2", "1.1"));
+        assert!(VersionUtil::is_greater_than_str(" 1.0.2", "1.0.1"));
+        assert!(VersionUtil::is_greater_than_str("1.0.2", "1"));
+        assert!(!VersionUtil::is_greater_than_str("1.0.2", "1.1"));
+        assert!(VersionUtil::is_greater_than_or_equal_str("1.0.2 ", "1.0.2"));
+        assert!(VersionUtil::is_less_than_str("1.0.2", "1.0.3"));
+        assert!(VersionUtil::is_less_than_or_equal_str("1.0.2", "1.1"));
         assert_eq!(compare_versions("8.5a", "8.5c"), Ordering::Less);
         assert_eq!(compare_versions("1.0", "1.0.0"), Ordering::Equal);
         assert_eq!(compare_versions("1.0.2", "1.0.2a"), Ordering::Less);
@@ -307,8 +373,13 @@ mod tests {
         );
         assert!(VersionUtil::match_el("1.0.2", ">null").unwrap());
         assert!(!VersionUtil::match_el("1.0.2", "<null").unwrap());
-        assert!(VersionUtil::is_greater_than("1.0.2", "NULL"));
-        assert!(!VersionUtil::is_less_than_or_equal("1.0.2", "null"));
+        assert!(VersionUtil::is_greater_than_str("1.0.2", "NULL"));
+        assert!(!VersionUtil::is_less_than_or_equal_str("1.0.2", "null"));
+        assert!(VersionUtil::is_greater_than(Some("1.0"), None));
+        assert!(!VersionUtil::is_greater_than(None, Some("1.0")));
+        assert_eq!(compare_nullable(Some("1.0"), None), Ordering::Greater);
+        assert_eq!(compare_nullable(None, Some("1.0")), Ordering::Less);
+        assert_eq!(compare_nullable(None, None), Ordering::Equal);
     }
 
     #[test]

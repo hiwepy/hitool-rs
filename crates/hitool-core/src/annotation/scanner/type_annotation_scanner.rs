@@ -1,20 +1,44 @@
 //! 对齐: `cn.hutool.core.annotation.scanner.TypeAnnotationScanner`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/annotation/scanner/TypeAnnotationScanner.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::sync::Arc;
+
+use super::abstract_type_annotation_scanner::{type_handle_of, AbstractTypeAnnotationScanner};
+use super::annotation_scanner::{AnnotationScanner, ScanConsumer};
+use crate::annotation::element::{ElementHandle, ElementKind, global_registry};
 
 /// 对齐 Java 类: `cn.hutool.core.annotation.scanner.TypeAnnotationScanner`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct TypeAnnotationScanner;
+pub struct TypeAnnotationScanner {
+    inner: AbstractTypeAnnotationScanner,
+}
 
 impl TypeAnnotationScanner {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 构造类型扫描器。
+    pub fn new(include_super_class: bool, include_interfaces: bool) -> Self {
+        Self {
+            inner: AbstractTypeAnnotationScanner::new(include_super_class, include_interfaces),
+        }
+    }
+}
+
+impl AnnotationScanner for TypeAnnotationScanner {
+    fn support(&self, element: ElementHandle) -> bool {
+        global_registry()
+            .read()
+            .get(element)
+            .map(|e| e.kind() == ElementKind::Type)
+            .unwrap_or(false)
+    }
+
+    fn scan(&self, consumer: &mut ScanConsumer, element: ElementHandle) {
+        if let Some(ty) = type_handle_of(element) {
+            self.inner.scan_type_hierarchy(consumer, ty);
+        }
+    }
+}
+
+impl TypeAnnotationScanner {
+    /// 获取注解列表。
+    pub fn get_annotations(&self, element: ElementHandle) -> Vec<Arc<super::super::mirror::AnnotationMirror>> {
+        AnnotationScanner::get_annotations(self, element)
     }
 }

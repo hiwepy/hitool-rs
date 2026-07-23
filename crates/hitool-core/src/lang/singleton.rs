@@ -1,44 +1,89 @@
 //! 对齐: `cn.hutool.core.lang.Singleton`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/lang/Singleton.java
-//!
-//! Hutool 的 `Singleton` Java 类型,等待完整实现。
-//! 状态: 对齐桩(对象/方法/参数已对齐),等待 `hitool-core` 内部继续迁移。
+//! `ReentrantMutex` + `RefCell`：同线程构造嵌套 `get` 不死锁，且同类型只创建一次。
 
-use crate::{CoreError, Result};
+use parking_lot::ReentrantMutex;
+use std::any::{Any, TypeId};
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::sync::Arc;
 
-/// 对齐 Java: `cn.hutool.core.lang.Singleton`
-#[derive(Debug, Clone, Default)]
+type StoreMap = HashMap<TypeId, Arc<dyn Any + Send + Sync>>;
+
+static STORE: std::sync::OnceLock<ReentrantMutex<RefCell<StoreMap>>> = std::sync::OnceLock::new();
+
+fn store() -> &'static ReentrantMutex<RefCell<StoreMap>> {
+    STORE.get_or_init(|| ReentrantMutex::new(RefCell::new(HashMap::new())))
+}
+
+/// 对齐 Java: `Singleton`
 pub struct Singleton;
 
 impl Singleton {
-    /// 对齐 Java: `Singleton.get(Class<T> clazz, Object... params)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn get(Class<T> clazz, Object... params) -> Result<T> {
-        Err(CoreError::PendingEngine("Singleton::get (waiting for full impl)"))
+    /// 对齐 `Singleton.get(Class)` — 按类型懒创建（可重入）
+    pub fn get<T, F>(factory: F) -> Arc<T>
+    where
+        T: Send + Sync + 'static,
+        F: FnOnce() -> T,
+    {
+        let tid = TypeId::of::<T>();
+        let guard = store().lock();
+        if let Some(v) = guard.borrow().get(&tid) {
+            return Arc::clone(v).downcast::<T>().expect("type mismatch");
+        }
+        // 持有可重入锁调用 factory；嵌套 get 其他 TypeId 可再次 lock
+        let created = Arc::new(factory());
+        let mut map = guard.borrow_mut();
+        if let Some(v) = map.get(&tid) {
+            return Arc::clone(v).downcast::<T>().expect("type mismatch");
+        }
+        map.insert(tid, created.clone());
+        created
     }
-    /// 对齐 Java: `Singleton.put(Object obj)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn put(Object obj) -> Result<()> {
-        Err(CoreError::PendingEngine("Singleton::put (waiting for full impl)"))
+
+    /// 对齐 `put`
+    pub fn put<T: Send + Sync + 'static>(obj: T) {
+        store()
+            .lock()
+            .borrow_mut()
+            .insert(TypeId::of::<T>(), Arc::new(obj));
     }
-    /// 对齐 Java: `Singleton.exists(Class<?> clazz, Object... params)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn exists(Class<?> clazz, Object... params) -> Result<bool> {
-        Err(CoreError::PendingEngine("Singleton::exists (waiting for full impl)"))
+
+    /// 对齐 `exists`
+    pub fn exists<T: 'static>() -> bool {
+        store().lock().borrow().contains_key(&TypeId::of::<T>())
     }
-    /// 对齐 Java: `Singleton.getExistClass()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn getExistClass() -> Result<Set<Class<?>>> {
-        Err(CoreError::PendingEngine("Singleton::getExistClass (waiting for full impl)"))
+
+    /// 对齐 `remove`
+    pub fn remove<T: 'static>() {
+        store().lock().borrow_mut().remove(&TypeId::of::<T>());
     }
-    /// 对齐 Java: `Singleton.remove(Class<?> clazz)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn remove(Class<?> clazz) -> Result<()> {
-        Err(CoreError::PendingEngine("Singleton::remove (waiting for full impl)"))
+
+    /// 对齐 `destroy`
+    pub fn destroy() {
+        store().lock().borrow_mut().clear();
     }
-    /// 对齐 Java: `Singleton.destroy()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn destroy() -> Result<()> {
-        Err(CoreError::PendingEngine("Singleton::destroy (waiting for full impl)"))
+}
+
+#[cfg(test)]
+mod singleton_idiomatic_parity {
+    use super::*;
+
+    #[derive(Debug)]
+    struct Demo(i32);
+
+    /// 对齐 Java Singleton get/put/exists/remove 可执行证据。
+    #[test]
+    fn singleton_get_put_exists_remove() {
+        Singleton::remove::<Demo>();
+        assert!(!Singleton::exists::<Demo>());
+        let a = Singleton::get(|| Demo(7));
+        let b = Singleton::get(|| Demo(99));
+        assert_eq!(a.0, 7);
+        assert_eq!(b.0, 7);
+        assert!(Singleton::exists::<Demo>());
+        Singleton::put(Demo(3));
+        assert_eq!(Singleton::get(|| Demo(0)).0, 3);
+        Singleton::remove::<Demo>();
+        assert!(!Singleton::exists::<Demo>());
     }
 }

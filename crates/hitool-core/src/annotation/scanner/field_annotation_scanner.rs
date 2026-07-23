@@ -1,20 +1,37 @@
 //! 对齐: `cn.hutool.core.annotation.scanner.FieldAnnotationScanner`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/annotation/scanner/FieldAnnotationScanner.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::sync::Arc;
+
+use super::annotation_scanner::{declared_annotations, accept_annotation, AnnotationScanner, ScanConsumer};
+use super::element_annotation_scanner::ElementAnnotationScanner;
+use crate::annotation::element::{global_registry, ElementHandle, ElementKind};
 
 /// 对齐 Java 类: `cn.hutool.core.annotation.scanner.FieldAnnotationScanner`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
 pub struct FieldAnnotationScanner;
 
+impl AnnotationScanner for FieldAnnotationScanner {
+    fn support(&self, element: ElementHandle) -> bool {
+        global_registry()
+            .read()
+            .get(element)
+            .map(|e| e.kind() == ElementKind::Field)
+            .unwrap_or(false)
+    }
+
+    fn scan(&self, consumer: &mut ScanConsumer, element: ElementHandle) {
+        ElementAnnotationScanner.scan(consumer, element);
+    }
+}
+
 impl FieldAnnotationScanner {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 获取字段声明注解。
+    pub fn get_annotations(&self, element: ElementHandle) -> Vec<Arc<crate::annotation::mirror::AnnotationMirror>> {
+        AnnotationScanner::get_annotations(self, element)
+    }
+}
+
+impl Default for FieldAnnotationScanner {
+    fn default() -> Self {
+        Self
     }
 }

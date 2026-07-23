@@ -1,24 +1,7 @@
 //! 对齐: `cn.hutool.core.io.IoUtil`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/io/IoUtil.java
 //!
-//! IO工具类<br>
-//! 状态: 对齐桩,等待实现
-//!
-//! Rust 化要点:
-//! - 静态方法类 → ZST + 关联函数
-//! - Java interface → Rust trait
-//! - 异常类 → thiserror Error 枚举
-//! - 工具类的常量 → 关联常量
+//! Hutool 命名门面：委托至惯用实现 `crate::IoUtil`（`src/io_util.rs`）。
+//! 本文件位于 `io/` 包镜像中；请优先使用 `hitool_core::IoUtil`。
 
-use crate::{CoreError, Result};
-
-/// IO工具类<br>
-#[derive(Debug, Clone, Copy, Default)]
-pub struct IoUtil;
-
-impl IoUtil {
-    /// Sentinel used until the corresponding IO engine is implemented.
-    pub fn pending_io_alignment() -> Result<()> {
-        Err(CoreError::PendingEngine("IoUtil::pending_io_alignment"))
-    }
-}
+pub use crate::IoUtil;

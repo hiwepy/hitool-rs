@@ -10,20 +10,66 @@ use thiserror::Error;
 
 mod base;
 pub use base::{HTTP_1_0, HTTP_1_1, HttpBase, HttpBaseError};
+mod body;
+pub use body::{BytesBody, FormUrlEncodedBody, MultipartBody, MultipartOutputStream, RequestBody, ResourceBody};
 mod config;
 pub use config::{
     HostnameVerification, HttpConfig, HttpConfigError, HttpInterceptorError, HttpRequestContext,
     HttpResponseContext, RequestInterceptor, ResponseInterceptor, TlsProtocol,
 };
+mod cookie;
+pub use cookie::{
+    CookieJar, CookieManagerHandle, GlobalCookieManager, ThreadLocalCookieStore,
+};
+mod interceptor;
+pub use interceptor::GlobalInterceptor;
+mod input_stream;
+pub use input_stream::HttpInputStream;
+mod resource;
+pub use resource::HttpResource;
+mod downloader;
+pub use downloader::HttpDownloader;
+mod global_config;
+pub use global_config::{HttpGlobalConfig, HttpGlobalConfigState, DEFAULT_BOUNDARY};
 mod metadata;
 pub use metadata::{ContentType, GlobalHeaders, Header, HttpStatus, Status};
+mod progress;
+pub use progress::{FnStreamProgress, NoopStreamProgress, StreamProgress};
+mod query;
+mod http_util;
+pub use http_util::{form_map, HttpUtil};
+mod request;
+pub use request::HttpRequest;
 mod response;
-pub use response::HttpResponse;
+pub use response::{HttpCookie, HttpResponse};
+mod exception;
+pub use exception::HttpException;
+mod http_connection;
+pub use http_connection::{HttpConnection, StubHttpConnection};
+pub mod server;
+pub use server::{
+    Action, DefaultExceptionFilter, Filter, FilterChain, HttpExchangeWrapper, HttpServerBase,
+    HttpServerRequest, HttpServerResponse, RootAction, SimpleServer,
+};
+pub mod ssl;
+pub use ssl::{
+    CustomProtocolsSslFactory, CustomProtocolsSslFactoryImpl, TrustAnyHostnameVerifier,
+    TrustAnyHostnameVerifierImpl,
+};
+pub mod webservice;
+pub use webservice::{
+    JakartaSoapClient, JakartaSoapProtocol, JakartaSoapUtil, SoapClient, SoapProtocol,
+    SoapRuntimeException, SoapUtil,
+};
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 
 /// User-Agent parsing compatible with Hutool's `useragent` package.
 #[cfg(feature = "useragent")]
 pub mod useragent;
+
+/// HTML helpers aligned with Hutool `HtmlUtil` / `HTMLFilter`.
+#[cfg(feature = "html")]
+pub mod html;
 
 /// Validates a destination URL before network I/O.
 pub trait UrlPolicy: Send + Sync {
@@ -138,6 +184,12 @@ pub enum HttpError {
     /// The request body cannot be cloned safely for another attempt.
     #[error("request body cannot be cloned for retry")]
     UncloneableRetryRequest,
+    /// The response status was not successful for a helper that requires 2xx.
+    #[error("unexpected HTTP status {status}")]
+    UnexpectedStatus {
+        /// Observed response status.
+        status: StatusCode,
+    },
     /// Every retry attempt failed.
     #[error("HTTP request failed after {attempts} attempts: {source}")]
     RetriesExhausted {
@@ -336,12 +388,13 @@ impl HttpClient {
     ) -> Result<HttpResponse, HttpError> {
         let status = response.status();
         let headers = response.headers().clone();
+        let url = response.url().to_string();
         let mut body = Vec::new();
         while let Some(chunk) = response.chunk().await? {
             self.ensure_size(body.len().saturating_add(chunk.len()))?;
             body.extend_from_slice(&chunk);
         }
-        Ok(HttpResponse::new(status, headers, body))
+        Ok(HttpResponse::new(status, headers, body).with_url(url))
     }
 
     /// Sends an idempotent request with an explicit retry policy.
@@ -604,6 +657,7 @@ fn configure_blocking_builder(
 pub struct HttpClientBuilder {
     config: HttpConfig,
     url_policy: Arc<dyn UrlPolicy>,
+    cookie_store: bool,
 }
 
 impl Default for HttpClientBuilder {
@@ -611,6 +665,7 @@ impl Default for HttpClientBuilder {
         Self {
             config: HttpConfig::default(),
             url_policy: Arc::new(AllowAllUrls),
+            cookie_store: false,
         }
     }
 }
@@ -673,6 +728,27 @@ impl HttpClientBuilder {
         self
     }
 
+    /// Installs a shared URL/SSRF policy handle.
+    #[must_use]
+    pub fn url_policy_arc(mut self, policy: Arc<dyn UrlPolicy>) -> Self {
+        self.url_policy = policy;
+        self
+    }
+
+    /// Replaces the full configuration value while preserving policy/cookie flags.
+    #[must_use]
+    pub fn with_config(mut self, config: HttpConfig) -> Self {
+        self.config = config;
+        self
+    }
+
+    /// Enables reqwest's cookie jar for redirect/cookie parity tests.
+    #[must_use]
+    pub const fn cookie_store(mut self, enable: bool) -> Self {
+        self.cookie_store = enable;
+        self
+    }
+
     /// Builds a pooled Rustls client.
     pub fn build(self) -> Result<HttpClient, HttpError> {
         let mut builder = reqwest::Client::builder()
@@ -681,7 +757,8 @@ impl HttpClientBuilder {
             .redirect(reqwest::redirect::Policy::limited(
                 self.config.redirect_limit,
             ))
-            .user_agent(&self.config.user_agent);
+            .user_agent(&self.config.user_agent)
+            .cookie_store(self.cookie_store);
         builder = configure_async_builder(builder, &self.config)?;
         let inner = builder.build()?;
         let max_response_bytes = self.config.max_response_bytes;
@@ -795,6 +872,7 @@ pub mod blocking {
         ) -> Result<HttpResponse, HttpError> {
             let status = response.status();
             let headers = response.headers().clone();
+            let url = response.url().to_string();
             let mut body = Vec::new();
             let mut buffer = [0_u8; 16 * 1024];
             loop {
@@ -805,7 +883,7 @@ pub mod blocking {
                 self.ensure_size(body.len().saturating_add(read))?;
                 body.extend_from_slice(&buffer[..read]);
             }
-            Ok(HttpResponse::new(status, headers, body))
+            Ok(HttpResponse::new(status, headers, body).with_url(url))
         }
 
         fn send_response_checked(

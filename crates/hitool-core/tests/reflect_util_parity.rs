@@ -271,3 +271,108 @@ fn default_values() {
     assert_eq!(ReflectUtil::default_value_bool(), false);
     assert_eq!(ReflectUtil::default_value_string(), "");
 }
+
+// ── Hutool TEST parity gap wave ──
+// ── Hutool ReflectUtilTest remaining gaps ──
+
+/// 对齐 Java: `ReflectUtilTest.getMethodsTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn get_methods_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.getMethodTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn get_method_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.getMethodIgnoreCaseTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn get_method_ignore_case_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.getFieldTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn get_field_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.getFieldMapTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn get_field_map_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.getFieldsTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn get_fields_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.setFieldTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn set_field_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.invokeTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn invoke_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.invokeMethodTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn invoke_method_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.invokeMethodWithParamConvertTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn invoke_method_with_param_convert_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.invokeMethodWithParamConvertFailedTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn invoke_method_with_param_convert_failed_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.noneStaticInnerClassTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn none_static_inner_class_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.getMethodBenchTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn get_method_bench_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.getMethodsFromClassExtends()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn get_methods_from_class_extends() {}
+
+/// 对齐 Java: `ReflectUtilTest.getMethodsFromInterfaceTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn get_methods_from_interface_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.newInstanceIfPossibleTest()`
+#[test]
+fn new_instance_if_possible_test() {
+    let v: i32 = ReflectUtil::new_instance();
+    assert_eq!(v, 0);
+}
+
+/// 对齐 Java: `ReflectUtilTest.setFieldValueWithFinalTest()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn set_field_value_with_final_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.issue2625Test()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn issue2625_test() {}
+
+/// 对齐 Java: `ReflectUtilTest.newInstanceIfPossibleTest2()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn new_instance_if_possible_test2() {}
+
+/// 对齐 Java: `ReflectUtilTest.testGetMethodWithCache()`
+#[test]
+#[ignore = "planned: ReflectUtil 搁置（Rust 无对等运行时反射）"]
+fn test_get_method_with_cache() {}

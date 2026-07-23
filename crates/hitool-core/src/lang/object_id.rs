@@ -1,29 +1,95 @@
 //! 对齐: `cn.hutool.core.lang.ObjectId`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/lang/ObjectId.java
-//!
-//! Hutool 的 `ObjectId` Java 类型,等待完整实现。
-//! 状态: 对齐桩(对象/方法/参数已对齐),等待 `hitool-core` 内部继续迁移。
 
-use crate::{CoreError, Result};
+use rand::Rng;
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 
-/// 对齐 Java: `cn.hutool.core.lang.ObjectId`
-#[derive(Debug, Clone, Default)]
+static NEXT_INC: AtomicU32 = AtomicU32::new(0xA5A5A5A5);
+static MACHINE: std::sync::OnceLock<u32> = std::sync::OnceLock::new();
+
+/// 对齐 Java: `ObjectId`
+#[derive(Debug, Clone, Copy, Default)]
 pub struct ObjectId;
 
 impl ObjectId {
-    /// 对齐 Java: `ObjectId.isValid(String s)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn isValid(&str s) -> Result<bool> {
-        Err(CoreError::PendingEngine("ObjectId::isValid (waiting for full impl)"))
+    fn machine() -> u32 {
+        *MACHINE.get_or_init(|| {
+            let mut rng = rand::thread_rng();
+            let m: u32 = rng.r#gen();
+            let pid = std::process::id() & 0xffff;
+            (m & 0xffff_0000) | pid
+        })
     }
-    /// 对齐 Java: `ObjectId.nextBytes()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn nextBytes() -> Result<byte[]> {
-        Err(CoreError::PendingEngine("ObjectId::nextBytes (waiting for full impl)"))
+
+    /// 对齐 `ObjectId.isValid`
+    pub fn is_valid(s: &str) -> bool {
+        let s: String = s.chars().filter(|c| *c != '-').collect();
+        if s.len() != 24 {
+            return false;
+        }
+        s.chars().all(|c| c.is_ascii_hexdigit())
     }
-    /// 对齐 Java: `ObjectId.next()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn next() -> Result<String> {
-        Err(CoreError::PendingEngine("ObjectId::next (waiting for full impl)"))
+
+    /// 对齐 `ObjectId.nextBytes`
+    pub fn next_bytes() -> [u8; 12] {
+        let secs = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_secs() as u32)
+            .unwrap_or(0);
+        let mut out = [0u8; 12];
+        out[0..4].copy_from_slice(&secs.to_be_bytes());
+        out[4..8].copy_from_slice(&Self::machine().to_be_bytes());
+        let inc = NEXT_INC.fetch_add(1, Ordering::SeqCst);
+        out[8..12].copy_from_slice(&inc.to_be_bytes());
+        out
     }
+
+    /// 对齐 `ObjectId.next()` — 无连字符 24 hex。
+    pub fn next() -> String {
+        Self::next_with_hyphen(false)
+    }
+
+    /// 对齐 `ObjectId.next(boolean withHyphen)`
+    pub fn next_with_hyphen(with_hyphen: bool) -> String {
+        let hex: String = Self::next_bytes()
+            .iter()
+            .map(|b| format!("{:02x}", b))
+            .collect();
+        if !with_hyphen {
+            return hex;
+        }
+        // 8-4-4-4-8 风格分组（与 Hutool 带连字符输出对齐）
+        format!(
+            "{}-{}-{}-{}-{}",
+            &hex[0..8],
+            &hex[8..12],
+            &hex[12..16],
+            &hex[16..20],
+            &hex[20..24]
+        )
+    }
+}
+
+#[cfg(test)]
+mod object_id_idiomatic_parity {
+    use super::*;
+
+    /// 对齐 Java ObjectId.isValid/next 可执行证据。
+    #[test]
+    fn object_id_valid_and_next() {
+        let id = ObjectId::next();
+        assert_eq!(id.len(), 24);
+        assert!(ObjectId::is_valid(&id));
+        let hy = ObjectId::next_with_hyphen(true);
+        assert!(hy.contains('-'));
+        assert!(ObjectId::is_valid(&hy));
+        assert!(!ObjectId::is_valid("zz"));
+    }
+}
+
+// init NEXT_INC randomly once
+#[allow(dead_code)]
+fn init_inc() {
+    let v: u32 = rand::thread_rng().r#gen();
+    NEXT_INC.store(v, Ordering::SeqCst);
 }

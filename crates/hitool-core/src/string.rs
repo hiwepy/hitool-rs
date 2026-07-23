@@ -6,6 +6,9 @@
 
 use std::fmt::{Display, Write};
 
+use crate::{CoreError, Result};
+use crate::text::str_splitter::StrSplitter;
+
 /// Returns `true` when a string is empty or contains only Unicode whitespace.
 #[inline]
 #[must_use]
@@ -192,9 +195,12 @@ pub fn clean_blank(value: &str) -> String {
 ///
 /// # 错误
 /// - `cut_length <= 0` 时返回 `Err`
-pub fn cut(value: &str, cut_length: usize) -> Result<Vec<String>, String> {
+pub fn cut(value: &str, cut_length: usize) -> Result<Vec<String>> {
     if cut_length == 0 {
-        return Err("cut_length must be greater than zero".into());
+        return Err(CoreError::InvalidArgument {
+            name: "cut_length",
+            reason: "must be greater than zero",
+        });
     }
     let chars: Vec<char> = value.chars().collect();
     let mut result = Vec::new();
@@ -331,6 +337,159 @@ pub fn str_or_empty(value: Option<&str>) -> &str {
     value.unwrap_or("")
 }
 
+/// 对齐 Java: `CharSequenceUtil.splitToArray(CharSequence text, char separator, int limit)`
+///
+/// `text` 为 `None` 时返回 `InvalidArgument`(对齐 Java `Assert.notNull` / `IllegalArgumentException`)。
+pub fn split_to_array(text: Option<&str>, separator: char) -> Result<Vec<String>> {
+    split_to_array_limit(text, separator, 0)
+}
+
+/// 对齐 Java: `CharSequenceUtil.splitToArray(CharSequence text, char separator, int limit)`
+pub fn split_to_array_limit(
+    text: Option<&str>,
+    separator: char,
+    limit: i32,
+) -> Result<Vec<String>> {
+    let Some(value) = text else {
+        return Err(CoreError::InvalidArgument {
+            name: "text",
+            reason: "Text must be not null!",
+        });
+    };
+    StrSplitter::split_char_limit(value, separator, limit, false, false)
+}
+
+/// 对齐 Java: `CharSequenceUtil.subByCodePoint(CharSequence str, int fromIndex, int toIndex)`
+///
+/// 下标按 Unicode 码点计数,而非 UTF-16 代码单元。
+pub fn sub_by_code_point(value: &str, from_index: i32, to_index: i32) -> Result<String> {
+    if value.is_empty() {
+        return Ok(String::new());
+    }
+    if from_index < 0 || from_index > to_index {
+        return Err(CoreError::InvalidArgument {
+            name: "fromIndex/toIndex",
+            reason: "fromIndex must be >= 0 and <= toIndex",
+        });
+    }
+    if from_index == to_index {
+        return Ok(String::new());
+    }
+    let sub_len = (to_index - from_index) as usize;
+    Ok(value
+        .chars()
+        .skip(from_index as usize)
+        .take(sub_len)
+        .collect())
+}
+
+/// 对齐 Java: `CharSequenceUtil.replaceByCodePoint(CharSequence str, int startInclude, int endExclude, char replacedChar)`
+///
+/// 区间 `[startInclude, endExclude)` 按码点计数;区间内每个码点替换为 `replaced_char`。
+pub fn replace_by_code_point(
+    value: &str,
+    start_include: i32,
+    end_exclude: i32,
+    replaced_char: char,
+) -> String {
+    if value.is_empty() {
+        return value.to_string();
+    }
+    let code_points: Vec<char> = value.chars().collect();
+    let str_length = code_points.len() as i32;
+    if start_include > str_length {
+        return value.to_string();
+    }
+    let end_exclude = end_exclude.min(str_length);
+    if start_include > end_exclude {
+        return value.to_string();
+    }
+
+    let mut result = String::with_capacity(value.len());
+    for (index, ch) in code_points.into_iter().enumerate() {
+        let index = index as i32;
+        if index >= start_include && index < end_exclude {
+            result.push(replaced_char);
+        } else {
+            result.push(ch);
+        }
+    }
+    result
+}
+
+/// 对齐 Java: `CharSequenceUtil.indexedFormat(CharSequence pattern, Object... arguments)`
+///
+/// 使用 `{0}`、`{1}` 占位符;`''` 转义为字面量 `'`(对齐 Java `MessageFormat`)。
+pub fn indexed_format(pattern: &str, args: &[&dyn Display]) -> Result<String> {
+    let mut result = String::with_capacity(pattern.len());
+    let bytes = pattern.as_bytes();
+    let mut index = 0usize;
+
+    while index < bytes.len() {
+        let ch = pattern[index..].chars().next().expect("valid utf-8");
+        if ch == '\'' {
+            // MessageFormat: '' → 字面量 '
+            if index + 1 < bytes.len() && bytes[index + 1] == b'\'' {
+                result.push('\'');
+                index += 2;
+                continue;
+            }
+            // 引号段: 直到下一个未转义 '
+            index += 1;
+            while index < bytes.len() {
+                let quoted = pattern[index..].chars().next().expect("valid utf-8");
+                if quoted == '\'' {
+                    if index + 1 < bytes.len() && bytes[index + 1] == b'\'' {
+                        result.push('\'');
+                        index += 2;
+                        continue;
+                    }
+                    index += 1;
+                    break;
+                }
+                result.push(quoted);
+                index += quoted.len_utf8();
+            }
+            continue;
+        }
+
+        if ch == '{' {
+            let close = pattern[index..]
+                .find('}')
+                .ok_or_else(|| CoreError::InvalidArgument {
+                    name: "pattern",
+                    reason: "unclosed format element",
+                })?;
+            let element = &pattern[index + 1..index + close];
+            let arg_index: usize = element
+                .split(',')
+                .next()
+                .unwrap_or("")
+                .trim()
+                .parse()
+                .map_err(|_| CoreError::InvalidArgument {
+                    name: "pattern",
+                    reason: "invalid format element index",
+                })?;
+            if let Some(value) = args.get(arg_index) {
+                write!(&mut result, "{value}")
+                    .expect("writing indexed format argument to String cannot fail");
+            } else {
+                result.push('{');
+                result.push_str(element);
+                result.push('}');
+            }
+            index += close + 1;
+            continue;
+        }
+
+        result.push(ch);
+        index += ch.len_utf8();
+    }
+
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -370,5 +529,36 @@ mod tests {
         assert_eq!(value.trimmed(), "hello");
         assert!(" \n".is_blank());
         assert_eq!("banana".without("na"), "ba");
+    }
+
+    #[test]
+    fn split_to_array_rejects_null() {
+        assert!(split_to_array(None, '.').is_err());
+    }
+
+    #[test]
+    fn replace_by_code_point_handles_surrogate_emoji() {
+        let value = "\u{24C09}秀秀";
+        assert_eq!(
+            replace_by_code_point(value, 1, value.len() as i32, '*'),
+            "\u{24C09}**"
+        );
+    }
+
+    #[test]
+    fn sub_by_code_point_uses_scalar_indices() {
+        let value = "\u{1F914}\u{1F44D}\u{1F353}\u{1F914}";
+        assert_eq!(
+            sub_by_code_point(value, 0, 3).unwrap(),
+            "\u{1F914}\u{1F44D}\u{1F353}"
+        );
+    }
+
+    #[test]
+    fn indexed_format_escapes_single_quotes() {
+        assert_eq!(
+            indexed_format("I''m {0} years old.", &[&10]).unwrap(),
+            "I'm 10 years old."
+        );
     }
 }

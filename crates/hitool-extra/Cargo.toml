@@ -8,13 +8,15 @@ authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
 readme.workspace = true
-description = "Optional QR code, image, archive, mail, and extension utilities for HiTool."
+description = "Optional QR code, image, archive, mail, emoji, pinyin, and extension utilities for HiTool."
 
 [lints]
 workspace = true
 
 [features]
-default = ["archive", "qrcode"]
+default = ["archive", "qrcode", "emoji", "pinyin"]
+emoji = ["dep:emojis"]
+pinyin = ["dep:pinyin"]
 archive = ["dep:zip"]
 qrcode = ["dep:qrcode"]
 image = ["dep:image"]
@@ -25,6 +27,10 @@ image = { workspace = true, optional = true }
 lettre = { workspace = true, optional = true }
 qrcode = { workspace = true, optional = true }
 secrecy = { workspace = true, optional = true }
+emojis = { workspace = true, optional = true }
+pinyin = { workspace = true, optional = true }
+serde.workspace = true
+serde_json.workspace = true
 thiserror.workspace = true
 zip = { workspace = true, optional = true }
 

@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
 use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
-use tokio::sync::{Mutex, RwLock, watch};
+use tokio::sync::{Mutex, Notify, RwLock, Semaphore, watch};
 use tokio::task::{JoinHandle, JoinSet};
 use tokio::time;
 
@@ -88,6 +88,8 @@ impl From<SocketError> for SocketRuntimeException {
 /// Socket communication limits and deadlines.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SocketConfig {
+    /// Hutool `threadPoolSize`: worker concurrency / max concurrent accept sessions
+    /// processed by Tokio session tasks via a `Semaphore` in [`AioServer::start`].
     thread_pool_size: usize,
     read_timeout: Duration,
     write_timeout: Duration,
@@ -102,13 +104,13 @@ impl SocketConfig {
         Self::default()
     }
 
-    /// Returns the requested worker concurrency.
+    /// Returns the requested worker concurrency (also the accept-loop session cap).
     #[must_use]
     pub const fn thread_pool_size(&self) -> usize {
         self.thread_pool_size
     }
 
-    /// Sets worker concurrency.
+    /// Sets worker concurrency / max concurrent sessions (`1..=1024`).
     pub fn set_thread_pool_size(
         &mut self,
         size: usize,
@@ -264,7 +266,10 @@ where
 /// Shared Tokio TCP session.
 #[derive(Clone)]
 pub struct AioSession {
-    stream: Arc<Mutex<TcpStream>>,
+    /// `Option` enables take/restore so I/O `.await` never holds `MutexGuard`.
+    stream: Arc<Mutex<Option<TcpStream>>>,
+    /// Wakes waiters after the stream is restored (serializes concurrent I/O).
+    stream_available: Arc<Notify>,
     action: Arc<dyn IoAction>,
     config: SocketConfig,
     remote: SocketAddr,
@@ -285,11 +290,32 @@ impl AioSession {
             .peer_addr()
             .expect("Tokio TcpStream instances are connected");
         Self {
-            stream: Arc::new(Mutex::new(stream)),
+            stream: Arc::new(Mutex::new(Some(stream))),
+            stream_available: Arc::new(Notify::new()),
             action,
             config,
             remote,
         }
+    }
+
+    /// Takes the stream for one I/O op without holding `MutexGuard` across `.await`.
+    /// 取出 TCP 流以执行单次 I/O，避免在 await 期间持有 MutexGuard（rust-async-patterns 修复）。
+    async fn take_stream(&self) -> TcpStream {
+        loop {
+            // Register before checking so a restore notification cannot be missed.
+            let wait = self.stream_available.notified();
+            if let Some(stream) = self.stream.lock().await.take() {
+                return stream;
+            }
+            wait.await;
+        }
+    }
+
+    /// Restores the stream after I/O and wakes any waiter.
+    /// I/O 完成后归还 TCP 流并唤醒等待者。
+    async fn restore_stream(&self, stream: TcpStream) {
+        *self.stream.lock().await = Some(stream);
+        self.stream_available.notify_waiters();
     }
 
     /// Returns the configured read-buffer capacity.
@@ -314,10 +340,14 @@ impl AioSession {
     }
 
     /// Reads one bounded chunk and dispatches it to the action.
+    /// 读取一块有界数据并回调；I/O await 时不持有 MutexGuard。
     pub async fn read(&self) -> Result<usize, SocketRuntimeException> {
         let mut buffer = vec![0; self.config.read_buffer_size];
-        let future = async { self.stream.lock().await.read(&mut buffer).await };
-        let count = match with_timeout(self.config.read_timeout, future).await {
+        // Anti-pattern fix: never `lock().await.read(...).await` (MutexGuard across await).
+        let mut stream = self.take_stream().await;
+        let result = with_timeout(self.config.read_timeout, stream.read(&mut buffer)).await;
+        self.restore_stream(stream).await;
+        let count = match result {
             Ok(count) => count,
             Err(error) => {
                 self.action.failed(&error, self);
@@ -330,14 +360,18 @@ impl AioSession {
     }
 
     /// Writes one bounded byte slice.
+    /// 写入有界字节；I/O await 时不持有 MutexGuard。
     pub async fn write(&self, data: &[u8]) -> Result<usize, SocketRuntimeException> {
         if data.len() > self.config.write_buffer_size {
             return Err(SocketRuntimeException::new(
                 "write exceeds configured buffer size",
             ));
         }
-        let future = async { self.stream.lock().await.write_all(data).await };
-        with_timeout(self.config.write_timeout, future).await?;
+        // Anti-pattern fix: never `lock().await.write_all(...).await` (MutexGuard across await).
+        let mut stream = self.take_stream().await;
+        let result = with_timeout(self.config.write_timeout, stream.write_all(data)).await;
+        self.restore_stream(stream).await;
+        result?;
         Ok(data.len())
     }
 
@@ -347,22 +381,22 @@ impl AioSession {
     }
 
     /// Returns whether the stream has no pending socket error.
+    /// 流临时取出进行 I/O 时视为仍打开。
     pub async fn is_open(&self) -> bool {
-        self.stream
-            .lock()
-            .await
-            .take_error()
-            .is_ok_and(|e| e.is_none())
+        match self.stream.lock().await.as_ref() {
+            Some(stream) => stream.take_error().is_ok_and(|e| e.is_none()),
+            // Stream is checked out for in-flight I/O — session is still open.
+            None => true,
+        }
     }
 
     /// Shuts down the session. Tokio exposes a full async shutdown instead of Java half-close methods.
+    /// 关闭会话；shutdown await 时不持有 MutexGuard。
     pub async fn close(&self) -> Result<(), SocketRuntimeException> {
-        self.stream
-            .lock()
-            .await
-            .shutdown()
-            .await
-            .map_err(Into::into)
+        let mut stream = self.take_stream().await;
+        let result = stream.shutdown().await;
+        self.restore_stream(stream).await;
+        result.map_err(Into::into)
     }
 
     /// Rust compatibility alias for closing input.
@@ -620,11 +654,17 @@ impl AioServer {
         !*self.shutdown.borrow()
     }
     /// Starts the accept loop in a managed Tokio task.
+    ///
+    /// Concurrent sessions are capped by [`SocketConfig::thread_pool_size`] using a
+    /// `Semaphore`. When no permit is available the loop waits (backpressure) while
+    /// still honouring shutdown via `select!`; the permit is held for the session
+    /// task lifetime and released on drop.
     pub fn start(&self) -> JoinHandle<Result<(), SocketRuntimeException>> {
         let listener = Arc::clone(&self.listener);
         let actions = Arc::clone(&self.action);
         let config = self.config;
         let mut shutdown = self.shutdown.subscribe();
+        let semaphore = Arc::new(Semaphore::new(config.thread_pool_size));
         #[cfg(test)]
         let fail_accept = self.fail_accept;
         tokio::spawn(async move {
@@ -639,9 +679,26 @@ impl AioServer {
                     accepted = accept_connection(&listener, #[cfg(test)] fail_accept) => {
                         let (stream, _) = accepted?;
                         if let Some(action) = actions.read().await.clone() {
+                            // Backpressure: wait for a free slot, or exit on shutdown.
+                            let permit = tokio::select! {
+                                changed = shutdown.changed() => {
+                                    changed.map_err(|_| {
+                                        SocketRuntimeException::new("shutdown channel closed")
+                                    })?;
+                                    drop(stream);
+                                    sessions.shutdown().await;
+                                    return Ok(());
+                                }
+                                permit = Arc::clone(&semaphore).acquire_owned() => {
+                                    permit.map_err(|_| {
+                                        SocketRuntimeException::new("connection semaphore closed")
+                                    })?
+                                }
+                            };
                             let session = AioSession::new(stream, action, config);
                             session.action.accept(&session);
                             sessions.spawn(async move {
+                                let _permit = permit;
                                 let _ = session.read().await;
                             });
                         }
@@ -1034,6 +1091,71 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn aio_server_limits_concurrent_sessions_to_thread_pool_size() {
+        /// Tracks accept callbacks; sessions stay open until the peer is dropped.
+        struct LimitingAction {
+            accepted: AtomicUsize,
+            notify: Notify,
+        }
+
+        impl IoAction for LimitingAction {
+            fn accept(&self, _session: &AioSession) {
+                self.accepted.fetch_add(1, Ordering::SeqCst);
+                self.notify.notify_waiters();
+            }
+
+            fn do_action(&self, _session: &AioSession, _data: &[u8]) {}
+        }
+
+        let action = Arc::new(LimitingAction {
+            accepted: AtomicUsize::new(0),
+            notify: Notify::new(),
+        });
+        let mut config = SocketConfig::default();
+        // Cap concurrent session tasks at 2 (Hutool `threadPoolSize` mapping).
+        config.set_thread_pool_size(2).unwrap();
+        let server = AioServer::bind("127.0.0.1:0", config).await.unwrap();
+        server.set_io_action(action.clone()).await;
+        let address = server.local_address().unwrap();
+        let task = server.start();
+
+        let client1 = TcpStream::connect(address).await.unwrap();
+        let client2 = TcpStream::connect(address).await.unwrap();
+        while action.accepted.load(Ordering::SeqCst) < 2 {
+            time::timeout(Duration::from_secs(1), action.notify.notified())
+                .await
+                .unwrap();
+        }
+        assert_eq!(action.accepted.load(Ordering::SeqCst), 2);
+
+        // Third connect succeeds at TCP level but must not be accepted until a slot frees.
+        let pending = tokio::spawn(async move { TcpStream::connect(address).await.unwrap() });
+        time::sleep(Duration::from_millis(100)).await;
+        assert_eq!(
+            action.accepted.load(Ordering::SeqCst),
+            2,
+            "accept loop must wait when thread_pool_size permits are exhausted"
+        );
+
+        drop(client1);
+        let client3 = time::timeout(Duration::from_secs(1), pending)
+            .await
+            .expect("third connect should complete once a permit is free")
+            .unwrap();
+        while action.accepted.load(Ordering::SeqCst) < 3 {
+            time::timeout(Duration::from_secs(1), action.notify.notified())
+                .await
+                .unwrap();
+        }
+        assert_eq!(action.accepted.load(Ordering::SeqCst), 3);
+
+        drop(client2);
+        drop(client3);
+        server.close();
+        task.await.unwrap().unwrap();
+    }
+
+    #[tokio::test]
     async fn aio_server_client_session_and_protocol_use_real_loopback_io() {
         let action = Arc::new(RecordingAction::default());
         let server = AioServer::bind("127.0.0.1:0", SocketConfig::default())
@@ -1061,10 +1183,11 @@ mod tests {
         assert_eq!(client.session().write_buffer_size(), 8_192);
         assert!(client.session().is_open().await);
         {
-            let stream = client.session().stream.lock().await;
-            assert!(SocketUtil::is_connected(&stream));
-            assert_eq!(SocketUtil::remote_address(&stream).unwrap(), address);
-            NioUtil::register_channel(&stream, Operation::Read).unwrap();
+            let guard = client.session().stream.lock().await;
+            let stream = guard.as_ref().expect("stream present when idle");
+            assert!(SocketUtil::is_connected(stream));
+            assert_eq!(SocketUtil::remote_address(stream).unwrap(), address);
+            NioUtil::register_channel(stream, Operation::Read).unwrap();
         }
 
         assert_eq!(client.write(b"hello").await.unwrap(), 5);
@@ -1149,5 +1272,37 @@ mod tests {
         });
         assert!(session.write(&vec![0; 16 * 1024 * 1024]).await.is_err());
         drop(peer);
+    }
+
+    /// Proves read/write still work after the MutexGuard-across-await anti-pattern fix.
+    /// 验证 take/restore 修复后 read/write 行为保持正确。
+    #[tokio::test]
+    async fn session_read_write_without_mutex_across_await() {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let peer = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            let mut buf = [0_u8; 5];
+            stream.read_exact(&mut buf).await.unwrap();
+            assert_eq!(&buf, b"hello");
+            stream.write_all(b"world").await.unwrap();
+        });
+
+        let action = Arc::new(RecordingAction::default());
+        let session = AioSession::new(
+            SocketUtil::connect(address).await.unwrap(),
+            action.clone() as Arc<dyn IoAction>,
+            SocketConfig::default(),
+        );
+
+        // Stream is present while idle; I/O uses take/restore (no MutexGuard across await).
+        assert!(session.stream.lock().await.is_some());
+        assert_eq!(session.write(b"hello").await.unwrap(), 5);
+        assert!(session.stream.lock().await.is_some());
+        assert_eq!(session.read().await.unwrap(), 5);
+        assert_eq!(action.bytes.load(Ordering::SeqCst), 5);
+        assert!(session.is_open().await);
+        session.close().await.unwrap();
+        peer.await.unwrap();
     }
 }

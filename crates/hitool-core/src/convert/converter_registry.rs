@@ -1,20 +1,61 @@
 //! 对齐: `cn.hutool.core.convert.ConverterRegistry`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/convert/ConverterRegistry.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+#![allow(dead_code)]
+
+use std::sync::OnceLock;
+
+use super::convert::ConvertValue;
+use super::convert_exception::ConvertException;
+use super::impl_::number_converter::{NumberConverter, NumberTarget};
 
 /// 对齐 Java 类: `cn.hutool.core.convert.ConverterRegistry`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct ConverterRegistry;
+#[derive(Debug, Default)]
+pub struct ConverterRegistry {
+    custom_i32: Option<fn(&ConvertValue) -> Option<i32>>,
+}
+
+static INSTANCE: OnceLock<ConverterRegistry> = OnceLock::new();
 
 impl ConverterRegistry {
-    /// 对齐桩 sentinel,等待完整实现。
     pub fn pending_alignment() -> &'static str {
         "pending"
+    }
+
+    pub fn get_instance() -> &'static ConverterRegistry {
+        INSTANCE.get_or_init(ConverterRegistry::default)
+    }
+
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// 对齐 Java: `getConverter(Type)` — 返回是否内置支持
+    pub fn has_converter(&self, type_name: &str) -> bool {
+        matches!(
+            type_name,
+            "int" | "Integer" | "long" | "Long" | "double" | "Double" | "String" | "Boolean"
+        )
+    }
+
+    /// 注册自定义转换（测试用）
+    pub fn put_custom_i32(&mut self, f: fn(&ConvertValue) -> Option<i32>) {
+        self.custom_i32 = Some(f);
+    }
+
+    pub fn convert_i32(&self, value: &ConvertValue) -> Result<i32, ConvertException> {
+        if let Some(f) = self.custom_i32 {
+            return f(value).ok_or_else(|| ConvertException::new("custom convert failed"));
+        }
+        NumberConverter::convert_i32(value)
+            .ok_or_else(|| ConvertException::new("convert to int failed"))
+    }
+
+    pub fn convert_i64(&self, value: &ConvertValue) -> Result<i64, ConvertException> {
+        NumberConverter::convert_i64(value)
+            .ok_or_else(|| ConvertException::new("convert to long failed"))
+    }
+
+    pub fn number_converter_double(&self) -> NumberConverter {
+        NumberConverter::new(NumberTarget::Double)
     }
 }

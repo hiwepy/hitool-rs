@@ -5,7 +5,7 @@
 //! hash_password, verify_password, aes256_gcm_encrypt, aes256_gcm_decrypt
 //!
 //! 本文件按 Java 测试文件分组,已实现函数用真实断言,
-//! 未实现函数标记 #[ignore] 待后续实现后启用。
+//! 未实现函数标记 ignore 待后续实现后启用。
 
 use hitool_crypto as hc;
 
@@ -106,100 +106,184 @@ fn bcrypt_checkpw_test() {
         "错误密码应验证失败 (对齐 Java BCryptTest)");
 }
 
-// ===== 未实现方法 (全部 #[ignore]) =====
-// 待 hitool-crypto 扩展后取消 ignore
+mod common;
+
+use common::{load_resource, rsa_oaep_round_trip, rsa_pub_enc_priv_dec, sm2_sign_verify_round_trip, RSA_PLAINTEXT};
+
+// ===== Hutool parity — previously ignored, now enabled =====
 
 /// 对齐 Java: DigestTest.md5Test()
-#[ignore = "MD5 已废弃，等待 hitool-crypto 扩展(或安全策略拒绝)"]
 #[test]
-fn digest_md5_test() {}
+fn digest_md5_test() {
+    let test_str = "test中文";
+    assert_eq!(
+        hc::md5_hex(test_str.as_bytes()),
+        "5393554e94bf0eb6436f240a4fd71282"
+    );
+    assert_eq!(hc::md5_hex(test_str.as_bytes()), hc::md5_hex(test_str.as_bytes()));
+}
 
 /// 对齐 Java: DigestTest.sha1Test()
-#[ignore = "SHA1 已废弃，等待 hitool-crypto 扩展"]
 #[test]
-fn digest_sha1_test() {}
+fn digest_sha1_test() {
+    let test_str = "test中文";
+    assert_eq!(
+        hc::sha1_hex(test_str.as_bytes()),
+        "ecabf586cef0d3b11c56549433ad50b81110a836"
+    );
+}
 
 /// 对齐 Java: HmacTest.hmacTest() — HmacMD5
-#[ignore = "等待 hitool-crypto 扩展 hmac_md5"]
 #[test]
-fn hmac_md5_test() {}
+fn hmac_md5_test() {
+    let key = b"password";
+    let msg = "test中文".as_bytes();
+    assert_eq!(
+        hc::hmac_md5_hex(key, msg).expect("hmac"),
+        "b977f4b13f93f549e06140971bded384"
+    );
+}
 
 /// 对齐 Java: HmacTest.hmacSha1Test()
-#[ignore = "等待 hitool-crypto 扩展 hmac_sha1"]
 #[test]
-fn hmac_sha1_test() {}
+fn hmac_sha1_test() {
+    let key = b"password";
+    let msg = "test中文".as_bytes();
+    assert_eq!(
+        hc::hmac_sha1_hex(key, msg).expect("hmac"),
+        "1dd68d2f119d5640f0d416e99d3f42408b88d511"
+    );
+}
 
 /// 对齐 Java: AESTest.encryptCBCTest()
-#[ignore = "等待 hitool-crypto 扩展 AES-CBC/PKCS7"]
 #[test]
-fn aes_cbc_test() {}
+fn aes_cbc_test() {
+    let key = b"1234567890123456";
+    let iv = b"1234567890123456";
+    assert_eq!(
+        hc::aes128_cbc_encrypt_hex(key, iv, b"123456").expect("cbc"),
+        "d637735ae9e21ba50cb686b74fab8d2c"
+    );
+}
 
 /// 对齐 Java: AESTest.encryptCTSTest()
-#[ignore = "等待 hitool-crypto 扩展 AES-CTS"]
 #[test]
-fn aes_cts_test() {}
+fn aes_cts_test() {
+    let key = b"0CoJUm6Qyw8W8jue";
+    let iv = b"0102030405060708";
+    assert_eq!(
+        hc::aes128_cts_encrypt_hex(key, iv, "test中文".as_bytes()).expect("cts"),
+        "8dc9de7f050e86ca2c8261dde56dfec9"
+    );
+}
 
 /// 对齐 Java: RSATest.rsaTest()
-#[ignore = "等待 hitool-crypto 扩展 RSA"]
 #[test]
-fn rsa_test() {}
+fn rsa_test() {
+    let pair = hc::generate_rsa_keypair().expect("keygen");
+    assert!(hc::rsa_private_key_to_pem(&pair.private_key).expect("pem").contains("PRIVATE KEY"));
+    assert!(hc::rsa_public_key_to_pem(&pair.public_key).expect("pem").contains("PUBLIC KEY"));
+    rsa_pub_enc_priv_dec(RSA_PLAINTEXT);
+}
 
 /// 对齐 Java: SymmetricTest.desTest()
-#[ignore = "DES 已废弃，等待 hitool-crypto 扩展(或安全策略拒绝)"]
 #[test]
-fn symmetric_des_test() {}
+fn symmetric_des_test() {
+    assert!(matches!(
+        hc::des_encrypt(b"12345678", b"test"),
+        Err(hc::CryptoError::LegacyRejected(_))
+    ));
+}
 
 /// 对齐 Java: SM2Test.sm2Test()
-#[ignore = "等待 hitool-crypto 扩展 SM2/SM3/SM4 国密"]
 #[test]
-fn sm2_test() {}
+fn sm2_test() {
+    let (secret, _public) = hc::generate_sm2_keypair().expect("sm2 keygen");
+    assert_eq!(hc::sm2_private_hex_len(&secret), 64);
+    sm2_sign_verify_round_trip(RSA_PLAINTEXT.as_bytes());
+}
 
 /// 对齐 Java: PemUtilTest.readPrivateKeyTest()
-#[ignore = "等待 hitool-crypto 扩展 PEM 密钥读取"]
 #[test]
-fn pem_read_private_key_test() {}
+fn pem_read_private_key_test() {
+    let pem = load_resource("test_private_key.pem");
+    assert!(hc::read_pem_private_key(&pem).is_ok());
+}
 
 /// 对齐 Java: KeyUtilTest.generateECIESKeyTest()
-#[ignore = "等待 hitool-crypto 扩展密钥生成"]
 #[test]
-fn key_util_generate_ecies_key_test() {}
+fn key_util_generate_ecies_key_test() {
+    let (secret, public) = hc::generate_ec_keypair().expect("ec keygen");
+    assert!(hc::ec_private_pkcs8_round_trip(&secret).expect("roundtrip"));
+    assert_eq!(secret.public_key(), public);
+}
 
 /// 对齐 Java: SignTest.signAndVerifyTest()
-#[ignore = "等待 hitool-crypto 扩展签名/验签"]
 #[test]
-fn sign_and_verify_test() {}
+fn sign_and_verify_test() {
+    sm2_sign_verify_round_trip(b"\xe6\x88\x91\xe6\x98\xafHanley.");
+}
 
 /// 对齐 Java: OTPTest.genKeyTest()
-#[ignore = "等待 hitool-crypto 扩展 OTP/TOTP"]
 #[test]
-fn otp_gen_key_test() {}
+fn otp_gen_key_test() {
+    let key = hc::generate_totp_secret_key(8).expect("secret");
+    let decoded = data_encoding::BASE32_NOPAD.decode(key.as_bytes()).expect("b32");
+    assert_eq!(decoded.len(), 8);
+}
 
 /// 对齐 Java: RC4Test.testCryptMessage()
-#[ignore = "RC4 已废弃，等待 hitool-crypto 扩展(或安全策略拒绝)"]
 #[test]
-fn rc4_crypt_test() {}
+fn rc4_crypt_test() {
+    assert!(matches!(
+        hc::rc4_crypt(b"key", b"test"),
+        Err(hc::CryptoError::LegacyRejected(_))
+    ));
+}
 
-/// 对齐 Java: TEATest.teaTest()
-#[ignore = "等待 hitool-crypto 扩展 TEA/XTEA/XXTEA"]
+/// 对齐 Java: `TEATest.teaTest()`
 #[test]
-fn tea_test() {}
+fn tea_test() {
+    let key = b"MyPassword123456";
+    let pt = "测试的加密数据 by Hutool".as_bytes();
+    let ct = hc::tea_encrypt(key, pt).expect("tea enc");
+    let dec = hc::tea_decrypt(key, &ct).expect("tea dec");
+    assert_eq!(dec, pt);
+}
 
 /// 对齐 Java: SmTest.sm3Test()
-#[ignore = "等待 hitool-crypto 扩展国密 SM3/SM4"]
 #[test]
-fn sm3_test() {}
+fn sm3_test() {
+    assert_eq!(
+        hc::sm3_hex(b"aaaaa"),
+        "136ce3c86e4ed909b76082055a61586af20b4dab674732ebd4b599eef080c9be"
+    );
+}
 
 /// 对齐 Java: ChaCha20Test.encryptAndDecryptTest()
-#[ignore = "等待 hitool-crypto 扩展 ChaCha20"]
 #[test]
-fn chacha20_encrypt_decrypt_test() {}
+fn chacha20_encrypt_decrypt_test() {
+    let key = [9u8; 32];
+    let iv = [1u8; 12];
+    let pt = "test中文".as_bytes();
+    let ct = hc::chacha20_encrypt(&key, &iv, pt).expect("enc");
+    let dec = hc::chacha20_decrypt(&key, &iv, &ct).expect("dec");
+    assert_eq!(dec, pt);
+}
 
 /// 对齐 Java: PBKDF2Test.encryptTest()
-#[ignore = "等待 hitool-crypto 扩展 PBKDF2"]
 #[test]
-fn pbkdf2_encrypt_test() {}
+fn pbkdf2_encrypt_test() {
+    let salt = [0u8; 16];
+    let out = hc::pbkdf2_hex(b"123456", &salt).expect("pbkdf2");
+    assert_eq!(out.len(), 128);
+}
 
 /// 对齐 Java: FPETest.ff1Test()
-#[ignore = "等待 hitool-crypto 扩展格式保留加密 FPE"]
 #[test]
-fn fpe_ff1_test() {}
+fn fpe_ff1_test() {
+    let fpe = hc::FpeFf1::new([1u8; 16], b"0123456789");
+    let enc = fpe.encrypt("1234567890123456").expect("fpe enc");
+    let dec = fpe.decrypt(&enc).expect("fpe dec");
+    assert_eq!(dec, "1234567890123456");
+}

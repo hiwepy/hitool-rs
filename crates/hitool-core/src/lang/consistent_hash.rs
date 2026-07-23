@@ -1,29 +1,126 @@
 //! 对齐: `cn.hutool.core.lang.ConsistentHash`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/lang/ConsistentHash.java
 //!
-//! Hutool 的 `ConsistentHash` Java 类型,等待完整实现。
-//! 状态: 对齐桩(对象/方法/参数已对齐),等待 `hitool-core` 内部继续迁移。
+//! 一致性哈希环：`BTreeMap` 模拟 Java `TreeMap`，默认 FNV32 哈希。
 
-use crate::{CoreError, Result};
+use crate::hash_util::HashUtil;
+use std::collections::BTreeMap;
+use std::fmt::Display;
+use std::hash::{Hash, Hasher};
 
-/// 对齐 Java: `cn.hutool.core.lang.ConsistentHash`
-#[derive(Debug, Clone, Default)]
-pub struct ConsistentHash;
+/// 32 位哈希函数，对齐 Java `Hash32<Object>`。
+pub type Hash32Fn = Box<dyn Fn(&str) -> i32 + Send + Sync>;
 
-impl ConsistentHash {
-    /// 对齐 Java: `ConsistentHash.add(T node)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn add(T node) -> Result<()> {
-        Err(CoreError::PendingEngine("ConsistentHash::add (waiting for full impl)"))
+/// 对齐 Java: `cn.hutool.core.lang.ConsistentHash<T>`
+pub struct ConsistentHash<T> {
+    number_of_replicas: usize,
+    hash_fn: Hash32Fn,
+    circle: BTreeMap<i32, T>,
+}
+
+impl<T: Clone + Display> ConsistentHash<T> {
+    /// 对齐 Java: `ConsistentHash(int, Collection)` — 默认 FNV 哈希。
+    pub fn new(number_of_replicas: usize, nodes: impl IntoIterator<Item = T>) -> Self {
+        let mut ring = Self {
+            number_of_replicas,
+            hash_fn: Box::new(|s| HashUtil::fnv_hash(s)),
+            circle: BTreeMap::new(),
+        };
+        for node in nodes {
+            ring.add(node);
+        }
+        ring
     }
-    /// 对齐 Java: `ConsistentHash.remove(T node)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn remove(T node) -> Result<()> {
-        Err(CoreError::PendingEngine("ConsistentHash::remove (waiting for full impl)"))
+
+    /// 对齐 Java: 自定义 `Hash32` 构造。
+    pub fn with_hash_fn(
+        hash_fn: Hash32Fn,
+        number_of_replicas: usize,
+        nodes: impl IntoIterator<Item = T>,
+    ) -> Self {
+        let mut ring = Self {
+            number_of_replicas,
+            hash_fn,
+            circle: BTreeMap::new(),
+        };
+        for node in nodes {
+            ring.add(node);
+        }
+        ring
     }
-    /// 对齐 Java: `ConsistentHash.get(Object key)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn get(Object key) -> Result<T> {
-        Err(CoreError::PendingEngine("ConsistentHash::get (waiting for full impl)"))
+
+    /// 对齐 Java: `add(T)` — 为节点写入 `numberOfReplicas` 个虚拟节点。
+    pub fn add(&mut self, node: T) {
+        let key = node.to_string();
+        for i in 0..self.number_of_replicas {
+            let h = (self.hash_fn)(&format!("{key}{i}"));
+            self.circle.insert(h, node.clone());
+        }
+    }
+
+    /// 对齐 Java: `remove(T)`
+    pub fn remove(&mut self, node: &T) {
+        let key = node.to_string();
+        for i in 0..self.number_of_replicas {
+            let h = (self.hash_fn)(&format!("{key}{i}"));
+            self.circle.remove(&h);
+        }
+    }
+
+    /// 对齐 Java: `get(Object)` — 顺时针最近虚拟节点。
+    pub fn get(&self, key: &str) -> Option<T> {
+        if self.circle.is_empty() {
+            return None;
+        }
+        let hash = (self.hash_fn)(key);
+        if let Some(v) = self.circle.get(&hash) {
+            return Some(v.clone());
+        }
+        // tailMap：第一个 >= hash；否则绕回 firstKey
+        if let Some((_, v)) = self.circle.range(hash..).next() {
+            return Some(v.clone());
+        }
+        self.circle.values().next().cloned()
+    }
+
+    /// 环上虚拟节点数量（测试辅助）。
+    #[must_use]
+    pub fn virtual_size(&self) -> usize {
+        self.circle.len()
+    }
+}
+
+/// 默认字符串键的 Display 包装，便于测试。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StrNode(pub String);
+
+impl Display for StrNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl Hash for StrNode {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+    }
+}
+
+#[cfg(test)]
+mod consistent_hash_idiomatic_parity {
+    use super::*;
+
+    /// 对齐 Java ConsistentHash add/remove/get 可执行证据。
+    #[test]
+    fn consistent_hash_add_get_remove() {
+        let nodes = ["a", "b", "c"].map(|s| StrNode(s.into()));
+        let mut ring = ConsistentHash::new(3, nodes);
+        assert_eq!(ring.virtual_size(), 9);
+        let hit = ring.get("user-42").expect("node");
+        assert!(["a", "b", "c"].contains(&hit.0.as_str()));
+        ring.remove(&StrNode("b".into()));
+        assert_eq!(ring.virtual_size(), 6);
+        let hit2 = ring.get("user-42").expect("node");
+        assert_ne!(hit2.0, "b");
     }
 }

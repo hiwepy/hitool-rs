@@ -1,13 +1,45 @@
 //! 对齐: `cn.hutool.core.convert.BasicType`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/convert/BasicType.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+#![allow(dead_code)]
 
-/// 对齐 Java enum: `cn.hutool.core.convert.BasicType`
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BasicType {
-    /// 对齐 Java 枚举常量: `BYTE`
-    BYTE,
+/// 对齐 Java 类: `cn.hutool.core.convert.BasicType`
+#[derive(Debug, Clone, Default)]
+pub struct BasicType;
+
+impl BasicType {
+    pub fn pending_alignment() -> &'static str {
+        "pending"
+    }
+
+    /// 对齐 Java: `BasicType.wrap(Class)` — 以类型名字符串表达
+    pub fn wrap(type_name: &str) -> &'static str {
+        match type_name {
+            "int" | "Integer" => "Integer",
+            "long" | "Long" => "Long",
+            "boolean" | "Boolean" => "Boolean",
+            "byte" | "Byte" => "Byte",
+            "short" | "Short" => "Short",
+            "char" | "Character" => "Character",
+            "float" | "Float" => "Float",
+            "double" | "Double" => "Double",
+            "void" | "Void" => "Void",
+            _ => "Object",
+        }
+    }
+
+    /// 对齐 Java: `BasicType.unWrap(Class)`
+    pub fn un_wrap(type_name: &str) -> &'static str {
+        match type_name {
+            "Integer" | "int" => "int",
+            "Long" | "long" => "long",
+            "Boolean" | "boolean" => "boolean",
+            "Byte" | "byte" => "byte",
+            "Short" | "short" => "short",
+            "Character" | "char" => "char",
+            "Float" | "float" => "float",
+            "Double" | "double" => "double",
+            "Void" | "void" => "void",
+            _ => "Object",
+        }
+    }
 }

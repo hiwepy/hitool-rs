@@ -18,7 +18,7 @@ pub enum Part {
     Minute,
     /// Hours, `0..=23`.
     Hour,
-    /// Day of month, `1..=31`.
+    /// Day of month, `1..=31`, with Hutool sentinel `32` for `L` (last day).
     DayOfMonth,
     /// Month, `1..=12`.
     Month,
@@ -59,7 +59,7 @@ impl Part {
         match self {
             Self::Second | Self::Minute => 59,
             Self::Hour => 23,
-            Self::DayOfMonth => 31,
+            Self::DayOfMonth => 32,  // Hutool: 32 == last day ("L")
             Self::Month => 12,
             Self::DayOfWeek => 7,
             Self::Year => 2099,
@@ -92,25 +92,26 @@ impl Part {
     }
 }
 
-/// Incrementally builds a seven-part cron expression.
-#[derive(Debug, Clone)]
+/// Incrementally builds a Hutool-style cron expression.
+///
+/// Unset second/year fields are omitted from [`Self::build`], matching Hutool
+/// `CronPatternBuilder` (`NullMode.IGNORE`).
+#[derive(Debug, Clone, Default)]
 pub struct CronPatternBuilder {
-    parts: [String; 7],
-}
-
-impl Default for CronPatternBuilder {
-    fn default() -> Self {
-        Self {
-            parts: std::array::from_fn(|_| "*".to_owned()),
-        }
-    }
+    parts: [Option<String>; 7],
 }
 
 impl CronPatternBuilder {
-    /// Creates an all-wildcard builder.
+    /// Creates an empty builder (minute–week default to `*` on build).
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Alias for [`Self::new`], matching Hutool `CronPatternBuilder.of()`.
+    #[must_use]
+    pub fn of() -> Self {
+        Self::new()
     }
 
     /// Sets a comma-separated collection of values.
@@ -122,18 +123,15 @@ impl CronPatternBuilder {
             .iter()
             .map(|value| part.check_value(*value).map(|value| value.to_string()))
             .collect::<Result<Vec<_>, _>>()?;
-        self.parts[part.calendar_field()] = values.join(",");
+        self.parts[part.calendar_field()] = Some(values.join(","));
         Ok(self)
     }
 
-    /// Sets an inclusive value range.
+    /// Sets a value range. When `begin > end`, Hutool wrap notation is kept.
     pub fn set_range(&mut self, part: Part, begin: i32, end: i32) -> Result<&mut Self, CronError> {
         part.check_value(begin)?;
         part.check_value(end)?;
-        if begin > end {
-            return Err(CronError::InvalidPartRange { part, begin, end });
-        }
-        self.parts[part.calendar_field()] = format!("{begin}-{end}");
+        self.parts[part.calendar_field()] = Some(format!("{begin}-{end}"));
         Ok(self)
     }
 
@@ -141,16 +139,28 @@ impl CronPatternBuilder {
     pub fn set(&mut self, part: Part, value: impl Into<String>) -> Result<&mut Self, CronError> {
         let value = value.into();
         let mut candidate = self.clone();
-        candidate.parts[part.calendar_field()] = value;
+        candidate.parts[part.calendar_field()] = Some(value);
         CronPattern::parse(candidate.build())?;
         *self = candidate;
         Ok(self)
     }
 
-    /// Builds a seven-part expression.
+    /// Builds the expression, omitting unset second/year like Hutool.
     #[must_use]
     pub fn build(&self) -> String {
-        self.parts.join(" ")
+        let mut parts = self.parts.clone();
+        // From minute through day-of-week, unset fields default to `*`.
+        for index in Part::Minute.calendar_field()..Part::Year.calendar_field() {
+            if parts[index].as_ref().is_none_or(|value| value.trim().is_empty()) {
+                parts[index] = Some("*".to_owned());
+            }
+        }
+        parts
+            .into_iter()
+            .flatten()
+            .filter(|value| !value.trim().is_empty())
+            .collect::<Vec<_>>()
+            .join(" ")
     }
 }
 
@@ -160,6 +170,8 @@ pub struct CronPattern {
     expression: String,
     second_schedules: Vec<Schedule>,
     minute_schedules: Vec<Schedule>,
+    /// Per-alternative flag: day-of-month field used Hutool `L` (last day).
+    dom_last: Vec<bool>,
 }
 
 impl CronPattern {
@@ -172,17 +184,22 @@ impl CronPattern {
         }
         let mut second_schedules = Vec::with_capacity(alternatives.len());
         let mut minute_schedules = Vec::with_capacity(alternatives.len());
+        let mut dom_last = Vec::with_capacity(alternatives.len());
         for alternative in alternatives {
-            second_schedules.push(Schedule::from_str(&normalize(alternative, true))?);
+            let (second_expr, last) = normalize_expanded(alternative, true)?;
+            let (minute_expr, _) = normalize_expanded(alternative, false)?;
+            second_schedules.push(Schedule::from_str(&second_expr)?);
             minute_schedules.push(
-                Schedule::from_str(&normalize(alternative, false))
+                Schedule::from_str(&minute_expr)
                     .expect("replacing a valid seconds field with zero remains valid"),
             );
+            dom_last.push(last);
         }
         Ok(Self {
             expression,
             second_schedules,
             minute_schedules,
+            dom_last,
         })
     }
 
@@ -205,12 +222,16 @@ impl CronPattern {
                 .with_nanosecond(0)
                 .expect("zero nanoseconds is always valid")
         };
-        self.schedules(match_second).iter().any(|schedule| {
-            schedule
-                .after(&(instant - ChronoDuration::seconds(1)))
-                .next()
-                == Some(instant)
-        })
+        self.schedules(match_second)
+            .iter()
+            .zip(self.dom_last.iter().copied())
+            .any(|(schedule, last)| {
+                let hits = schedule
+                    .after(&(instant - ChronoDuration::seconds(1)))
+                    .next()
+                    == Some(instant);
+                hits && (!last || is_last_day_of_month(instant))
+            })
     }
 
     /// Returns whether a millisecond timestamp matches this pattern.
@@ -240,7 +261,8 @@ impl CronPattern {
     ) -> Option<DateTime<Utc>> {
         self.schedules(match_second)
             .iter()
-            .filter_map(|schedule| schedule.after(&start).next())
+            .zip(self.dom_last.iter().copied())
+            .filter_map(|(schedule, last)| next_after_filtered(schedule, start, last))
             .min()
     }
 
@@ -259,7 +281,32 @@ impl fmt::Display for CronPattern {
     }
 }
 
-fn normalize(expression: &str, match_second: bool) -> String {
+/// Walks schedule candidates, skipping non-last days when `dom_last` is set.
+fn next_after_filtered(
+    schedule: &Schedule,
+    start: DateTime<Utc>,
+    dom_last: bool,
+) -> Option<DateTime<Utc>> {
+    let mut cursor = start;
+    // Bound iterations: worst case skips ~3 days per month when expanding L→28..31.
+    for _ in 0..50_000 {
+        let next = schedule.after(&cursor).next()?;
+        if !dom_last || is_last_day_of_month(next) {
+            return Some(next);
+        }
+        cursor = next;
+    }
+    None
+}
+
+/// Returns whether `instant` falls on the last calendar day of its month.
+fn is_last_day_of_month(instant: DateTime<Utc>) -> bool {
+    let leap = instant.year() % 4 == 0 && (instant.year() % 100 != 0 || instant.year() % 400 == 0);
+    instant.day() == DayOfMonthMatcher::last_day(instant.month(), leap)
+}
+
+/// Normalizes field count and expands Hutool-only syntax for the `cron` crate.
+fn normalize_expanded(expression: &str, match_second: bool) -> Result<(String, bool), CronError> {
     let mut fields = expression.split_whitespace().collect::<Vec<_>>();
     match fields.len() {
         5 => {
@@ -268,12 +315,265 @@ fn normalize(expression: &str, match_second: bool) -> String {
         }
         6 => fields.push("*"),
         7 => {}
-        _ => return expression.to_owned(),
+        _ => return Err(CronError::InvalidPattern(expression.to_owned())),
     }
     if !match_second {
         fields[0] = "0";
     }
-    fields.join(" ")
+    let parts = [
+        Part::Second,
+        Part::Minute,
+        Part::Hour,
+        Part::DayOfMonth,
+        Part::Month,
+        Part::DayOfWeek,
+        Part::Year,
+    ];
+    let mut dom_last = false;
+    let mut expanded = Vec::with_capacity(7);
+    for (part, field) in parts.into_iter().zip(fields.iter().copied()) {
+        let (field_expr, last) = expand_field(part, field)?;
+        if part == Part::DayOfMonth {
+            dom_last = last;
+        }
+        expanded.push(field_expr);
+    }
+    Ok((expanded.join(" "), dom_last))
+}
+
+/// Returns whether a field needs Hutool→cron expansion (`L`, negatives, wrap ranges).
+fn field_needs_expand(field: &str) -> bool {
+    for item in field.split(',') {
+        let base = item.split_once('/').map_or(item, |(base, _)| base);
+        if base.eq_ignore_ascii_case("l") {
+            return true;
+        }
+        // Lone negative number: `-4`
+        if base.starts_with('-')
+            && base.len() > 1
+            && base[1..].chars().all(|c| c.is_ascii_digit())
+        {
+            return true;
+        }
+        // Wrapping numeric range: `22-2`
+        if let Some((begin, end)) = split_numeric_range(base) {
+            if begin > end {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn split_numeric_range(base: &str) -> Option<(i32, i32)> {
+    let (begin, end) = base.split_once('-')?;
+    if begin.is_empty() || end.is_empty() {
+        return None;
+    }
+    Some((begin.parse().ok()?, end.parse().ok()?))
+}
+
+
+/// Converts a Hutool day-of-week field to Quartz numbering for the `cron` crate.
+fn convert_hutool_dow_field(field: &str) -> Result<String, CronError> {
+    let mut out = Vec::new();
+    for item in field.split(',') {
+        let (base, step) = item.split_once('/').map_or((item, None), |(b, s)| (b, Some(s)));
+        let converted = if let Some((begin, end)) = base
+            .split_once('-')
+            .filter(|(b, e)| !b.is_empty() && !e.is_empty())
+        {
+            format!(
+                "{}-{}",
+                convert_hutool_dow_token(begin)?,
+                convert_hutool_dow_token(end)?
+            )
+        } else {
+            convert_hutool_dow_token(base)?
+        };
+        if let Some(step) = step {
+            out.push(format!("{converted}/{step}"));
+        } else {
+            out.push(converted);
+        }
+    }
+    Ok(out.join(","))
+}
+
+fn convert_hutool_dow_token(token: &str) -> Result<String, CronError> {
+    if token.chars().all(|c| c.is_ascii_digit()) {
+        let value: i32 = token
+            .parse()
+            .map_err(|_| CronError::InvalidPattern(token.to_owned()))?;
+        return Ok(hutool_dow_to_quartz(value)?.to_string());
+    }
+    // Keep Sun/Mon/... aliases for the schedule engine.
+    Ok(token.to_owned())
+}
+
+/// Expands one field: `L`, negatives, and wrapping ranges → cron-crate form.
+///
+/// Month/weekday name aliases are left intact so the `cron` crate keeps its
+/// own numbering (Quartz-style), matching Hutool when names are used.
+fn expand_field(part: Part, field: &str) -> Result<(String, bool), CronError> {
+    if matches!(field, "*" | "?") {
+        return Ok((field.to_owned(), false));
+    }
+    // Preserve star-step forms (`*/5`) for the schedule engine.
+    if let Some(rest) = field.strip_prefix("*/") {
+        let step: i32 = rest.parse().map_err(|_| CronError::InvalidPattern(field.to_owned()))?;
+        if step <= 0 {
+            return Err(CronError::InvalidPattern(field.to_owned()));
+        }
+        return Ok((format!("*/{step}"), false));
+    }
+    // Hutool DOW is 0-6/7 (Sun=0/7); the `cron` crate uses Quartz 1-7 (Sun=1).
+    if part == Part::DayOfWeek && !field_needs_expand(field) {
+        return Ok((convert_hutool_dow_field(field)?, false));
+    }
+    if !field_needs_expand(field) {
+        return Ok((field.to_owned(), false));
+    }
+
+    let mut values = Vec::new();
+    let mut has_last = false;
+    for item in field.split(',') {
+        let (base, step) = item.split_once('/').map_or((item, 1_i32), |(base, step)| {
+            (base, step.parse::<i32>().unwrap_or(0))
+        });
+        if step <= 0 {
+            return Err(CronError::InvalidPattern(field.to_owned()));
+        }
+        let collected = if base == "*" {
+            expand_range(part, part.min(), schedule_max(part), step)?
+        } else if let Some((begin, end)) = base.split_once('-').filter(|(b, e)| !b.is_empty() && !e.is_empty()) {
+            let begin = apply_negative(part, parse_alias(part, begin)?)?;
+            let end = apply_negative(part, parse_alias(part, end)?)?;
+            expand_range(part, begin, end, step)?
+        } else {
+            let value = apply_negative(part, parse_alias(part, base)?)?;
+            if part == Part::DayOfMonth && value == 32 {
+                has_last = true;
+                Vec::new()
+            } else if step > 1 {
+                expand_range(part, value, schedule_max(part), step)?
+            } else {
+                vec![checked_schedule_value(part, value)?]
+            }
+        };
+        for value in collected {
+            if part == Part::DayOfMonth && value == 32 {
+                has_last = true;
+            } else {
+                values.push(value);
+            }
+        }
+    }
+    if has_last && part == Part::DayOfMonth {
+        values.extend(28..=31);
+    }
+    values.sort_unstable();
+    values.dedup();
+    if values.is_empty() {
+        return Err(CronError::InvalidPattern(field.to_owned()));
+    }
+    if part == Part::DayOfWeek {
+        values = values
+            .into_iter()
+            .map(hutool_dow_to_quartz)
+            .collect::<Result<Vec<_>, _>>()?;
+        values.sort_unstable();
+        values.dedup();
+    }
+    Ok((
+        values
+            .iter()
+            .map(i32::to_string)
+            .collect::<Vec<_>>()
+            .join(","),
+        has_last,
+    ))
+}
+
+fn hutool_dow_to_quartz(value: i32) -> Result<i32, CronError> {
+    match value {
+        0 | 7 => Ok(1),
+        1..=6 => Ok(value + 1),
+        _ => Err(CronError::InvalidPartValue {
+            part: Part::DayOfWeek,
+            value,
+        }),
+    }
+}
+
+fn schedule_max(part: Part) -> i32 {
+    if part == Part::DayOfMonth {
+        31
+    } else {
+        part.max()
+    }
+}
+
+fn checked_schedule_value(part: Part, value: i32) -> Result<i32, CronError> {
+    if part == Part::DayOfMonth {
+        if value == 32 {
+            return Ok(32);
+        }
+        if !(1..=31).contains(&value) {
+            return Err(CronError::InvalidPartValue { part, value });
+        }
+        return Ok(value);
+    }
+    part.check_value(value)
+}
+
+fn expand_range(part: Part, begin: i32, end: i32, step: i32) -> Result<Vec<i32>, CronError> {
+    let step = usize::try_from(step).expect("positive step fits usize");
+    let max = if part == Part::DayOfMonth {
+        31
+    } else {
+        part.max()
+    };
+    let min = part.min();
+    // For DOM, allow 32 only as standalone L, not in numeric ranges beyond 31.
+    let begin = if part == Part::DayOfMonth && begin == 32 {
+        max
+    } else {
+        begin
+    };
+    let end = if part == Part::DayOfMonth && end == 32 {
+        max
+    } else {
+        end
+    };
+    if part == Part::DayOfMonth {
+        if !(1..=31).contains(&begin) || !(1..=31).contains(&end) {
+            return Err(CronError::InvalidPartValue {
+                part,
+                value: begin.max(end),
+            });
+        }
+    } else {
+        part.check_value(begin)?;
+        part.check_value(end)?;
+    }
+    let mut values = Vec::new();
+    if begin <= end {
+        values.extend((begin..=end).step_by(step));
+    } else {
+        // Hutool wrap: 22-2 → 22..=max then min..=2
+        values.extend((begin..=max).step_by(step));
+        values.extend((min..=end).step_by(step));
+    }
+    Ok(values)
+}
+
+fn apply_negative(part: Part, value: i32) -> Result<i32, CronError> {
+    if value >= 0 {
+        return Ok(value);
+    }
+    // Hutool: `i += part.getMax()` — hour `-4` → 19; DOM uses max 32.
+    Ok(value + part.max())
 }
 
 /// Helpers for calculating matching dates with explicit bounds.
@@ -321,6 +621,36 @@ impl CronPatternUtil {
         }
         Ok(result)
     }
+
+    /// Hutool `matchedDates(pattern, start, count, matchSecond)` — end defaults to year-end.
+    pub fn matched_dates_count(
+        pattern: &str,
+        start: DateTime<Utc>,
+        count: usize,
+        match_second: bool,
+    ) -> Result<Vec<DateTime<Utc>>, CronError> {
+        let parsed = CronPattern::parse(pattern)?;
+        let end = end_of_year(start);
+        Self::matched_dates(&parsed, start, end, count, match_second)
+    }
+
+    /// Hutool `matchedDates(pattern, start, end, count, matchSecond)`.
+    pub fn matched_dates_str(
+        pattern: &str,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+        count: usize,
+        match_second: bool,
+    ) -> Result<Vec<DateTime<Utc>>, CronError> {
+        let parsed = CronPattern::parse(pattern)?;
+        Self::matched_dates(&parsed, start, end, count, match_second)
+    }
+}
+
+fn end_of_year(start: DateTime<Utc>) -> DateTime<Utc> {
+    Utc.with_ymd_and_hms(start.year(), 12, 31, 23, 59, 59)
+        .single()
+        .unwrap_or(start)
 }
 
 /// Common behavior of one cron field matcher.
@@ -580,7 +910,7 @@ impl PartParser {
         Self { part }
     }
 
-    /// Parses wildcards, lists, ranges, and steps.
+    /// Parses wildcards, lists, ranges, steps, `L`, negatives, and wrapping ranges.
     pub fn parse(&self, value: &str) -> Result<Box<dyn PartMatcher>, CronError> {
         if matches!(value, "*" | "?") {
             return Ok(Box::new(AlwaysTrueMatcher));
@@ -593,26 +923,31 @@ impl PartParser {
             if step <= 0 {
                 return Err(CronError::InvalidPattern(value.to_owned()));
             }
-            let (begin, end) = if base == "*" {
-                (self.part.min(), self.part.max())
-            } else if let Some((begin, end)) = base.split_once('-') {
-                (parse_alias(self.part, begin)?, parse_alias(self.part, end)?)
+            let range_max = if self.part == Part::DayOfMonth {
+                31
             } else {
-                let begin = parse_alias(self.part, base)?;
-                (begin, begin)
+                self.part.max()
             };
-            self.part.check_value(begin)?;
-            self.part.check_value(end)?;
-            if begin > end {
-                return Err(CronError::InvalidPartRange {
-                    part: self.part,
-                    begin,
-                    end,
-                });
-            }
-            let step = usize::try_from(step)
-                .expect("a positive i32 step is representable as usize on supported targets");
-            values.extend((begin..=end).step_by(step));
+            let collected = if base == "*" {
+                expand_range(self.part, self.part.min(), range_max, step)?
+            } else if let Some((begin, end)) = base
+                .split_once('-')
+                .filter(|(b, e)| !b.is_empty() && !e.is_empty())
+            {
+                let begin = apply_negative(self.part, parse_alias(self.part, begin)?)?;
+                let end = apply_negative(self.part, parse_alias(self.part, end)?)?;
+                expand_range(self.part, begin, end, step)?
+            } else {
+                let begin = apply_negative(self.part, parse_alias(self.part, base)?)?;
+                if step > 1 {
+                    expand_range(self.part, begin, range_max, step)?
+                } else if self.part == Part::DayOfMonth && begin == 32 {
+                    vec![32]
+                } else {
+                    vec![checked_schedule_value(self.part, begin)?]
+                }
+            };
+            values.extend(collected);
         }
         if self.part == Part::Year {
             Ok(Box::new(YearValueMatcher::from_values(values).expect(
@@ -640,19 +975,15 @@ impl PatternParser {
             .split('|')
             .map(str::trim)
             .map(|alternative| {
-                let normalized = normalize(alternative, true);
-                let fields = normalized.split_whitespace().collect::<Vec<_>>();
-                if fields.len() != 7 {
-                    return Err(CronError::InvalidPattern(alternative.to_owned()));
-                }
+                let fields = pad_fields(alternative, true)?;
                 let fields = [
-                    PartParser::new(Part::Second).parse(fields[0])?,
-                    PartParser::new(Part::Minute).parse(fields[1])?,
-                    PartParser::new(Part::Hour).parse(fields[2])?,
-                    PartParser::new(Part::DayOfMonth).parse(fields[3])?,
-                    PartParser::new(Part::Month).parse(fields[4])?,
-                    PartParser::new(Part::DayOfWeek).parse(fields[5])?,
-                    PartParser::new(Part::Year).parse(fields[6])?,
+                    PartParser::new(Part::Second).parse(&fields[0])?,
+                    PartParser::new(Part::Minute).parse(&fields[1])?,
+                    PartParser::new(Part::Hour).parse(&fields[2])?,
+                    PartParser::new(Part::DayOfMonth).parse(&fields[3])?,
+                    PartParser::new(Part::Month).parse(&fields[4])?,
+                    PartParser::new(Part::DayOfWeek).parse(&fields[5])?,
+                    PartParser::new(Part::Year).parse(&fields[6])?,
                 ];
                 Ok(PatternMatcher::new(fields))
             })
@@ -662,6 +993,14 @@ impl PatternParser {
 
 fn parse_alias(part: Part, value: &str) -> Result<i32, CronError> {
     let lowercase = value.to_ascii_lowercase();
+    // Hutool: `L` means the field maximum (day-of-month sentinel 32, Saturday=6).
+    if lowercase == "l" {
+        return Ok(match part {
+            Part::DayOfMonth => 32,
+            Part::DayOfWeek => 6,
+            _ => part.max(),
+        });
+    }
     let alias = match part {
         Part::Month => [
             "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
@@ -679,6 +1018,35 @@ fn parse_alias(part: Part, value: &str) -> Result<i32, CronError> {
     alias
         .or_else(|| value.parse().ok())
         .ok_or_else(|| CronError::InvalidPattern(value.to_owned()))
+}
+
+/// Pads a 5/6/7-field expression to seven fields without Hutool expansions.
+fn pad_fields(expression: &str, match_second: bool) -> Result<[String; 7], CronError> {
+    let mut fields = expression
+        .split_whitespace()
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    match fields.len() {
+        5 => {
+            fields.insert(0, "0".to_owned());
+            fields.push("*".to_owned());
+        }
+        6 => fields.push("*".to_owned()),
+        7 => {}
+        _ => return Err(CronError::InvalidPattern(expression.to_owned())),
+    }
+    if !match_second {
+        fields[0] = "0".to_owned();
+    }
+    Ok([
+        fields[0].clone(),
+        fields[1].clone(),
+        fields[2].clone(),
+        fields[3].clone(),
+        fields[4].clone(),
+        fields[5].clone(),
+        fields[6].clone(),
+    ])
 }
 
 /// Extracts Hutool's seven field values from a UTC date.
@@ -731,10 +1099,12 @@ mod tests {
             .unwrap()
             .set(Part::DayOfWeek, "mon-fri")
             .unwrap();
-        assert_eq!(builder.build(), "* 5,10 8-18 * * mon-fri *");
+        // Hutool builder omits unset second/year → 5 fields here.
+        assert_eq!(builder.build(), "5,10 8-18 * * mon-fri");
         assert!(builder.set_values(Part::Minute, &[]).is_err());
         assert!(builder.set_values(Part::Minute, &[60]).is_err());
-        assert!(builder.set_range(Part::Hour, 18, 8).is_err());
+        // Wrap ranges are valid Hutool notation.
+        assert!(builder.set_range(Part::Hour, 18, 8).is_ok());
         assert!(builder.set_range(Part::Hour, -1, 8).is_err());
         assert!(builder.set_range(Part::Hour, 8, 24).is_err());
         assert!(builder.set(Part::Minute, "invalid").is_err());
@@ -744,7 +1114,9 @@ mod tests {
         assert!(parsed[0].matches([0, 10, 1, 1, 1, 1, 2026]));
         assert!(parsed[1].matches_week(0));
         assert!(PartParser::new(Part::Minute).parse("*/0").is_err());
-        assert!(PartParser::new(Part::Minute).parse("10-2").is_err());
+        // Hutool wrapping range 10-2 → 10..=59 then 0..=2
+        assert!(PartParser::new(Part::Minute).parse("10-2").unwrap().matches(10));
+        assert!(PartParser::new(Part::Minute).parse("10-2").unwrap().matches(0));
         assert!(PartParser::new(Part::Minute).parse("bad-2").is_err());
         assert!(PartParser::new(Part::Minute).parse("2-bad").is_err());
         assert!(PartParser::new(Part::Minute).parse("60").is_err());

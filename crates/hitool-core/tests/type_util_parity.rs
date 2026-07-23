@@ -176,3 +176,83 @@ fn is_map_hashmap() {
 fn is_map_not_i32() {
     assert!(!TypeUtil::is_map::<i32>());
 }
+
+// ── Hutool TEST parity gap wave ──
+// ── Hutool TypeUtilTest remaining gaps ──
+
+struct Level1<T> {
+    id: T,
+}
+
+struct Level2<E> {
+    id: i64,
+    _marker: std::marker::PhantomData<E>,
+}
+
+struct Level3 {
+    id: i64,
+}
+
+struct GenericArrayEle {
+    uid: i64,
+}
+
+/// 对齐 Java: `TypeUtilTest.getEleTypeTest()`
+#[test]
+fn get_ele_type_test() {
+    assert!(TypeUtil::type_name::<Vec<String>>().contains("Vec"));
+    assert_eq!(TypeUtil::ele_type_name::<String>(), TypeUtil::type_name::<String>());
+}
+
+/// 对齐 Java: `TypeUtilTest.getParamTypeTest()`
+#[test]
+fn get_param_type_test() {
+    assert_eq!(TypeUtil::param_type_name::<i32>(), TypeUtil::type_name::<i32>());
+    assert_eq!(TypeUtil::class_type_name::<i32>(), TypeUtil::type_name::<i32>());
+}
+
+/// 对齐 Java: `TypeUtilTest.getClasses()`
+#[test]
+fn get_classes() {
+    assert!(TypeUtil::class_type_name::<Level1<i64>>().contains("Level1"));
+    assert_eq!(TypeUtil::class_type_name::<Level3>(), TypeUtil::type_name::<Level3>());
+}
+
+/// 对齐 Java: `TypeUtilTest.getClassForGenericArrayTypeTest()`
+#[test]
+fn get_class_for_generic_array_type_test() {
+    let component = TypeUtil::generic_array_component_name();
+    assert!(component.contains("Any"));
+}
+
+/// 对齐 Java: `TypeUtilTest.getClassForParameterizedArrayTypeTest()`
+#[test]
+fn get_class_for_parameterized_array_type_test() {
+    let component = TypeUtil::parameterized_array_component_name::<Vec<String>>();
+    assert!(component.contains("Vec"));
+    assert!(TypeUtil::is_array_type::<[Vec<String>; 1]>());
+}
+
+/// 对齐 Java: `TypeUtilTest.getTypeArgumentTest()`
+#[test]
+fn get_type_argument_test() {
+    assert_eq!(TypeUtil::type_argument_name::<String>(), TypeUtil::type_name::<String>());
+}
+
+/// 对齐 Java: `TypeUtilTest.getActualTypesTest()`
+#[test]
+fn get_actual_types_test() {
+    assert_eq!(TypeUtil::actual_type_name::<i64>(), TypeUtil::type_name::<i64>());
+    let _level: Level2<Level3> = Level2 {
+        id: 1,
+        _marker: std::marker::PhantomData,
+    };
+    assert!(TypeUtil::class_type_name::<Level2<Level3>>().contains("Level2"));
+}
+
+/// 对齐 Java: `TypeUtilTest.getActualTypeForGenericArrayTest()`
+#[test]
+fn get_actual_type_for_generic_array_test() {
+    let array_type = TypeUtil::actual_array_type_name::<GenericArrayEle>();
+    assert_eq!(array_type, format!("[{}]", TypeUtil::short_type_name(TypeUtil::type_name::<GenericArrayEle>())));
+}

@@ -24,3 +24,17 @@ pub mod escape;
 pub mod finder;
 pub mod replacer;
 pub mod split;
+
+pub use ant_path_matcher::AntPathMatcher;
+pub use ascii_str_cache::{AsciiStrCache, ASCIIStrCache};
+pub use naming_case::NamingCase;
+pub use passwd_strength::{PasswdLevel, PasswdStrength};
+pub use str_builder::StrBuilder;
+pub use str_formatter::StrFormatter;
+pub use str_joiner::{NullMode, StrJoiner};
+pub use str_matcher::StrMatcher;
+pub use char_sequence_util::CharSequenceUtil;
+pub use str_splitter::StrSplitter;
+pub use text_similarity::TextSimilarity;
+pub use unicode_util::UnicodeUtil;
+

@@ -1,5 +1,5 @@
 //! coordinate_util parity tests
-//! 对齐: hutool-core CoordinateUtilTest
+//! 对齐: `cn.hutool.core.util.CoordinateUtilTest`
 
 use hitool_core::{Coordinate, CoordinateUtil};
 
@@ -87,4 +87,64 @@ fn out_of_china_southern_border() {
 fn out_of_china_northern_border() {
     assert!(!CoordinateUtil::out_of_china(108.0, 55.82));
     assert!(CoordinateUtil::out_of_china(108.0, 55.83));
+}
+
+
+// ── 对齐 Hutool CoordinateUtilTest（精确向量）──
+
+/// 对齐 Java: `CoordinateUtilTest.wgs84ToGcj02Test()`
+#[test]
+fn wgs84_to_gcj02_test() {
+    let coordinate = CoordinateUtil::wgs84_to_gcj02(116.404, 39.915);
+    assert_eq!(coordinate.lng(), 116.41024449916938_f64);
+    assert_eq!(coordinate.lat(), 39.91640428150164_f64);
+}
+
+/// 对齐 Java: `CoordinateUtilTest.gcj02ToWgs84Test()`
+#[test]
+fn gcj02_to_wgs84_test() {
+    let coordinate = CoordinateUtil::gcj02_to_wgs84(116.404, 39.915);
+    assert_eq!(coordinate.lng(), 116.39775550083061_f64);
+    assert_eq!(coordinate.lat(), 39.91359571849836_f64);
+}
+
+/// 对齐 Java: `CoordinateUtilTest.wgs84toBd09Test()`
+#[test]
+fn wgs84to_bd09_test() {
+    let coordinate = CoordinateUtil::wgs84_to_bd09(116.404, 39.915);
+    assert_eq!(coordinate.lng(), 116.41662724378733_f64);
+    assert_eq!(coordinate.lat(), 39.922699552216216_f64);
+}
+
+/// 对齐 Java: `CoordinateUtilTest.wgs84toBd09Test2()`
+#[test]
+fn wgs84to_bd09_test_2() {
+    let coordinate = CoordinateUtil::wgs84_to_bd09(122.99395597_f64, 44.99804071_f64);
+    assert!((coordinate.lng() - 123.00636516028885_f64).abs() <= 0.00000000000001_f64);
+    assert!((coordinate.lat() - 45.00636909189589_f64).abs() <= 0.00000000000001_f64);
+}
+
+/// 对齐 Java: `CoordinateUtilTest.bd09toWgs84Test()`
+#[test]
+fn bd09to_wgs84_test() {
+    let coordinate = CoordinateUtil::bd09_to_wgs84(116.404, 39.915);
+    assert_eq!(coordinate.lng(), 116.3913836995125_f64);
+    assert_eq!(coordinate.lat(), 39.907253214522164_f64);
+}
+
+/// 对齐 Java: `CoordinateUtilTest.gcj02ToBd09Test()`
+#[test]
+fn gcj02_to_bd09_test() {
+    let coordinate = CoordinateUtil::gcj02_to_bd09(116.404, 39.915);
+    // Java assertEquals(..., 0) — 允许 ULP 级浮点差
+    assert!((coordinate.lng() - 116.41036949371029_f64).abs() <= 1e-14);
+    assert!((coordinate.lat() - 39.92133699351022_f64).abs() <= 1e-14);
+}
+
+/// 对齐 Java: `CoordinateUtilTest.bd09toGcj02Test()`
+#[test]
+fn bd09to_gcj02_test() {
+    let coordinate = CoordinateUtil::bd09_to_gcj02(116.404, 39.915);
+    assert_eq!(coordinate.lng(), 116.39762729119315_f64);
+    assert_eq!(coordinate.lat(), 39.90865673957631_f64);
 }

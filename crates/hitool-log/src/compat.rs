@@ -20,6 +20,19 @@ pub enum LogLevel {
     Error,
 }
 
+impl fmt::Display for LogLevel {
+    /// Formats as the uppercase Hutool `Level` enum name (`DEBUG`, `INFO`, …).
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(match self {
+            Self::Trace => "TRACE",
+            Self::Debug => "DEBUG",
+            Self::Info => "INFO",
+            Self::Warn => "WARN",
+            Self::Error => "ERROR",
+        })
+    }
+}
+
 /// A backend-neutral logging event.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LogRecord {
@@ -112,8 +125,16 @@ impl LogSink for TracingSink {
 }
 
 /// Formats Hutool-style sequential `{}` placeholders.
+///
+/// Aligns with `cn.hutool.core.text.StrFormatter#format`:
+/// - empty argument list → template unchanged
+/// - fewer arguments than placeholders → leftover `{}` retained
+/// - more arguments than placeholders → extras dropped (not appended)
 #[must_use]
 pub fn format_message(template: &str, arguments: &[&dyn fmt::Display]) -> String {
+    if arguments.is_empty() {
+        return template.to_owned();
+    }
     let mut result = String::with_capacity(template.len());
     let mut remaining = template;
     let mut arguments = arguments.iter();
@@ -123,14 +144,13 @@ pub fn format_message(template: &str, arguments: &[&dyn fmt::Display]) -> String
             result.push_str(&argument.to_string());
         } else {
             result.push_str("{}");
+            remaining = &remaining[index + 2..];
+            result.push_str(remaining);
+            return result;
         }
         remaining = &remaining[index + 2..];
     }
     result.push_str(remaining);
-    for argument in arguments {
-        result.push(' ');
-        result.push_str(&argument.to_string());
-    }
     result
 }
 
@@ -147,6 +167,10 @@ pub trait Log: Send + Sync {
     fn log(&self, level: LogLevel, message: &str) {
         self.log_record(LogRecord::new(self.name(), level, message));
     }
+    /// Logs a Hutool-style templated message at an arbitrary level.
+    fn log_fmt(&self, level: LogLevel, template: &str, arguments: &[&dyn fmt::Display]) {
+        self.log(level, &format_message(template, arguments));
+    }
     /// Logs a message and error description.
     fn log_error(&self, level: LogLevel, error: &str, message: &str) {
         self.log_record(LogRecord::new(self.name(), level, message).with_error(error));
@@ -159,25 +183,53 @@ pub trait Log: Send + Sync {
         }
         self.log_record(record);
     }
+    /// Logs a nullable message; `None` becomes the literal `"null"` (Hutool `null` arg).
+    fn log_nullable(&self, level: LogLevel, message: Option<&str>) {
+        self.log(level, message.unwrap_or("null"));
+    }
     /// Logs a trace message.
     fn trace(&self, message: &str) {
         self.log(LogLevel::Trace, message);
+    }
+    /// Logs a Hutool-style templated trace message.
+    fn trace_fmt(&self, template: &str, arguments: &[&dyn fmt::Display]) {
+        self.log_fmt(LogLevel::Trace, template, arguments);
     }
     /// Logs a debug message.
     fn debug(&self, message: &str) {
         self.log(LogLevel::Debug, message);
     }
+    /// Logs a Hutool-style templated debug message.
+    fn debug_fmt(&self, template: &str, arguments: &[&dyn fmt::Display]) {
+        self.log_fmt(LogLevel::Debug, template, arguments);
+    }
     /// Logs an informational message.
     fn info(&self, message: &str) {
         self.log(LogLevel::Info, message);
+    }
+    /// Logs a Hutool-style templated informational message.
+    fn info_fmt(&self, template: &str, arguments: &[&dyn fmt::Display]) {
+        self.log_fmt(LogLevel::Info, template, arguments);
     }
     /// Logs a warning message.
     fn warn(&self, message: &str) {
         self.log(LogLevel::Warn, message);
     }
+    /// Logs a Hutool-style templated warning message.
+    fn warn_fmt(&self, template: &str, arguments: &[&dyn fmt::Display]) {
+        self.log_fmt(LogLevel::Warn, template, arguments);
+    }
     /// Logs an error message.
     fn error(&self, message: &str) {
         self.log(LogLevel::Error, message);
+    }
+    /// Logs a Hutool-style templated error message.
+    fn error_fmt(&self, template: &str, arguments: &[&dyn fmt::Display]) {
+        self.log_fmt(LogLevel::Error, template, arguments);
+    }
+    /// Logs an error message with a separate throwable/error description.
+    fn error_with_cause(&self, message: &str, error: &str) {
+        self.log_error(LogLevel::Error, error, message);
     }
 }
 
@@ -284,6 +336,13 @@ impl LogFactory {
             cache: Arc::new(RwLock::new(HashMap::new())),
         }
     }
+    /// Creates a factory with a dialect display name and the default tracing sink.
+    ///
+    /// 对齐 Java: dialect `LogFactory` constructors such as `new ConsoleLogFactory()`.
+    #[must_use]
+    pub fn named(name: &str) -> Self {
+        Self::new(name, Arc::new(TracingSink))
+    }
     /// Returns the factory/backend name.
     #[must_use]
     pub fn name(&self) -> &str {
@@ -337,7 +396,21 @@ impl LogFactory {
         self.cache
             .write()
             .expect("log cache write lock poisoned")
-            .clear();
+            .clear()
+    }
+    /// 对齐 Java: `LogFactory.setCurrentLogFactory(LogFactory)`.
+    pub fn set_current(factory: LogFactory) -> LogFactory {
+        GlobalLogFactory::set(factory)
+    }
+    /// 对齐 Java: `LogFactory.get()` — returns a logger from the process-wide factory.
+    #[must_use]
+    pub fn get_current() -> Arc<dyn Log> {
+        GlobalLogFactory::get().get("default")
+    }
+    /// 对齐 Java: `LogFactory.get(String name)`.
+    #[must_use]
+    pub fn get_by_name(name: &str) -> Arc<dyn Log> {
+        GlobalLogFactory::get().get(name)
     }
 }
 
@@ -390,29 +463,58 @@ impl StaticLog {
     pub fn get(name: &str) -> Arc<dyn Log> {
         GlobalLogFactory::get().get(name)
     }
+    /// 对齐 Java: `Log.get()` / `StaticLog.get()` — caller-inferred name becomes `"default"`.
+    #[must_use]
+    pub fn get_default() -> Arc<dyn Log> {
+        GlobalLogFactory::get().get("default")
+    }
     /// Logs a message at an arbitrary level.
     pub fn log(level: LogLevel, message: &str) {
         Self::get("static").log(level, message);
+    }
+    /// Logs a Hutool-style templated message at an arbitrary level.
+    pub fn log_fmt(level: LogLevel, template: &str, arguments: &[&dyn fmt::Display]) {
+        Self::get("static").log_fmt(level, template, arguments);
     }
     /// Logs a trace message.
     pub fn trace(message: &str) {
         Self::log(LogLevel::Trace, message);
     }
+    /// 对齐 Java: `StaticLog.trace(String, Object...)`.
+    pub fn trace_fmt(template: &str, arguments: &[&dyn fmt::Display]) {
+        Self::log_fmt(LogLevel::Trace, template, arguments);
+    }
     /// Logs a debug message.
     pub fn debug(message: &str) {
         Self::log(LogLevel::Debug, message);
+    }
+    /// 对齐 Java: `StaticLog.debug(String, Object...)`.
+    pub fn debug_fmt(template: &str, arguments: &[&dyn fmt::Display]) {
+        Self::log_fmt(LogLevel::Debug, template, arguments);
     }
     /// Logs an informational message.
     pub fn info(message: &str) {
         Self::log(LogLevel::Info, message);
     }
+    /// 对齐 Java: `StaticLog.info(String, Object...)`.
+    pub fn info_fmt(template: &str, arguments: &[&dyn fmt::Display]) {
+        Self::log_fmt(LogLevel::Info, template, arguments);
+    }
     /// Logs a warning message.
     pub fn warn(message: &str) {
         Self::log(LogLevel::Warn, message);
     }
+    /// 对齐 Java: `StaticLog.warn(String, Object...)`.
+    pub fn warn_fmt(template: &str, arguments: &[&dyn fmt::Display]) {
+        Self::log_fmt(LogLevel::Warn, template, arguments);
+    }
     /// Logs an error message.
     pub fn error(message: &str) {
         Self::log(LogLevel::Error, message);
+    }
+    /// 对齐 Java: `StaticLog.error(String, Object...)`.
+    pub fn error_fmt(template: &str, arguments: &[&dyn fmt::Display]) {
+        Self::log_fmt(LogLevel::Error, template, arguments);
     }
 }
 
@@ -489,7 +591,10 @@ mod tests {
         assert_eq!(format!("{logger:?}"), "AbstractLog { name: \"demo\", .. }");
         assert_eq!(format_message("{} + {} = {}", &[&1, &2, &3]), "1 + 2 = 3");
         assert_eq!(format_message("{} {}", &[&1]), "1 {}");
-        assert_eq!(format_message("value", &[&1, &2]), "value 1 2");
+        // Hutool StrFormatter drops extras when no placeholder remains.
+        assert_eq!(format_message("value", &[&1, &2]), "value");
+        assert_eq!(format_message("Extra: {}", &[&"a", &"b"]), "Extra: a");
+        assert_eq!(format!("{level}", level = LogLevel::Debug), "DEBUG");
     }
 
     #[test]

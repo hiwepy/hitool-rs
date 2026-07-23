@@ -1,20 +1,29 @@
 //! 对齐: `cn.hutool.core.annotation.MirrorFor`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/annotation/MirrorFor.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+/// `@MirrorFor` 元注解类型名。
+pub const TYPE_NAME: &str = "cn.hutool.core.annotation.MirrorFor";
 
-/// 对齐 Java 类: `cn.hutool.core.annotation.MirrorFor`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct MirrorFor;
+/// 对齐 Java 注解: 镜像属性关系（非反射元数据）。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MirrorFor {
+    /// 注解类型名。
+    pub annotation: String,
+    /// 属性名。
+    pub attribute: String,
+}
 
 impl MirrorFor {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 创建镜像关系。
+    pub fn new(annotation: impl Into<String>, attribute: impl Into<String>) -> Self {
+        Self {
+            annotation: annotation.into(),
+            attribute: attribute.into(),
+        }
+    }
+
+    /// 返回注解类型全名。
+    pub fn type_name() -> &'static str {
+        TYPE_NAME
     }
 }

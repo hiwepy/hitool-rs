@@ -81,6 +81,8 @@ impl SettingLoader {
         Ok(())
     }
     fn parse(&self, text: &str) -> Result<GroupedMap, SettingError> {
+        // Strip UTF-8 BOM (U+FEFF) so `[group]` headers still parse — 对齐 IssueI7G34E.
+        let text = text.strip_prefix('\u{feff}').unwrap_or(text);
         let mut result = GroupedMap::new();
         let mut group = String::new();
         for (index, raw) in text.lines().enumerate() {
@@ -127,20 +129,30 @@ impl SettingLoader {
             };
             let end = key_start + relative_end;
             let key = &output[key_start..end];
-            let replacement = values.get(group, key).or_else(|| values.get("", key));
+            // Hutool order: same group → cross-group `group.key` → system/env;
+            // also keep default-group fallback for existing Rust callers.
+            let replacement = values
+                .get(group, key)
+                .map(str::to_owned)
+                .or_else(|| {
+                    key.split_once('.')
+                        .and_then(|(g, k)| values.get(g, k).map(str::to_owned))
+                })
+                .or_else(|| values.get("", key).map(str::to_owned))
+                .or_else(|| std::env::var(key).ok());
             let Some(replacement) = replacement else {
                 break;
             };
-            output.replace_range(start..end + self.variable_suffix.len(), replacement);
+            output.replace_range(start..end + self.variable_suffix.len(), &replacement);
         }
         output
     }
     /// Stores grouped values.
+    ///
+    /// Empty (default) groups are written as `[]`, matching Hutool `SettingLoader.store`.
     pub fn store(&self, values: &GroupedMap, writer: &mut dyn Write) -> Result<(), SettingError> {
         for group in values.groups() {
-            if !group.is_empty() {
-                writeln!(writer, "[{group}]")?;
-            }
+            writeln!(writer, "[{group}]")?;
             for (key, value) in values.entries(group) {
                 writeln!(writer, "{key} {} {value}", self.assign_flag)?;
             }

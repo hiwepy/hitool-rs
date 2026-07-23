@@ -1,20 +1,7 @@
-//! 对齐: `cn.hutool.core.map.multi.AbsCollValueMap`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/map/multi/AbsCollValueMap.java
-//!
-//! 状态: 对齐桩,等待完整实现。
+//! 对齐: `cn.hutool.core.map.multi.AbsCollValueMap` 模块入口
+//! 实际实现见 `list_value_map.rs` 中的 `ListValueMap` / `SetValueMap`。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+pub use super::list_value_map::{CollValueMapOps, CollectionValueMap, ListValueMap, SetValueMap};
 
-/// 对齐 Java 类: `cn.hutool.core.map.multi.AbsCollValueMap`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct AbsCollValueMap;
-
-impl AbsCollValueMap {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
-    }
-}
+/// 对齐 Java: `AbsCollValueMap` —— Rust 以 `ListValueMap` 为默认集合值 Map。
+pub type AbsCollValueMap<K, V> = ListValueMap<K, V>;

@@ -1,20 +1,47 @@
-//! 对齐: `cn.hutool.core.map.WeakConcurrentMap`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/map/WeakConcurrentMap.java
+//! 对齐: JVM 弱/软引用并发 Map
 //!
-//! 状态: 对齐桩,等待完整实现。
+//! Rust 无 GC 弱引用语义；提供 `HashMap` 包装占位，语义记为 planned。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::collections::HashMap;
+use std::hash::Hash;
+use std::sync::{Arc, Mutex};
 
-/// 对齐 Java 类: `cn.hutool.core.map.WeakConcurrentMap`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
+use crate::{CoreError, Result};
+
+/// 对齐 Java: `WeakConcurrentMap` —— 无弱引用语义的并发 HashMap 包装。
 #[derive(Debug, Clone, Default)]
-pub struct WeakConcurrentMap;
+pub struct WeakConcurrentMap<K, V> {
+    inner: Arc<Mutex<HashMap<K, V>>>,
+}
 
-impl WeakConcurrentMap {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+impl<K: Eq + Hash, V> WeakConcurrentMap<K, V> {
+    /// 构造。
+    pub fn new() -> Self {
+        Self {
+            inner: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+
+    /// 放入（非弱引用）。
+    pub fn put(&self, key: K, value: V) -> Option<V> {
+        self.inner.lock().expect("lock").insert(key, value)
+    }
+
+    /// 取值。
+    pub fn get(&self, key: &K) -> Option<V>
+    where
+        V: Clone,
+    {
+        self.inner.lock().expect("lock").get(key).cloned()
+    }
+
+    /// 声明：弱引用 GC 语义不可移植。
+    pub fn weak_semantics_status() -> Result<()> {
+        Err(CoreError::PendingEngine(
+            "JVM WeakHashMap / SoftReference GC semantics",
+        ))
     }
 }
+
+/// 对齐 Java: `ReferenceConcurrentMap`
+pub type ReferenceConcurrentMap<K, V> = WeakConcurrentMap<K, V>;

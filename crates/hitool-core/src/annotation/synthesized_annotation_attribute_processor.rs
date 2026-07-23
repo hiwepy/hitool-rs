@@ -1,12 +1,17 @@
 //! 对齐: `cn.hutool.core.annotation.SynthesizedAnnotationAttributeProcessor`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/annotation/SynthesizedAnnotationAttributeProcessor.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::sync::Arc;
+
+use super::mirror::{AnnotationValue, ValueKind};
+use super::synthesized_annotation::SynthesizedAnnotation;
 
 /// 对齐 Java interface: `cn.hutool.core.annotation.SynthesizedAnnotationAttributeProcessor`
-///
-/// Java 接口在 Rust 中通过 trait dispatch 表达。
-pub trait SynthesizedAnnotationAttributeProcessor {
+pub trait SynthesizedAnnotationAttributeProcessor: Send + Sync {
+    /// 从多个合成注解中获取属性值。
+    fn get_attribute_value(
+        &self,
+        attribute_name: &str,
+        attribute_type: ValueKind,
+        synthesized_annotations: &[Arc<dyn SynthesizedAnnotation>],
+    ) -> Option<AnnotationValue>;
 }

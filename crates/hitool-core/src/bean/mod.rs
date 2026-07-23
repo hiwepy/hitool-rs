@@ -15,3 +15,6 @@ pub mod null_wrapper_bean;
 pub mod prop_desc;
 pub mod record_util;
 pub mod copier;
+
+pub use bean_exception::BeanException;
+pub use bean_util::BeanUtil;

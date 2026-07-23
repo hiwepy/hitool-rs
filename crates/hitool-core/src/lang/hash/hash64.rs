@@ -1,12 +1,8 @@
 //! 对齐: `cn.hutool.core.lang.hash.Hash64`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/lang/hash/Hash64.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
-
-/// 对齐 Java interface: `cn.hutool.core.lang.hash.Hash64`
-///
-/// Java 接口在 Rust 中通过 trait dispatch 表达。
-pub trait Hash64 {
+/// 对齐 Java: `Hash64<T>`
+pub trait Hash64<T: ?Sized> {
+    /// 对齐 Java: `hash64(T)`
+    fn hash64(&self, key: &T) -> i64;
 }

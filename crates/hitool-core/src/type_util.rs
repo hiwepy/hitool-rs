@@ -129,4 +129,56 @@ impl TypeUtil {
         let type_name = std::any::type_name::<T>();
         type_name.contains("HashMap") || type_name.contains("BTreeMap") || type_name.contains("IndexMap")
     }
+
+    // ── 泛型/数组类型（Rust TypeId 等价，非 JVM 反射） ──
+
+    /// 对齐 Java: `TypeUtil.getTypeArgument` — 元素/泛型参数类型名
+    pub fn ele_type_name<E: 'static>() -> &'static str {
+        std::any::type_name::<E>()
+    }
+
+    /// 对齐 Java: `TypeUtil.getParamType`
+    pub fn param_type_name<P: 'static>() -> &'static str {
+        std::any::type_name::<P>()
+    }
+
+    /// 对齐 Java: `TypeUtil.getReturnType` / `TypeUtil.getClass`
+    pub fn class_type_name<T: 'static>() -> &'static str {
+        std::any::type_name::<T>()
+    }
+
+    /// 对齐 Java: 未绑定泛型数组 `T[]` 的组件类型（等价 `Object`）
+    pub fn generic_array_component_name() -> &'static str {
+        std::any::type_name::<dyn Any>()
+    }
+
+    /// 对齐 Java: 参数化数组组件类型，如 `List<String>[]` 的 `List`
+    pub fn parameterized_array_component_name<T: 'static>() -> &'static str {
+        std::any::type_name::<T>()
+    }
+
+    /// 对齐 Java: `TypeUtil.getTypeArgument`（接口实现场景）
+    pub fn type_argument_name<T: 'static>() -> &'static str {
+        std::any::type_name::<T>()
+    }
+
+    /// 对齐 Java: `TypeUtil.getActualType`
+    pub fn actual_type_name<T: 'static>() -> &'static str {
+        std::any::type_name::<T>()
+    }
+
+    /// 对齐 Java: 泛型数组字段的实际组件数组类型名
+    pub fn actual_array_type_name<E: 'static>() -> String {
+        format!("[{}]", Self::short_type_name(std::any::type_name::<E>()))
+    }
+
+    /// 取 `::` 分隔的简短类型名
+    pub fn short_type_name(full: &str) -> &str {
+        full.rsplit("::").next().unwrap_or(full)
+    }
+
+    /// 判断 Rust 数组/slice 类型
+    pub fn is_array_type<T: 'static>() -> bool {
+        std::any::type_name::<T>().starts_with('[')
+    }
 }

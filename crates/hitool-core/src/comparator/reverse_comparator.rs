@@ -1,20 +1,38 @@
 //! 对齐: `cn.hutool.core.comparator.ReverseComparator`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/comparator/ReverseComparator.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::cmp::Ordering;
+use std::marker::PhantomData;
 
 /// 对齐 Java 类: `cn.hutool.core.comparator.ReverseComparator`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct ReverseComparator;
+pub struct ReverseComparator<E, F>
+where
+    F: Fn(&E, &E) -> Ordering,
+{
+    inner: F,
+    _marker: PhantomData<E>,
+}
 
-impl ReverseComparator {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+impl<E, F> ReverseComparator<E, F>
+where
+    F: Fn(&E, &E) -> Ordering,
+{
+    /// 对齐 Java: `ReverseComparator(Comparator)`
+    #[must_use]
+    pub fn new(comparator: F) -> Self {
+        Self {
+            inner: comparator,
+            _marker: PhantomData,
+        }
+    }
+
+    /// 对齐 Java: `compare(E o1, E o2)`
+    #[must_use]
+    pub fn compare(&self, o1: &E, o2: &E) -> i32 {
+        match (self.inner)(o1, o2).reverse() {
+            Ordering::Less => -1,
+            Ordering::Equal => 0,
+            Ordering::Greater => 1,
+        }
     }
 }

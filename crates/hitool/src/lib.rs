@@ -39,8 +39,6 @@ pub use hitool_json as json;
 pub use hitool_jwt as jwt;
 #[cfg(feature = "log")]
 pub use hitool_log as log;
-#[cfg(feature = "poi")]
-pub use hitool_poi as poi;
 #[cfg(feature = "script")]
 pub use hitool_script as script;
 #[cfg(feature = "setting")]
@@ -82,7 +80,7 @@ impl Hutool {
         enabled!("aop", "aop");
         enabled!("bloom-filter", "bloom_filter");
         enabled!("cache", "cache");
-        enabled!("captcha", "captcha");
+        enabled!("hitool-captcha", "hitool-captcha");
         enabled!("core", "core");
         enabled!("cron", "cron");
         enabled!("crypto", "crypto");
@@ -94,7 +92,6 @@ impl Hutool {
         enabled!("json", "json");
         enabled!("jwt", "jwt");
         enabled!("log", "log");
-        enabled!("poi", "poi");
         enabled!("script", "script");
         enabled!("setting", "setting");
         enabled!("socket", "socket");

@@ -129,7 +129,11 @@ impl MathGenerator {
         self.number_length as usize * 2 + 2
     }
 
-    fn evaluate(code: &str) -> Option<i64> {
+    /// Evaluates an arithmetic CAPTCHA expression produced by [`Self::generate`].
+    ///
+    /// Mirrors Hutool's `Calculator.conversion(code)` used by `MathGenerator.verify`.
+    #[must_use]
+    pub fn evaluate(code: &str) -> Option<i64> {
         let expression = code.strip_suffix('=')?;
         for operator in ['+', '-', '*'] {
             if let Some((left, right)) = expression.split_once(operator) {
@@ -648,6 +652,8 @@ impl ShearCaptcha {
 
 impl GifCaptcha {
     /// Sets GIF color-quantization speed/quality.
+    ///
+    /// Values below 1 are clamped to 1 (Hutool `GifCaptcha.setQuality`).
     #[must_use]
     pub fn set_quality(mut self, quality: u8) -> Self {
         self.0.gif_quality = quality.clamp(1, 30);
@@ -655,12 +661,30 @@ impl GifCaptcha {
         self
     }
 
-    /// Sets GIF repetition count; zero means infinite.
+    /// Returns the GIF quantization quality (Hutool `quality` field).
     #[must_use]
-    pub fn set_repeat(mut self, repeat: u16) -> Self {
-        self.0.gif_repeat = repeat;
+    pub const fn quality(&self) -> u8 {
+        self.0.gif_quality
+    }
+
+    /// Sets GIF repetition count; zero means infinite.
+    ///
+    /// Negative values are clamped to `0` (Hutool `GifCaptcha.setRepeat` / `Math.max`).
+    #[must_use]
+    pub fn set_repeat(mut self, repeat: i32) -> Self {
+        self.0.gif_repeat = if repeat < 0 {
+            0
+        } else {
+            u16::try_from(repeat).unwrap_or(u16::MAX)
+        };
         self.0.invalidate();
         self
+    }
+
+    /// Returns the GIF frame repeat count (Hutool `repeat` field).
+    #[must_use]
+    pub const fn repeat(&self) -> u16 {
+        self.0.gif_repeat
     }
 
     /// Sets the maximum random text color component.
@@ -671,12 +695,37 @@ impl GifCaptcha {
         self
     }
 
+    /// Returns the maximum random text color component (Hutool `maxColor`).
+    #[must_use]
+    pub const fn max_color(&self) -> u8 {
+        self.0.max_color
+    }
+
     /// Sets the minimum random text color component.
     #[must_use]
     pub fn set_min_color(mut self, minimum: u8) -> Self {
         self.0.min_color = minimum;
         self.0.invalidate();
         self
+    }
+
+    /// Returns the minimum random text color component (Hutool `minColor`).
+    #[must_use]
+    pub const fn min_color(&self) -> u8 {
+        self.0.min_color
+    }
+
+    /// Samples a random RGB color in `[min, max]` (Hutool `GifCaptcha.getRandomColor`).
+    #[must_use]
+    pub fn random_color(min: u8, max: u8) -> CaptchaColor {
+        let (lo, hi) = if min <= max { (min, max) } else { (0, 255) };
+        let mut rng = rand::rng();
+        CaptchaColor([
+            rng.random_range(lo..=hi),
+            rng.random_range(lo..=hi),
+            rng.random_range(lo..=hi),
+            255,
+        ])
     }
 }
 
@@ -689,9 +738,51 @@ impl CaptchaUtil {
         LineCaptcha::new(width, height)
     }
 
+    /// Creates a line CAPTCHA with explicit code and interference counts.
+    pub fn create_line_captcha_with_count(
+        width: u16,
+        height: u16,
+        code_count: usize,
+        line_count: u16,
+    ) -> Result<LineCaptcha, CaptchaError> {
+        LineCaptcha::with_code_count(width, height, code_count, line_count)
+    }
+
+    /// Creates a line CAPTCHA with a Hutool-style font-size multiplier.
+    pub fn create_line_captcha_with_size(
+        width: u16,
+        height: u16,
+        code_count: usize,
+        line_count: u16,
+        size: f32,
+    ) -> Result<LineCaptcha, CaptchaError> {
+        LineCaptcha::with_size(width, height, code_count, line_count, size)
+    }
+
     /// Creates a circle CAPTCHA.
     pub fn create_circle_captcha(width: u16, height: u16) -> Result<CircleCaptcha, CaptchaError> {
         CircleCaptcha::new(width, height)
+    }
+
+    /// Creates a circle CAPTCHA with explicit code and interference counts.
+    pub fn create_circle_captcha_with_count(
+        width: u16,
+        height: u16,
+        code_count: usize,
+        circle_count: u16,
+    ) -> Result<CircleCaptcha, CaptchaError> {
+        CircleCaptcha::with_code_count(width, height, code_count, circle_count)
+    }
+
+    /// Creates a circle CAPTCHA with a Hutool-style font-size multiplier.
+    pub fn create_circle_captcha_with_size(
+        width: u16,
+        height: u16,
+        code_count: usize,
+        circle_count: u16,
+        size: f32,
+    ) -> Result<CircleCaptcha, CaptchaError> {
+        CircleCaptcha::with_size(width, height, code_count, circle_count, size)
     }
 
     /// Creates a shear CAPTCHA.
@@ -699,9 +790,50 @@ impl CaptchaUtil {
         ShearCaptcha::new(width, height)
     }
 
+    /// Creates a shear CAPTCHA with explicit code and thickness.
+    pub fn create_shear_captcha_with_count(
+        width: u16,
+        height: u16,
+        code_count: usize,
+        thickness: u16,
+    ) -> Result<ShearCaptcha, CaptchaError> {
+        ShearCaptcha::with_code_count(width, height, code_count, thickness)
+    }
+
+    /// Creates a shear CAPTCHA with a Hutool-style font-size multiplier.
+    pub fn create_shear_captcha_with_size(
+        width: u16,
+        height: u16,
+        code_count: usize,
+        thickness: u16,
+        size: f32,
+    ) -> Result<ShearCaptcha, CaptchaError> {
+        ShearCaptcha::with_size(width, height, code_count, thickness, size)
+    }
+
     /// Creates an animated GIF CAPTCHA.
     pub fn create_gif_captcha(width: u16, height: u16) -> Result<GifCaptcha, CaptchaError> {
         GifCaptcha::new(width, height)
+    }
+
+    /// Creates a GIF CAPTCHA with an explicit code count (default interference 10).
+    pub fn create_gif_captcha_with_count(
+        width: u16,
+        height: u16,
+        code_count: usize,
+    ) -> Result<GifCaptcha, CaptchaError> {
+        GifCaptcha::with_code_count(width, height, code_count, 10)
+    }
+
+    /// Creates a GIF CAPTCHA with a Hutool-style font-size multiplier.
+    pub fn create_gif_captcha_with_size(
+        width: u16,
+        height: u16,
+        code_count: usize,
+        thickness: u16,
+        size: f32,
+    ) -> Result<GifCaptcha, CaptchaError> {
+        GifCaptcha::with_size(width, height, code_count, thickness, size)
     }
 }
 

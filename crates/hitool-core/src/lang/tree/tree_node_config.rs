@@ -1,20 +1,40 @@
 //! 对齐: `cn.hutool.core.lang.tree.TreeNodeConfig`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/lang/tree/TreeNodeConfig.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+/// 对齐 Java: `TreeNodeConfig`
+#[derive(Debug, Clone)]
+pub struct TreeNodeConfig {
+    pub id_key: String,
+    pub parent_id_key: String,
+    pub weight_key: String,
+    pub name_key: String,
+    pub children_key: String,
+    pub deep: Option<usize>,
+}
 
-/// 对齐 Java 类: `cn.hutool.core.lang.tree.TreeNodeConfig`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct TreeNodeConfig;
+impl Default for TreeNodeConfig {
+    fn default() -> Self {
+        Self {
+            id_key: "id".into(),
+            parent_id_key: "parentId".into(),
+            weight_key: "weight".into(),
+            name_key: "name".into(),
+            children_key: "children".into(),
+            deep: None,
+        }
+    }
+}
 
 impl TreeNodeConfig {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 设置权重字段名
+    pub fn set_weight_key(&mut self, key: impl Into<String>) {
+        self.weight_key = key.into();
+    }
+    /// 设置 id 字段名
+    pub fn set_id_key(&mut self, key: impl Into<String>) {
+        self.id_key = key.into();
+    }
+    /// 设置最大深度
+    pub fn set_deep(&mut self, deep: usize) {
+        self.deep = Some(deep);
     }
 }

@@ -1,20 +1,37 @@
 //! 对齐: `cn.hutool.core.net.URLEncoder`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/net/URLEncoder.java
 //!
-//! 状态: 对齐桩,等待完整实现。
+//! 轻量 percent-encoder，委托 RFC3986 安全集。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use crate::net::rfc3986::Rfc3986;
 
 /// 对齐 Java 类: `cn.hutool.core.net.URLEncoder`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct URLEncoder;
+#[derive(Debug, Clone, Copy, Default)]
+pub struct UrlEncoder;
 
-impl URLEncoder {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+impl UrlEncoder {
+    /// 对齐 Java: `URLEncoder.DEFAULT.encode(...)`（PATH）
+    pub fn encode(content: &str) -> String {
+        Rfc3986::encode_path(content)
+    }
+
+    /// 对齐 Java: `URLEncoder.QUERY.encode(...)`
+    pub fn encode_query(content: &str) -> String {
+        Rfc3986::encode_query(content)
+    }
+
+    /// 对齐 Java: `URLEncoder.FRAGMENT.encode(...)`
+    pub fn encode_fragment(content: &str) -> String {
+        Rfc3986::encode_fragment(content)
+    }
+
+    /// 对齐 Java: `URLEncoder.ALL.encode(...)`
+    pub fn encode_all(content: &str) -> String {
+        Rfc3986::encode_all(content)
+    }
+
+    /// 对齐 Java: `URLEncoder.createDefault()` 返回值的 encode 语义。
+    pub fn create_default_encode(content: &str) -> String {
+        Self::encode(content)
     }
 }

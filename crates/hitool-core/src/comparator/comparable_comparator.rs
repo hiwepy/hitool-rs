@@ -1,20 +1,47 @@
 //! 对齐: `cn.hutool.core.comparator.ComparableComparator`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/comparator/ComparableComparator.java
 //!
-//! 状态: 对齐桩,等待完整实现。
+//! 对实现 `Ord` 的类型做自然序比较。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::cmp::Ordering;
 
 /// 对齐 Java 类: `cn.hutool.core.comparator.ComparableComparator`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct ComparableComparator;
 
 impl ComparableComparator {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 对齐 Java: `ComparableComparator.INSTANCE`
+    pub const INSTANCE: ComparableComparator = ComparableComparator;
+
+    /// 对齐 Java: `ComparableComparator()`
+    #[must_use]
+    pub fn new() -> Self {
+        Self
+    }
+
+    /// 对齐 Java: `compare(E obj1, E obj2)`
+    #[must_use]
+    pub fn compare<E: Ord>(&self, obj1: &E, obj2: &E) -> i32 {
+        match obj1.cmp(obj2) {
+            Ordering::Less => -1,
+            Ordering::Equal => 0,
+            Ordering::Greater => 1,
+        }
+    }
+}
+
+impl PartialEq for ComparableComparator {
+    /// 对齐 Java: `equals(Object)` —— 同类即相等。
+    fn eq(&self, _other: &Self) -> bool {
+        true
+    }
+}
+
+impl Eq for ComparableComparator {}
+
+impl std::hash::Hash for ComparableComparator {
+    /// 对齐 Java: `hashCode()`
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        "ComparableComparator".hash(state);
     }
 }

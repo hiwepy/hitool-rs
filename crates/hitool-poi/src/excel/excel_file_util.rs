@@ -1,35 +1,41 @@
-//! Excel file utilities aligned with Hutool.
+//! 迁移自 hutool 的 `cn.hutool.poi.excel.ExcelFileUtil`
 //!
-//! 对齐: `cn.hutool.poi.excel.ExcelFileUtil`
-//! 来源: hutool-poi/src/main/java/cn/hutool/poi/excel/ExcelFileUtil.java
-//!
-//! 主要提供文件复制、临时目录创建与 OOXML 容器探测。
+//! - 原 Java 包：`cn.hutool.poi.excel`
+//! - 原 Java 主类：`cn.hutool.poi.excel.ExcelFileUtil`
+//! - 迁移状态：🟡 占位实现，等待 `easyexcel-rs` / `easydoc-rs` / `easyofd-rs` / `easypdf-rs` 完成
+//! - Java 源文件：`hutool-poi/src/main/java/excel/ExcelFileUtil.java`
 
-use crate::{PoiError, Result};
+#![allow(dead_code, clippy::missing_docs_in_private_items)]
 
-/// Excel file utility facade.
+/// 占位结构体，对齐 Java `ExcelFileUtil`。
 ///
-/// 对齐 Java: `cn.hutool.poi.excel.ExcelFileUtil`
-#[derive(Debug, Clone, Copy, Default)]
+/// 当前状态：等待 `easyexcel-rs` 引擎完成后填充实现。
 pub struct ExcelFileUtil;
 
 impl ExcelFileUtil {
-    /// 对齐 Java: `ExcelFileUtil.isXlsx(File)`
-    pub fn is_xlsx(_path: &str) -> Result<bool> {
-        Err(PoiError::PendingEngine(
-            "ExcelFileUtil::isXlsx (waiting for easyexcel-rs)",
-        ))
+    /// 占位方法。当前调用会 panic。
+    ///
+    /// # Panics
+    ///
+    /// 此方法尚未实现，等待 `easyexcel-rs` / `easydoc-rs` 等引擎完成。
+    pub fn new() -> Self {
+        unimplemented!("ExcelFileUtil::new() 等待 easyexcel-rs / easydoc-rs / easyofd-rs / easypdf-rs 完成")
     }
-    /// 对齐 Java: `ExcelFileUtil.isXls(File)`
-    pub fn is_xls(_path: &str) -> Result<bool> {
-        Err(PoiError::PendingEngine(
-            "ExcelFileUtil::isXls (waiting for easyexcel-rs)",
-        ))
+}
+
+impl Default for ExcelFileUtil {
+    fn default() -> Self {
+        Self::new()
     }
-    /// 对齐 Java: `ExcelFileUtil.createTempFile(String prefix)`
-    pub fn create_temp_file(_prefix: &str) -> Result<String> {
-        Err(PoiError::PendingEngine(
-            "ExcelFileUtil::createTempFile (waiting for easyexcel-rs)",
-        ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic(expected = "等待 easyexcel-rs")]
+    fn excelfileutil_new_is_unimplemented() {
+        let _ = ExcelFileUtil::new();
     }
 }

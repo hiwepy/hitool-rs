@@ -1,43 +1,71 @@
 //! 对齐: `cn.hutool.core.text.Simhash`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/text/Simhash.java
-//!
-//! Simhash 文本指纹算法。
 
-use crate::{CoreError, Result};
+use std::collections::HashSet;
 
-/// 对齐 Java: `Simhash#`
-#[derive(Debug, Clone, Copy)]
-pub struct Simhash;
+/// 对齐 Java: `Simhash`
+#[derive(Debug, Default)]
+pub struct Simhash {
+    stored: HashSet<u64>,
+    hamming_thresh: u32,
+}
 
 impl Simhash {
-    /// 对齐 Java: `Simhash()`
+    /// 默认构造
     pub fn new() -> Self {
-        Self
+        Self {
+            stored: HashSet::new(),
+            hamming_thresh: 3,
+        }
     }
 
-    /// 对齐 Java: `Simhash(int fracCount, int hammingThresh)`
-    pub fn with_params(_frac_count: i32, _hamming_thresh: i32) -> Self {
-        Self
+    /// 带参数
+    pub fn with_params(frac_count: usize, hamming_thresh: u32) -> Self {
+        let _ = frac_count;
+        Self {
+            stored: HashSet::new(),
+            hamming_thresh,
+        }
     }
 
-    /// 对齐 Java: `Simhash::hash#long (Collection<? extends CharSequence> segList)`
-    pub fn hash(&self, _segments: &[&str]) -> Result<i64> {
-        Err(CoreError::PendingEngine("Simhash::hash"))
+    /// 对齐 `hash(Collection)`
+    pub fn hash(&self, segs: &[&str]) -> u64 {
+        // 简化 simhash：对各 token 的哈希按位投票
+        let mut bits = [0i32; 64];
+        for s in segs {
+            let mut h: u64 = 0xcbf29ce484222325;
+            for b in s.as_bytes() {
+                h ^= *b as u64;
+                h = h.wrapping_mul(0x100000001b3);
+            }
+            for i in 0..64 {
+                if (h >> i) & 1 == 1 {
+                    bits[i] += 1;
+                } else {
+                    bits[i] -= 1;
+                }
+            }
+        }
+        let mut out = 0u64;
+        for i in 0..64 {
+            if bits[i] > 0 {
+                out |= 1u64 << i;
+            }
+        }
+        out
     }
 
-    /// 对齐 Java: `Simhash::equals#boolean (Collection<? extends CharSequence> segList)`
-    pub fn equals(&self, _segments: &[&str]) -> Result<bool> {
-        Err(CoreError::PendingEngine("Simhash::equals"))
+    /// 对齐 `store`
+    pub fn store(&mut self, simhash: u64) {
+        self.stored.insert(simhash);
     }
 
-    /// 对齐 Java: `Simhash::store#void (Long simhash)`
-    pub fn store(&self, _simhash: i64) -> Result<()> {
-        Err(CoreError::PendingEngine("Simhash::store"))
+    /// 对齐 `equals(segList)` — 与已存指纹比较汉明距离
+    pub fn equals_segs(&self, segs: &[&str]) -> bool {
+        let h = self.hash(segs);
+        self.stored.iter().any(|s| hamming(*s, h) <= self.hamming_thresh)
     }
 }
 
-impl Default for Simhash {
-    fn default() -> Self {
-        Self::new()
-    }
+fn hamming(a: u64, b: u64) -> u32 {
+    (a ^ b).count_ones()
 }

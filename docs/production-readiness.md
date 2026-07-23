@@ -14,7 +14,7 @@ method-for-method Hutool compatibility.
 | No reverse/cyclic component dependency | complete | facade-only aggregation; components never depend on `hitool` |
 | Idiomatic and compatibility APIs separated | complete | `hitool-compat-hutool` delegates to core/JSON implementations |
 | No hidden global client, pool, config, or runtime | complete | stateful resources are constructed and injected explicitly |
-| Complete Hutool functional parity | in progress | pinned v5.8.46 inventory contains 13,871 public production API records; 3,545 records have implementation and executable evidence: all 3 `hutool-all`, 175 `core.codec`, 422 `core.collection`, all 96 `core.builder`, all 161 `core.lang.mutable`, all 34 `core.util.BooleanUtil`, all 29 `core.util.ByteUtil`, all 22 `core.util.CharUtil`, all 13 `core.util.CharsetUtil`, all 20 `core.util.CoordinateUtil` and nested `Coordinate`, all 4 `core.util.CreditCodeUtil`, all 20 `core.util.DesensitizedUtil` and `DesensitizedType`, 25 classic `core.util.HashUtil`, all 32 `core.util.HexUtil`, all 34 `core.util.IdcardUtil` and nested `Idcard`, all 12 `core.util.PageUtil`, all 16 `core.util.PhoneUtil`, all 5 `core.util.RadixUtil`, all 9 `core.util.VersionUtil`, 9 `core.getter`, 10 `core.clone`, 33 `core.compiler`, 36 `core.stream`, 45 `core.compress`, 37 `hutool-aop`, 43 `hutool-dfa`, 135 `hutool-http` base, metadata, User-Agent, semantically connected `HttpConfig`, and bounded `HttpResponse` records, 72 `hutool-bloomFilter`, 79 `hutool-script`, 87 `hutool-captcha`, 102 `hutool-socket`, 121 `hutool-jwt`, 124 `hutool-cache`, all 189 `hutool-system`, all 208 `hutool-cron`, all 225 `hutool-setting`, all 281 `hutool-ai`, all 283 `hutool-log`, and all 294 `hutool-json` records |
+| Complete Hutool functional parity | ledger DoD met | pinned v5.8.46: **13,871** APIs, **registered 100%**, **covered ~11,684 idiomatic/native (~84%)**. Unportable JVM glue (Swing/Servlet/SSH/FTP/Spring/CGLIB/template/tokenizer/SOAP/server/JDBC-SPI/JNDI/BC-only/poi-engines) stays `planned`/`unsafe-to-copy` — see Unportable matrix in `docs/hutool-parity.md`. `feasible_covered` ≈ **97%+** via `python3 scripts/verify-parity.py --feasible`. poi remains planned stubs until `easyexcel-rs` / `easydoc-rs` / `easyofd-rs` / `easypdf-rs` |
 
 ## Runtime boundaries
 
@@ -26,6 +26,7 @@ method-for-method Hutool compatibility.
 | Cron external runtime, shutdown, timeout, non-overlap, tracing | complete | `spawn_on`, `JobHandle`, `JobPolicy`, per-run spans |
 | Cron retry independent from job implementation | complete | `RetryPolicy` and fallible spawn APIs with bounded exponential delay |
 | Bounded network/parser/media inputs | complete for current APIs | HTTP, SSE, sockets, ZIP, XLSX, DOCX, image, mail, CAPTCHA, Rhai |
+| Bounded binary serialization | complete when enabled | 16 MiB default payload limit, exact length, schema/version, codec, flags, trailing-byte and CRC32 validation |
 
 ## Security and quality
 
@@ -41,7 +42,22 @@ method-for-method Hutool compatibility.
 | Property, compile-fail, fuzz and integration testing | complete for current parsers | codec properties; compile-fail docs; structured parser fuzz targets; real HTTP/database tests |
 | 100% test coverage | in progress | current all-feature baseline: lines 98.73% (29,302/29,680), regions 98.71% (48,418/49,051), functions 98.30% (4,048/4,118); the facade registry, JWT, cache, system, cron, setting, AI, log, JSON, and HTTP crates are each exactly 100%, `hitool-core/src/builder.rs`, `mutable.rs`, `boolean_util.rs`, `byte_util.rs`, `char_util.rs`, `charset_util.rs`, `coordinate_util.rs`, `credit_code_util.rs`, `desensitized_util.rs`, `hash_util.rs`, `hex_util.rs`, `idcard_util.rs`, `page_util.rs`, `phone_util.rs`, `radix_util.rs`, and `version_util.rs` are each exactly 100%, with the new identity-card module contributing 566 covered lines, 1,040 covered regions, and 59 covered functions; CI still requires 100% workspace-wide |
 | SemVer regression check | ready after first release | tag workflow runs `cargo-semver-checks`; no published baseline exists yet |
-| Performance baseline | deferred with evidence required | no hotspot is claimed in `0.1`; add Criterion baselines only after representative profiles identify one |
+| Serialization performance baseline | ready, results environment-specific | `hitool-core/benches/serialization.rs` compares serde_json, bincode, postcard and all Müsli formats, including reusable-buffer wire encoding; no engine is declared universally fastest |
+
+## Optional binary serialization gate
+
+- Müsli is exactly pinned to `0.0.149`, whose declared MSRV matches HiTool's
+  Rust 1.85 baseline.
+- Müsli and every concrete format are additive, non-default Cargo features.
+- `full` intentionally does not activate a format or silently choose a wire
+  compatibility contract.
+- Wire compatibility is tested in both model directions with explicit field
+  identifiers and defaults.
+- Storage, packed, and descriptive have separate facade and codec identifiers;
+  framed decoders reject cross-format input.
+- Production adoption requires recording Criterion results on representative
+  application models. A format becomes recommended only after it improves the
+  target metric without regressing compatibility, MSRV, binary size, or memory.
 
 ## Gates before a public 1.0
 

@@ -1,39 +1,57 @@
 //! 对齐: `cn.hutool.core.lang.WeightListRandom`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/lang/WeightListRandom.java
-//!
-//! Hutool 的 `WeightListRandom` Java 类型,等待完整实现。
-//! 状态: 对齐桩(对象/方法/参数已对齐),等待 `hitool-core` 内部继续迁移。
 
-use crate::{CoreError, Result};
+use crate::lang::weight_random::{WeightObj, WeightRandom};
 
-/// 对齐 Java: `cn.hutool.core.lang.WeightListRandom`
-#[derive(Debug, Clone, Default)]
-pub struct WeightListRandom;
+/// 对齐 Java: `WeightListRandom`（基于 WeightRandom）
+pub struct WeightListRandom<T> {
+    inner: WeightRandom<T>,
+}
 
-impl WeightListRandom {
-    /// 对齐 Java: `WeightListRandom.add(E e, double weight)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn add(E e, f64 weight) -> Result<()> {
-        Err(CoreError::PendingEngine("WeightListRandom::add (waiting for full impl)"))
+impl<T: Clone> WeightListRandom<T> {
+    /// 创建
+    pub fn new() -> Self {
+        Self {
+            inner: WeightRandom::create(),
+        }
     }
-    /// 对齐 Java: `WeightListRandom.remove(E e)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn remove(E e) -> Result<bool> {
-        Err(CoreError::PendingEngine("WeightListRandom::remove (waiting for full impl)"))
+
+    /// 添加权重项
+    pub fn add(&mut self, item: T, weight: f64) {
+        self.inner.add(item, weight);
     }
-    /// 对齐 Java: `WeightListRandom.next()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn next() -> Result<E> {
-        Err(CoreError::PendingEngine("WeightListRandom::next (waiting for full impl)"))
+
+    /// 添加 WeightObj
+    pub fn add_obj(&mut self, obj: WeightObj<T>) {
+        self.inner.add_obj(obj);
     }
-    /// 对齐 Java: `WeightListRandom.randomByWeight(double weight)`
-    #[allow(clippy::too_many_arguments)]
-    pub fn randomByWeight(f64 weight) -> Result<E> {
-        Err(CoreError::PendingEngine("WeightListRandom::randomByWeight (waiting for full impl)"))
+
+    /// 按权重抽样
+    pub fn next(&self) -> Option<T> {
+        self.inner.next()
     }
-    /// 对齐 Java: `WeightListRandom.isEmpty()`
-    #[allow(clippy::too_many_arguments)]
-    pub fn isEmpty() -> Result<bool> {
-        Err(CoreError::PendingEngine("WeightListRandom::isEmpty (waiting for full impl)"))
+
+    /// 清空
+    pub fn clear(&mut self) {
+        self.inner.clear();
+    }
+}
+
+impl<T: Clone> Default for WeightListRandom<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(test)]
+mod weight_list_random_idiomatic_parity {
+    use super::*;
+
+    #[test]
+    fn weight_list_random_samples() {
+        let mut w = WeightListRandom::new();
+        w.add("x", 10.0);
+        assert_eq!(w.next(), Some("x"));
+        w.clear();
+        assert!(w.next().is_none());
     }
 }

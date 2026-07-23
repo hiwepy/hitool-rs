@@ -1,20 +1,57 @@
 //! 对齐: `cn.hutool.core.lang.loader.LazyFunLoader`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/lang/loader/LazyFunLoader.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use parking_lot::Mutex;
+use std::sync::Arc;
 
-/// 对齐 Java 类: `cn.hutool.core.lang.loader.LazyFunLoader`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct LazyFunLoader;
+/// 对齐 Java: `LazyFunLoader<T>`
+pub struct LazyFunLoader<T> {
+    factory: Mutex<Option<Box<dyn FnOnce() -> T + Send>>>,
+    value: Mutex<Option<Arc<T>>>,
+}
 
-impl LazyFunLoader {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+impl<T: Send + Sync + 'static> LazyFunLoader<T> {
+    /// 对齐构造 `new LazyFunLoader<>(supplier)`
+    pub fn new<F>(factory: F) -> Self
+    where
+        F: FnOnce() -> T + Send + 'static,
+    {
+        Self {
+            factory: Mutex::new(Some(Box::new(factory))),
+            value: Mutex::new(None),
+        }
+    }
+
+    /// 对齐 `on(supplier)`
+    pub fn on<F>(factory: F) -> Self
+    where
+        F: FnOnce() -> T + Send + 'static,
+    {
+        Self::new(factory)
+    }
+
+    /// 对齐 `get`
+    pub fn get(&self) -> Arc<T> {
+        {
+            let v = self.value.lock();
+            if let Some(ref a) = *v {
+                return Arc::clone(a);
+            }
+        }
+        let factory = self.factory.lock().take().expect("factory already consumed");
+        let arc = Arc::new(factory());
+        *self.value.lock() = Some(Arc::clone(&arc));
+        arc
+    }
+
+    /// 对齐 `isInitialize`
+    pub fn is_initialize(&self) -> bool {
+        self.value.lock().is_some()
+    }
+
+    /// 对齐 `ifInitialized`
+    pub fn if_initialized<F: FnOnce(&T)>(&self, f: F) {
+        if let Some(ref a) = *self.value.lock() {
+            f(a);
+        }
     }
 }

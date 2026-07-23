@@ -14,7 +14,7 @@ hitool-cron = { path = "../crates/hitool-cron" }
 hitool-dfa = { path = "../crates/hitool-dfa" }
 hitool-json = { path = "../crates/hitool-json" }
 hitool-jwt = { path = "../crates/hitool-jwt" }
-hitool-poi = { path = "../crates/hitool-poi" }
+# easyexcel-rs = { path = "../easyexcel-rs" } # removed: engine crates are independent projects
 serde_json = "1"
 url = "2"
 

@@ -1,20 +1,20 @@
 //! 对齐: `cn.hutool.core.net.MaskBit`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/net/MaskBit.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use crate::net::ipv4_util::Ipv4Util;
 
 /// 对齐 Java 类: `cn.hutool.core.net.MaskBit`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct MaskBit;
 
 impl MaskBit {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 对齐 Java: `MaskBit.get(int)`
+    pub fn get(mask_bit: i32) -> Option<String> {
+        Ipv4Util::get_mask_by_mask_bit(mask_bit)
+    }
+
+    /// 对齐 Java: `MaskBit.getMaskBit(String)`
+    pub fn get_mask_bit(mask: &str) -> Option<i32> {
+        Ipv4Util::get_mask_bit_by_mask(mask)
     }
 }

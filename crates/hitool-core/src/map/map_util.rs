@@ -1,20 +1,10 @@
-//! 对齐: `cn.hutool.core.map.MapUtil`
-//! 来源: hutool-core/src/main/java/cn/hutool/core/map/MapUtil.java
+//! 对齐: `cn.hutool.core.map.MapUtil` 包路径 facade
 //!
-//! 状态: 对齐桩,等待完整实现。
+//! 委托到 crate 根 [`crate::MapUtil`]。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+pub use crate::map_util::{
+    CreateMapKind, EmptyMapKind, LinkedOrHashMap, MapBuilderGate, MapUtil, NestedMapValue,
+};
 
-/// 对齐 Java 类: `cn.hutool.core.map.MapUtil`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct MapUtil;
-
-impl MapUtil {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
-    }
-}
+/// 历史别名：有序/无序 Map 联合体。
+pub type EitherMap<K, V> = LinkedOrHashMap<K, V>;

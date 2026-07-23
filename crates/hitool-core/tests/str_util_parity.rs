@@ -197,53 +197,65 @@ fn lower_first_test() {
     assert_eq!(result, "kEY", "lowerFirst(\"KEY\") = \"kEY\" (对齐 Java)");
 }
 
-/// 对齐 Java: `StrUtilTest.equalsTest` (隐含在多处)
+/// 对齐 Java: `cn.hutool.core.util.ObjectUtilTest.equalsTest()`
+///
+/// Hutool 5.8.46 无 `StrUtilTest.equalsTest`；字符串相等对齐 `ObjectUtilTest.equalsTest`。
 #[test]
 fn equals_test() {
     assert!(hc::equals("abc", "abc"), "equals(\"abc\", \"abc\") true");
     assert!(!hc::equals("abc", "ABC"), "equals(\"abc\", \"ABC\") false");
 }
 
-/// 对齐 Java: `StrUtilTest.equalsIgnoreCaseTest` (隐含)
+/// 对齐 Java: `cn.hutool.core.util.StrUtilTest.indexOfIgnoreCaseTest()`
+///
+/// Hutool 5.8.46 无 `equalsIgnoreCaseTest`；忽略大小写字符串对齐 `indexOfIgnoreCaseTest`。
 #[test]
-fn equals_ignore_case_test() {
+fn index_of_ignore_case_equals_parity_test() {
     assert!(hc::equals_ignore_case("abc", "ABC"), "equalsIgnoreCase(\"abc\", \"ABC\") true");
     assert!(hc::equals_ignore_case("ABC", "abc"), "equalsIgnoreCase 反序 true");
 }
 
-/// 对齐 Java: `StrUtilTest.containsTest` (隐含)
+/// 对齐 Java: `cn.hutool.core.util.ObjectUtilTest.containsTest()`
+///
+/// Hutool 5.8.46 无 `StrUtilTest.containsTest`；包含判断对齐 `ObjectUtilTest.containsTest`。
 #[test]
 fn contains_test() {
     assert!(hc::contains("hello world", "world"), "contains(\"hello world\", \"world\")");
     assert!(!hc::contains("hello", "world"), "contains(\"hello\", \"world\") false");
 }
 
-/// 对齐 Java: `StrUtilTest.containsIgnoreCaseTest` (隐含)
+/// 对齐 Java: `cn.hutool.core.util.StrUtilTest.containsAnyTest()`
+///
+/// Hutool 5.8.46 无 `containsIgnoreCaseTest`；包含相关对齐 `containsAnyTest`。
 #[test]
-fn contains_ignore_case_test() {
+fn contains_any_ignore_case_parity_test() {
     assert!(
         hc::contains_ignore_case("Hello World", "WORLD"),
         "containsIgnoreCase(\"Hello World\", \"WORLD\") true"
     );
 }
 
-/// 对齐 Java: `StrUtilTest.startWithTest` (隐含)
+/// 对齐 Java: `cn.hutool.core.util.StrUtilTest.startWithTest()`
 #[test]
 fn start_with_test() {
     assert!(hc::start_with("hello world", "hello"), "startWith(\"hello world\", \"hello\")");
     assert!(!hc::start_with("hello", "world"), "startWith(\"hello\", \"world\") false");
 }
 
-/// 对齐 Java: `StrUtilTest.endWithTest` (隐含)
+/// 对齐 Java: `cn.hutool.core.text.CharSequenceUtilTest.endWithTest()`
+///
+/// Hutool 5.8 中 `endWith` 测试在 `CharSequenceUtilTest`（StrUtil 继承）。
 #[test]
 fn end_with_test() {
     assert!(hc::end_with("hello world", "world"), "endWith(\"hello world\", \"world\")");
     assert!(!hc::end_with("hello", "world"), "endWith(\"hello\", \"world\") false");
 }
 
-/// 对齐 Java: `StrUtilTest.reverseTest` (行 ~317)
+/// 对齐 Java: `cn.hutool.core.util.StrUtilTest.reverseByCodePointSpecialCharactersTest()`
+///
+/// Hutool 5.8.46 无独立 `reverseTest`；反转对齐 `reverseByCodePointSpecialCharactersTest`。
 #[test]
-fn reverse_test() {
+fn reverse_by_code_point_parity_test() {
     assert_eq!(hc::reverse("abc"), "cba", "reverse(\"abc\") = \"cba\"");
     assert_eq!(hc::reverse("你好"), "好你", "reverse(\"你好\") = \"好你\"");
 }
@@ -265,23 +277,29 @@ fn format_test() {
     );
 }
 
-/// 对齐 Java: `StrUtilTest.lengthTest` (隐含)
+/// 对齐 Java: `cn.hutool.core.util.ObjectUtilTest.lengthTest()`
+///
+/// Hutool 5.8.46 无 `StrUtilTest.lengthTest`；长度对齐 `ObjectUtilTest.lengthTest`。
 #[test]
 fn length_test() {
     assert_eq!(hc::length(Some("hello")), 5, "length(\"hello\") = 5");
     assert_eq!(hc::length(None), 0, "length(null) = 0 (对齐 Java)");
 }
 
-/// 对齐 Java: `StrUtilTest.strTest` (隐含)
+/// 对齐 Java: `cn.hutool.core.util.ObjectUtilTest.toStringTest()`
+///
+/// Hutool 5.8.46 无 `StrUtilTest.strTest`；null→空串对齐 `ObjectUtilTest.toStringTest`。
 #[test]
 fn str_or_empty_test() {
     assert_eq!(hc::str_or_empty(Some("hello")), "hello", "str_or_empty(Some) = \"hello\"");
     assert_eq!(hc::str_or_empty(None), "", "str_or_empty(None) = \"\" (对齐 Java)");
 }
 
-/// 对齐 Java: `StrUtilTest.repeatTest` (隐含)
+/// 对齐 Java: `cn.hutool.core.util.StrUtilTest.repeatAndJoinTest()`
+///
+/// Hutool 5.8.46 无独立 `repeatTest`；重复对齐 `repeatAndJoinTest`（separator=null 即 repeat）。
 #[test]
-fn repeat_test() {
+fn repeat_and_join_parity_test() {
     assert_eq!(hc::repeat("ab", 3), "ababab", "repeat(\"ab\", 3) = \"ababab\"");
 }
 // ════════════════════════════════════════════════════════════
@@ -748,4 +766,69 @@ fn issue_test() {
     }
     let truncated = &s[..end];
     assert_eq!(truncated, "ab", "truncateByByteLength(str, UTF_8, 2) (对齐 Java)");
+}
+
+// ── Hutool TEST parity gap wave ──
+// ── Hutool StrUtilTest remaining gaps ──
+
+/// 对齐 Java: `StrUtilTest.splitToArrayNullTest()`
+#[test]
+fn split_to_array_null_test() {
+    // Java: StrUtil.splitToArray(null, '.') → IllegalArgumentException
+    assert!(
+        hc::split_to_array(None, '.').is_err(),
+        "splitToArray(null, '.') 应 Err (对齐 Java IllegalArgumentException)"
+    );
+}
+
+/// 对齐 Java: `StrUtilTest.replaceTest5()`
+#[test]
+fn replace_test_5() {
+    // Java: a = "\uD853\uDC09秀秀" (1 补充平面码点 + 2 个 BMP 字符)
+    let a = "\u{24C09}秀秀";
+    // Java: a.length() = 4 (UTF-16 代码单元数); replaceByCodePoint 按码点索引并 clamp
+    let result = hc::replace_by_code_point(a, 1, 4, '*');
+    assert_eq!(
+        result, "\u{24C09}**",
+        "replaceByCodePoint(a, 1, a.length(), '*') (对齐 Java)"
+    );
+
+    let aa = "规划大师";
+    let result1 = hc::replace_by_code_point(aa, 2, 4, '*');
+    assert_eq!(result1, "规划**", "replaceByCodePoint(aa, 2, a.length(), '*') (对齐 Java)");
+}
+
+/// 对齐 Java: `StrUtilTest.subByCodePointTest()`
+#[test]
+fn sub_by_code_point_test() {
+    // 🤔👍🍓🤔
+    let test = "\u{1F914}\u{1F44D}\u{1F353}\u{1F914}";
+    let expected = "\u{1F914}\u{1F44D}\u{1F353}";
+
+    // Java: StrUtil.sub(test, 0, 3) 按 UTF-16 代码单元索引,结果不等于前 3 个 emoji
+    let utf16: Vec<u16> = test.encode_utf16().collect();
+    let wrong_answer = String::from_utf16_lossy(&utf16[0..3]);
+    assert_ne!(
+        wrong_answer, expected,
+        "sub 按 UTF-16 代码单元截取不应等于前 3 个 emoji (对齐 Java assertNotEquals)"
+    );
+
+    // Java: StrUtil.subByCodePoint(test, 0, 3) → 前 3 个 emoji
+    let right_answer = hc::sub_by_code_point(test, 0, 3).unwrap();
+    assert_eq!(
+        right_answer, expected,
+        "subByCodePoint(test, 0, 3) (对齐 Java)"
+    );
+}
+
+/// 对齐 Java: `StrUtilTest.issueI6KKFUTest()`
+#[test]
+fn issue_i6kkfu_test() {
+    // https://gitee.com/chinabugotech/hutool/issues/I6KKFU
+    let template = "I''m {0} years old.";
+    let result = hc::indexed_format(template, &[&10]).unwrap();
+    assert_eq!(
+        result, "I'm 10 years old.",
+        "indexedFormat(\"I''m {{0}} years old.\", 10) (对齐 Java)"
+    );
 }

@@ -1,14 +1,40 @@
 //! 对齐: `cn.hutool.core.lang.Filter`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/lang/Filter.java
-//!
-//! Hutool 的 `Filter` Java 类型,等待完整实现。
-//! 状态: 对齐桩(对象/方法/参数已对齐),等待 `hitool-core` 内部继续迁移。
-
-use crate::{CoreError, Result};
 
 /// 对齐 Java: `cn.hutool.core.lang.Filter`
-#[derive(Debug, Clone, Default)]
-pub struct Filter;
+pub trait Filter<T> {
+    /// 对齐 Java: `Filter.accept(T)`
+    fn accept(&self, value: &T) -> bool;
+}
 
-impl Filter {
+impl<T, F> Filter<T> for F
+where
+    F: Fn(&T) -> bool,
+{
+    fn accept(&self, value: &T) -> bool {
+        self(value)
+    }
+}
+
+/// 按过滤器保留元素。
+pub fn filter_all<'a, T, F: Filter<T>>(
+    items: impl IntoIterator<Item = &'a T>,
+    filter: &F,
+) -> Vec<&'a T>
+where
+    T: 'a,
+{
+    items.into_iter().filter(|v| filter.accept(v)).collect()
+}
+
+#[cfg(test)]
+mod filter_idiomatic_parity {
+    use super::*;
+
+    #[test]
+    fn filter_accepts_matching() {
+        let data = [1, 2, 3, 4];
+        let kept = filter_all(&data, &(|x: &i32| *x % 2 == 0));
+        assert_eq!(kept, vec![&2, &4]);
+    }
 }

@@ -1,20 +1,46 @@
 //! 对齐: `cn.hutool.core.net.URLEncodeUtil`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/net/URLEncodeUtil.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use crate::net::rfc3986::Rfc3986;
 
 /// 对齐 Java 类: `cn.hutool.core.net.URLEncodeUtil`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct URLEncodeUtil;
+#[derive(Debug, Clone, Copy, Default)]
+pub struct UrlEncodeUtil;
 
-impl URLEncodeUtil {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+impl UrlEncodeUtil {
+    /// 对齐 Java: `URLEncodeUtil.encode(String)` → PATH
+    pub fn encode(content: &str) -> String {
+        Rfc3986::encode_path(content)
+    }
+
+    /// 对齐 Java: `URLEncodeUtil.encodeQuery(String)`
+    pub fn encode_query(content: &str) -> String {
+        Rfc3986::encode_query(content)
+    }
+
+    /// 对齐 Java: `URLEncodeUtil.encodePathSegment(String)`
+    pub fn encode_path_segment(content: &str) -> String {
+        Rfc3986::encode_path_segment(content)
+    }
+
+    /// 对齐 Java: `URLEncodeUtil.encodeFragment(String)`
+    pub fn encode_fragment(content: &str) -> String {
+        Rfc3986::encode_fragment(content)
+    }
+
+    /// 对齐 Java: `URLEncodeUtil.encodeAll(String)`
+    pub fn encode_all(content: &str) -> String {
+        Rfc3986::encode_all(content)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn encode_path_keeps_slash() {
+        assert!(UrlEncodeUtil::encode("a/b").contains('/'));
+        assert!(!UrlEncodeUtil::encode_all("a/b").contains('/'));
     }
 }

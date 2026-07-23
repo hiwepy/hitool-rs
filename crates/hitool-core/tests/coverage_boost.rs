@@ -243,11 +243,11 @@ fn ds01() { let r = DesensitizedUtil::mobile_phone(Some("13800138000")); assert!
 // ── 版本操作 (3 tests) ──
 
 #[test]
-fn v01() { assert!(VersionUtil::is_less_than("1.0.0", "2.0.0")); }
+fn v01() { assert!(VersionUtil::is_less_than_str("1.0.0", "2.0.0")); }
 #[test]
-fn v02() { assert!(VersionUtil::is_greater_than("2.0.0", "1.0.0")); }
+fn v02() { assert!(VersionUtil::is_greater_than_str("2.0.0", "1.0.0")); }
 #[test]
-fn v03() { assert!(VersionUtil::is_greater_than_or_equal("1.0.0", "1.0.0")); }
+fn v03() { assert!(VersionUtil::is_greater_than_or_equal_str("1.0.0", "1.0.0")); }
 
 // ── 分页操作 (3 tests) ──
 

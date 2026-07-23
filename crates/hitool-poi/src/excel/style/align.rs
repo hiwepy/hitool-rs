@@ -1,44 +1,41 @@
-//! Cell alignment enum aligned with Hutool.
+//! 迁移自 hutool 的 `cn.hutool.poi.excel.style.Align`
 //!
-//! 对齐: `cn.hutool.poi.excel.style.Align`
-//! 来源: hutool-poi/src/main/java/cn/hutool/poi/excel/style/Align.java
-//!
-//! Hutool 的 `Align` 枚举把 POI 的 `HorizontalAlignment` / `VerticalAlignment`
-//! 整合为 9 个语义对齐方式(`LEFT`、`CENTER`、`RIGHT`、`TOP_LEFT`...),
-//! 便于链式调用 `StyleSet.setAlign`。
+//! - 原 Java 包：`cn.hutool.poi.excel.style`
+//! - 原 Java 主类：`cn.hutool.poi.excel.style.Align`
+//! - 迁移状态：🟡 占位实现，等待 `easyexcel-rs` / `easydoc-rs` / `easyofd-rs` / `easypdf-rs` 完成
+//! - Java 源文件：`hutool-poi/src/main/java/excel/style/Align.java`
 
-/// Combined alignment enumeration.
+#![allow(dead_code, clippy::missing_docs_in_private_items)]
+
+/// 占位结构体，对齐 Java `Align`。
 ///
-/// 对齐 Java: `cn.hutool.poi.excel.style.Align`
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Align {
-    /// 对齐 Java: `Align.LEFT`
-    Left,
-    /// 对齐 Java: `Align.CENTER`
-    Center,
-    /// 对齐 Java: `Align.RIGHT`
-    Right,
-    /// 对齐 Java: `Align.TOP_LEFT`
-    TopLeft,
-    /// 对齐 Java: `Align.TOP_CENTER`
-    TopCenter,
-    /// 对齐 Java: `Align.TOP_RIGHT`
-    TopRight,
-    /// 对齐 Java: `Align.BOTTOM_LEFT`
-    BottomLeft,
-    /// 对齐 Java: `Align.BOTTOM_CENTER`
-    BottomCenter,
-    /// 对齐 Java: `Align.BOTTOM_RIGHT`
-    BottomRight,
-}
+/// 当前状态：等待 `easyexcel-rs` 引擎完成后填充实现。
+pub struct Align;
 
 impl Align {
-    /// 对齐 Java: `Align.values()`
-    pub fn values() -> &'static [Align] {
-        &[
-            Align::Left, Align::Center, Align::Right,
-            Align::TopLeft, Align::TopCenter, Align::TopRight,
-            Align::BottomLeft, Align::BottomCenter, Align::BottomRight,
-        ]
+    /// 占位方法。当前调用会 panic。
+    ///
+    /// # Panics
+    ///
+    /// 此方法尚未实现，等待 `easyexcel-rs` / `easydoc-rs` 等引擎完成。
+    pub fn new() -> Self {
+        unimplemented!("Align::new() 等待 easyexcel-rs / easydoc-rs / easyofd-rs / easypdf-rs 完成")
+    }
+}
+
+impl Default for Align {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic(expected = "等待 easyexcel-rs")]
+    fn align_new_is_unimplemented() {
+        let _ = Align::new();
     }
 }

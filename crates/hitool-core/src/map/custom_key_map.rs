@@ -1,20 +1,21 @@
 //! 对齐: `cn.hutool.core.map.CustomKeyMap`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/map/CustomKeyMap.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+use std::collections::HashMap;
+use std::hash::Hash;
+
+use super::FuncKeyMap;
 
 /// 对齐 Java 类: `cn.hutool.core.map.CustomKeyMap`
 ///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
-pub struct CustomKeyMap;
+/// 抽象自定义键变换；Rust 用闭包 `FuncKeyMap` 表达。
+pub type CustomKeyMap<K, V, F> = FuncKeyMap<K, V, F>;
 
-impl CustomKeyMap {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
-    }
+/// 便捷构造：自定义键函数的 map。
+pub fn custom_key_map<K, V, F>(key_func: F) -> CustomKeyMap<K, V, F>
+where
+    K: Eq + Hash + Clone,
+    F: Fn(&K) -> K,
+{
+    FuncKeyMap::new(HashMap::new(), key_func)
 }

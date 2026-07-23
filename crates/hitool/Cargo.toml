@@ -14,12 +14,34 @@ description = "Feature-gated facade for the HiTool Rust utility workspace."
 name = "core_json"
 required-features = ["core", "json"]
 
+[[example]]
+name = "json_object"
+required-features = ["json"]
+
+[[example]]
+name = "http_client"
+required-features = ["http"]
+
+[[example]]
+name = "crypto_hash"
+required-features = ["crypto"]
+
+[[example]]
+name = "cache_demo"
+required-features = ["cache"]
+
 [lints]
 workspace = true
 
 [features]
 default = ["core", "json"]
 core = ["dep:hitool-core"]
+serialization = ["core", "hitool-core/serialization"]
+serialization-musli = ["serialization", "hitool-core/serialization-musli"]
+musli-wire = ["serialization-musli", "hitool-core/musli-wire"]
+musli-storage = ["serialization-musli", "hitool-core/musli-storage"]
+musli-packed = ["serialization-musli", "hitool-core/musli-packed"]
+musli-descriptive = ["serialization-musli", "hitool-core/musli-descriptive"]
 aop = ["core", "dep:hitool-aop"]
 bloom-filter = ["core", "dep:hitool-bloom-filter"]
 cache = ["core", "dep:hitool-cache"]
@@ -41,11 +63,8 @@ script = ["core", "dep:hitool-script"]
 setting = ["json", "dep:hitool-setting"]
 system = ["core", "dep:hitool-system"]
 json = ["core", "dep:hitool-json"]
-poi = ["core", "dep:hitool-poi"]
-poi-docx = ["poi", "hitool-poi/docx"]
-captcha = ["core", "dep:hitool-captcha"]
-captcha-audio = ["captcha", "hitool-captcha/audio"]
-captcha-raster = ["captcha", "hitool-captcha/raster"]
+captcha-audio = ["hitool-captcha/audio"]
+captcha-raster = ["hitool-captcha/raster"]
 socket = ["log", "dep:hitool-socket"]
 jwt = ["json", "crypto", "dep:hitool-jwt"]
 ai = ["http", "json", "dep:hitool-ai"]
@@ -68,9 +87,6 @@ full = [
     "setting",
     "system",
     "json",
-    "poi",
-    "poi-docx",
-    "captcha",
     "captcha-audio",
     "captcha-raster",
     "socket",
@@ -95,7 +111,6 @@ hitool-http = { workspace = true, optional = true }
 hitool-json = { workspace = true, optional = true }
 hitool-jwt = { workspace = true, optional = true }
 hitool-log = { workspace = true, optional = true }
-hitool-poi = { workspace = true, optional = true }
 hitool-script = { workspace = true, optional = true }
 hitool-setting = { workspace = true, optional = true }
 hitool-socket = { workspace = true, optional = true }

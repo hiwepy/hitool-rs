@@ -1,20 +1,49 @@
 //! 对齐: `cn.hutool.core.math.BitStatusUtil`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/math/BitStatusUtil.java
 //!
-//! 状态: 对齐桩,等待完整实现。
-
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
+//! 通过位运算表示状态；参数必须 ≥0 且为偶数。
 
 /// 对齐 Java 类: `cn.hutool.core.math.BitStatusUtil`
-///
-/// 静态工具类在 Rust 中通过零字节 ZST + 关联函数表达;
-/// 实例类按 Java 字段映射为 Rust struct 字段(待完整实现)。
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct BitStatusUtil;
 
 impl BitStatusUtil {
-    /// 对齐桩 sentinel,等待完整实现。
-    pub fn pending_alignment() -> &'static str {
-        "pending"
+    /// 对齐 Java: `add(int states, int stat)`
+    #[must_use]
+    pub fn add(states: i32, stat: i32) -> i32 {
+        Self::check(&[states, stat]);
+        states | stat
+    }
+
+    /// 对齐 Java: `has(int states, int stat)`
+    #[must_use]
+    pub fn has(states: i32, stat: i32) -> bool {
+        Self::check(&[states, stat]);
+        (states & stat) == stat
+    }
+
+    /// 对齐 Java: `remove(int states, int stat)`
+    #[must_use]
+    pub fn remove(states: i32, stat: i32) -> i32 {
+        Self::check(&[states, stat]);
+        if Self::has(states, stat) {
+            states ^ stat
+        } else {
+            states
+        }
+    }
+
+    /// 对齐 Java: `clear()`
+    #[must_use]
+    pub fn clear() -> i32 {
+        0
+    }
+
+    /// 对齐 Java: `check(int... args)` —— 必须 ≥0 且为偶数。
+    fn check(args: &[i32]) {
+        for &arg in args {
+            assert!(arg >= 0, "{arg} 必须大于等于0");
+            assert!(arg & 1 == 0, "{arg} 不是偶数");
+        }
     }
 }

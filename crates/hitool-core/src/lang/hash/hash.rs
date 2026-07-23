@@ -1,12 +1,8 @@
 //! 对齐: `cn.hutool.core.lang.hash.Hash`
 //! 来源: hutool-core/src/main/java/cn/hutool/core/lang/hash/Hash.java
-//!
-//! 状态: 对齐桩,等待完整实现。
 
-#![allow(dead_code, unused_variables, clippy::new_without_default)]
-
-/// 对齐 Java interface: `cn.hutool.core.lang.hash.Hash`
-///
-/// Java 接口在 Rust 中通过 trait dispatch 表达。
-pub trait Hash {
+/// 对齐 Java: `Hash<T>` — 通用哈希，返回 `i64` 以覆盖 Number 语义。
+pub trait Hash<T: ?Sized> {
+    /// 对齐 Java: `hash(T)`
+    fn hash(&self, key: &T) -> i64;
 }

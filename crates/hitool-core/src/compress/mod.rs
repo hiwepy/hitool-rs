@@ -234,11 +234,11 @@ impl<W: Write + Seek> ZipWriter<W> {
             .map_err(|_| CoreError::Compress("source escaped archive root".into()))?;
         let name = relative.to_string_lossy().replace('\\', "/");
         if path.is_dir() {
-            let mut entries = read_directory(path)?;
-            entries.sort_by_key(std::fs::DirEntry::file_name);
-            if entries.is_empty() && !name.is_empty() {
+            if !name.is_empty() {
                 self.add_directory(&name)?;
             }
+            let mut entries = read_directory(path)?;
+            entries.sort_by_key(std::fs::DirEntry::file_name);
             for entry in entries {
                 self.add_path_from(&entry.path(), root)?;
             }

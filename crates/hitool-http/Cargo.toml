@@ -14,15 +14,19 @@ description = "Secure, bounded HTTP client utilities for HiTool."
 workspace = true
 
 [features]
-default = ["useragent"]
+default = ["useragent", "html"]
 blocking = ["reqwest/blocking"]
 useragent = ["dep:regex", "dep:woothee"]
+html = ["dep:fancy-regex"]
 
 [dependencies]
 encoding_rs.workspace = true
+hitool-core.workspace = true
+indexmap.workspace = true
 rand.workspace = true
 regex = { workspace = true, optional = true }
-reqwest.workspace = true
+fancy-regex = { workspace = true, optional = true }
+reqwest = { workspace = true, features = ["cookies", "multipart"] }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
@@ -32,3 +36,4 @@ woothee = { workspace = true, optional = true }
 
 [dev-dependencies]
 async-stream.workspace = true
+flate2.workspace = true
