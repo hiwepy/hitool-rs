@@ -2109,6 +2109,7 @@ dependencies = [
  "hutool-json",
  "hutool-jwt",
  "hutool-log",
+ "hutool-macro",
  "hutool-script",
  "hutool-setting",
  "hutool-socket",
@@ -2374,12 +2375,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "hutool-macros"
+name = "hutool-macro"
 version = "0.1.0"
 dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]

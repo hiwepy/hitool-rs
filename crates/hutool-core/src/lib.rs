@@ -61,7 +61,8 @@ pub mod math;
 pub mod io;
 /// Hutool `cn.hutool.core.thread` 对齐（std::thread / 显式线程池构建；无 JVM ThreadLocal 全局）。
 pub mod thread;
-pub mod annotation;
+// annotation 模块已迁移到独立 crate hutool-macro
+// hutool-core 不再内嵌 annotation；facade crate (hutool) 负责 re-export
 
 pub use advanced_codec::{
     HashIds, MorseCodec, base32_decode, base32_encode, base32_hex_decode, base32_hex_encode,

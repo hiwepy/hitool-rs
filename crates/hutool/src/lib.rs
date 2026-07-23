@@ -9,6 +9,8 @@ use std::{collections::BTreeSet, io};
 
 #[cfg(feature = "ai")]
 pub use hutool_ai as ai;
+#[cfg(feature = "annotation")]
+pub use hutool_macro as annotation;
 #[cfg(feature = "aop")]
 pub use hutool_aop as aop;
 #[cfg(feature = "bloom-filter")]

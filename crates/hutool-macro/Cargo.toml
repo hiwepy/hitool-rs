@@ -1,5 +1,5 @@
 [package]
-name = "hutool-macros"
+name = "hutool-macro"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,16 +8,13 @@ authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
 readme.workspace = true
-description = "Procedural macros used by HiTool crates."
-publish = false
+description = "Structured annotation model aligned with cn.hutool.core.annotation for Hutool-Rust."
 
 [lints]
 workspace = true
 
-[lib]
-proc-macro = true
-
 [dependencies]
-proc-macro2.workspace = true
-quote.workspace = true
-syn.workspace = true
+parking_lot.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
