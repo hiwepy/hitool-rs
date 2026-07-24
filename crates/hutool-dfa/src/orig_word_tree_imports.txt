@@ -1,0 +1,15 @@
+//! Mutable Hutool-compatible word trie.
+
+use crate::StopChar;
+use std::{collections::HashMap, fmt, sync::Arc};
+
+type CharFilter = dyn Fn(char) -> bool + Send + Sync;
+
+#[derive(Debug, Default, Clone)]
+struct Node {
+    children: HashMap<char, Node>,
+    terminal: bool,
+}
+
+/// One matched word and its exact source span.
+#[derive(Debug, Clone, PartialEq, Eq)]
