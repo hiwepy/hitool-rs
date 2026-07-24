@@ -14,6 +14,8 @@ mod profile;
 mod props;
 mod props_util;
 mod setting;
+mod setting_loader;
+mod setting_util;
 mod yaml;
 
 pub use config::{Config, ConfigError, Environment, File, FileFormat};
@@ -23,7 +25,9 @@ pub use grouped_set::GroupedSet;
 pub use profile::Profile;
 pub use props::Props;
 pub use props_util::PropsUtil;
-pub use setting::{AutoLoadHandle, Setting, SettingLoader, SettingUtil};
+pub use setting::{AutoLoadHandle, Setting};
+pub use setting_loader::SettingLoader;
+pub use setting_util::SettingUtil;
 pub use yaml::YamlUtil;
 
 use encoding_rs::{Encoding, UTF_8};
