@@ -90,7 +90,7 @@ Mark each core capability at least once. Don't use future tense to mask current 
 
 ### 2.1 One-sentence Architecture
 
-**hutool-rust is a multi-purpose utility toolkit organized as a Rust Workspace, which converts Java-side string, collection, crypto, database, HTTP, cache, scheduling, settings, JSON, and Excel/DOCX/PDF/OFD parsing and generation capabilities into pure-Rust-safe (`forbid(unsafe_code)`) public APIs through a "1:1 mirroring of hutool modules + Rust idiomatic wrapping" approach.**
+**hutool-rust is a multi-purpose utility toolkit organized as a Rust Workspace, which converts Java-side string, collection, crypto, database, HTTP, cache, scheduling, settings, and JSON capabilities into pure-Rust-safe (`forbid(unsafe_code)`) public APIs through a "1:1 mirroring of hutool modules + Rust idiomatic wrapping" approach. POI/Office APIs are currently recorded only as placeholder files and are not implemented capabilities.**
 
 ### 2.2 At a Glance
 
@@ -114,13 +114,13 @@ Mark each core capability at least once. Don't use future tense to mask current 
 
 | Dimension | Architecture conclusion | Status | Evidence |
 |---|---|---|---|
-| Subject | 23 crates 1:1 aligned with hutool modules | Confirmed | `crates/` directory |
+| Subject | 25 workspace crates: 20 implemented capability crates, one POI placeholder, facade, compatibility, macro, and test support | Confirmed | `crates/` directory and Cargo metadata |
 | Layering | hutool-core is bottom layer, others are adapters | Confirmed | `Cargo.toml` workspace |
 | Core main flow | Facade re-exports → sub-crate public API → std/ecosystem | Implemented | `cargo build` |
 | Data | Stateless (pure functions) primary | Confirmed | Public API |
 | Security | `#![forbid(unsafe_code)]` + `secrecy` + `zeroize` | Confirmed | All crate source |
 | Deployment | Library type (consumed via cargo) | Verified | `cargo install` viable |
-| Max risk | 51 `PendingEngine` stubs + some module file gaps | Processing | [docs/MIGRATION_STATUS.md](MIGRATION_STATUS.md) |
+| Max risk | `hutool-poi` has 67 `unimplemented!()` calls and no Office engine integration | Not implemented | `crates/hutool-poi/` |
 
 ### 2.4 Architecture Quality Attributes Priority
 
@@ -166,7 +166,7 @@ Mark each core capability at least once. Don't use future tense to mask current 
 |---|---|---|---|---|---|
 | `A-001` | RustCrypto sm3 0.4.2 ~ 0.5.0 byte-level output consistent with GB/T 32905 | High | `sm_byte_level_parity` test | Verified | hiwepy |
 | `A-002` | hutool-rust API 1:1 compatible with hutool Java (only naming style differs) | Medium | Visual diff | V1.0 | hiwepy |
-| `A-003` | 51 `PendingEngine` stubs can be implemented by independent engine crates | Medium | Introduce easyexcel-rs etc. | V0.2 | hiwepy |
+| `A-003` | `hutool-poi` may eventually delegate to independent engine crates | Medium | Introduce easyexcel-rs etc. only after separate approval | Deferred | hiwepy |
 
 ## 4. Scope, Boundaries, and External Context
 
@@ -222,9 +222,9 @@ flowchart LR
 
 | Dimension | Current |
 |---|---|
-| Workspace crate count | 23 |
+| Workspace crate count | 25, including the new `hutool-observability` crate and the non-functional `hutool-poi` placeholder |
 | Test count | 2347+ (including 364 byte-level parity) |
-| `PendingEngine` stubs | 51 (in hutool-core, concentrated in `dialect/impls.rs`) |
+| POI implementation | None; 79 Rust source files register API shape, with 67 `unimplemented!()` calls |
 | File count gaps | hutool-db missing 75, hutool-extra missing 170, hutool-cron missing 37, etc. |
 | Byte-level crypto | ✅ MD5/SHA-1/2/SM3/SM4/AES/ChaCha20/RSA/HMAC all consistent |
 | unsafe code | 0 |
@@ -234,9 +234,9 @@ flowchart LR
 
 | Dimension | Target |
 |---|---|
-| Workspace crate count | 23 (unchanged) |
+| Workspace crate count | 25 (infrastructure count; not a completion KPI) |
 | File 1:1 alignment | All hutool public API mirrored |
-| `PendingEngine` stubs | 0 (replaced by independent engine crates) |
+| POI implementation | Excluded from the current completion target until real `easy*` engines are integrated |
 | Byte-level crypto | All pass 1:1 comparison with hutool Java |
 | Documentation | Complete rustdoc + architecture design + bilingual README |
 | Release | crates.io |
@@ -248,7 +248,7 @@ flowchart LR
 |---|---|---|---|
 | hutool-db missing 75 files | Cannot handle complex SQL | P0 | Fill in V0.2 |
 | hutool-extra missing 170 files | Weak extension capabilities | P1 | Fill in V0.3 |
-| 51 `PendingEngine` stubs | API completeness limited | P0 | V0.2 replace with easyexcel-rs etc. |
+| POI API skeleton has no implementation | Office APIs are unusable and may panic | Excluded | Do not claim capability; integrate real `easy*` engines in a separately approved scope |
 | hutool-cron missing 37 files | Weak scheduling capability | P1 | V0.3 |
 | hutool-http missing 47 files | HTTP client capability limited | P1 | V0.3 |
 
@@ -271,10 +271,10 @@ See [docs/IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 | ADR | Decision | Reason | Alternative | Status |
 |---|---|---|---|---|
 | ADR-001 | Use RustCrypto instead of openssl | Pure Rust, zero FFI, `#![forbid(unsafe_code)]` enforceable | openssl FFI + ~30% performance | ✅ |
-| ADR-002 | Delete `hutool-poi`, migrate to `hutool-extra` submodule | Avoid circular dependency, hutool-poi is only facade | Keep hutool-poi mirroring hutool-poi | ✅ |
+| ADR-002 | Keep `hutool-poi` only as an API-registration skeleton and exclude it from the facade and completion metrics | Preserve migration inventory without claiming an implementation | Delete the skeleton or expose non-functional APIs | ✅ |
 | ADR-003 | `hutool-compat-hutool` uses Java-style naming | Compatible with Java migration | Only Rust naming + Java style requires user adjustment | ✅ |
 | ADR-004 | workspace resolver = 3 | Solve v3 features limitations | 2 | ✅ |
-| ADR-005 | 51 `PendingEngine` stubs replaced by independent engine crates | Decouple core from engine | Implement engine in core | V0.2 |
+| ADR-005 | A future POI implementation must delegate to independent engine crates | Decouple compatibility API from document engines | Implement engines inside the facade | Deferred |
 
 ## 7. Overall Architecture and Layering
 
@@ -327,7 +327,7 @@ See [docs/IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
 ## 8. Components, Modules, and Dependencies
 
-### 8.1 Workspace Crate Overview (23 crates)
+### 8.1 Workspace Crate Overview (25 crates)
 
 | Crate | Responsibility | Default feature | Key dependencies |
 |---|---|---|---|
@@ -351,9 +351,11 @@ See [docs/IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 | `hutool-socket` | Socket | socket | — |
 | `hutool-ai` | AI integration | ai | — |
 | `hutool-compat-hutool` | Java-style compat layer | hutool-compat | — |
-| `hutool-macros` | Procedural macro tools | — | syn/quote |
+| `hutool-macro` | Procedural macro tools | — | syn/quote |
 | `hutool-test-support` | Test common utilities | — | — |
 | `hutool-log` | Logging | log | tracing |
+| `hutool-observability` | Default tracing/metrics/health and authorized diagnostics | observability | tracing/metrics |
+| `hutool-poi` | API-registration placeholder only; no usable Office implementation and no facade feature | — | thiserror |
 
 ### 8.2 Dependency Relations
 
@@ -380,7 +382,7 @@ flowchart TB
     FACADE --> DFA["hutool-dfa"]
     FACADE --> AI["hutool-ai"]
     FACADE --> COMPAT["hutool-compat-hutool"]
-    CORE --> MACROS["hutool-macros"]
+    CORE --> MACROS["hutool-macro"]
     CORE --> TEST["hutool-test-support"]
 ```
 
@@ -651,7 +653,7 @@ User input
 ### 20.1 Extension Points
 
 - `hutool-aop` provides interceptor interface
-- Users can define custom macros via `hutool-macros`
+- Users can define custom macros via `hutool-macro`
 
 ### 20.2 Ecosystem Boundaries
 
@@ -722,7 +724,7 @@ flowchart LR
 
 | Risk | Impact | Mitigation | Status |
 |---|---|---|---|
-| 51 `PendingEngine` stubs | API completeness damaged | V0.2 replace with independent engine crates | In progress |
+| POI placeholder contains 67 `unimplemented!()` calls | Office capability is unavailable | Keep outside production/completion claims until real engines are integrated | Excluded |
 | hutool-db missing 75 files | SQL capabilities weak | Fill in V0.2 | Pending |
 | hutool-extra missing 170 files | Extension capabilities limited | Fill in V0.3 | Pending |
 | hutool-cron missing 37 files | Scheduling capabilities weak | Fill in V0.3 | Pending |
@@ -738,11 +740,11 @@ flowchart LR
 
 | Version | Focus | Status |
 |---|---|---|
-| V0.1 (current) | 23 crate skeleton + 2347+ tests | ✅ Released |
-| V0.2 | Fill hutool-db + replace 51 stubs with engine crates | In progress |
+| V0.1 (current) | 25 workspace crates, including observability and one non-functional POI placeholder | Experimental |
+| V0.2 | Fill hutool-db; keep POI outside implementation claims | In progress |
 | V0.3 | Fill hutool-extra + hutool-cron | Pending |
 | V0.4 | Publish to crates.io, add complete rustdoc | Pending |
-| V1.0 | All 23 crates stable, 1:1 aligned with hutool Java byte-level | Goal |
+| V1.0 | All implemented capability crates stable and aligned; POI remains excluded unless separately implemented | Goal |
 
 ## 24. Appendix
 
@@ -753,7 +755,7 @@ flowchart LR
 | hutool | hiwepy toolbox (abbreviation of hi + tool) |
 | hutool | Apache Dubbo tool library (Java) |
 | hutool-compat-hutool | Java-style compat layer |
-| PendingEngine | Placeholder to be implemented by independent engine crate |
+| POI placeholder | API/file inventory under `crates/hutool-poi`; not a usable implementation |
 
 ### 24.2 Reference Documents
 

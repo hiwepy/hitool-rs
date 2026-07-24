@@ -199,7 +199,16 @@ pub use enum_util::EnumUtil;
 mod url_util;
 pub use url_util::UrlUtil;
 mod xml_util;
-pub use xml_util::XmlUtil;
+pub use xml_util::{XmlChild, XmlDocument, XmlNode, XmlUtil};
+mod xml_stream;
+pub use xml_stream::{
+    NamespaceMode, XmlEventReader, XmlEventWriter, XmlParseOptions, XmlTransformAction,
+    transform_xml, visit_xml,
+};
+#[cfg(feature = "xml-serde")]
+mod xml_serde;
+#[cfg(feature = "xml-serde")]
+pub use xml_serde::XmlSerde;
 mod file_util;
 pub use file_util::FileUtil;
 mod io_util;

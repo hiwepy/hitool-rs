@@ -27,6 +27,23 @@ pub enum CoreError {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
+    /// XML was malformed or could not be decoded.
+    #[error("XML error: {0}")]
+    Xml(String),
+
+    /// XML exceeded one of the configured defensive limits.
+    #[error("XML {resource} limit exceeded (maximum {max})")]
+    XmlLimit {
+        /// Bounded XML resource.
+        resource: &'static str,
+        /// Configured maximum.
+        max: usize,
+    },
+
+    /// XML used a construct disabled by the active parsing policy.
+    #[error("XML construct is disabled by policy: {0}")]
+    XmlForbidden(&'static str),
+
     /// Compression or archive processing failed.
     #[error("compression error: {0}")]
     Compress(String),

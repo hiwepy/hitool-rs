@@ -2,8 +2,9 @@
 //!
 //! ## 当前状态
 //!
-//! 🟡 **占位骨架**：本 crate 提供完整的 API 形状（78 个 `.rs` 文件对应 78 个 Java `.java`），
-//! 但所有方法实现为 `unimplemented!()` 桩。等待以下引擎完成后填充实现：
+//! ⚪ **未实现的占位骨架**：本 crate 当前有 79 个 `.rs` 文件用于登记 Java POI API 形状，
+//! 其中 67 个文件包含 `unimplemented!()`。它不由 `hutool` facade 暴露，也没有可用的文档引擎。
+//! 以下项目仅是未来可能的引擎来源，不是当前依赖：
 //!
 //! - `easyexcel-rs`：Excel 读写（对应 `cn.hutool.poi.excel.*`）
 //! - `easydoc-rs`：Word 读写（对应 `cn.hutool.poi.word.*`）

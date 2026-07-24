@@ -19,10 +19,9 @@ hostile-input surfaces.
   and uncompressed-byte limits.
 - Image operations bound encoded input, decoded dimensions and pixels, target
   dimensions, and encoded output before returning an allocation.
-- XLSX reading does not execute formulas, macros, or external links and bounds
-  archive bytes, expanded XML, dimensions, and materialized cells.
-- DOCX generation writes a minimal OOXML package with no macros, embedded
-  objects, formulas, or external relationships and bounds document complexity.
+- POI/Office handling is not implemented or exposed by the facade. The
+  placeholder `hutool-poi` crate provides no XLSX/DOCX/OFD/PDF security
+  guarantees and must not be used for untrusted documents.
 - SMTP credentials use redacted secret containers. TLS and mandatory STARTTLS
   are explicit modes; unencrypted SMTP requires an explicit `Plaintext` choice.
 - Rhai scripts have operation, call-depth, expression-depth, string, array and
@@ -32,6 +31,11 @@ hostile-input surfaces.
   events instead of buffering an unbounded provider frame.
 - Fallible cron jobs use an explicit bounded retry count, capped exponential
   delay, optional execution timeout, and a tracing span for exhausted runs.
+- `hutool-observability` defaults to tracing, metrics, and health only. CPU,
+  Tokio Console, and heap profiling require separate Cargo features and a
+  matching unforgeable runtime permit.
+- Tokio Console is restricted to loopback. The observability crate starts no
+  management HTTP server, hidden runtime, or global allocator.
 - The workspace denies Rust `unsafe` code.
 
 ## Caller responsibilities
@@ -49,6 +53,9 @@ hostile-input surfaces.
   a job handle intentionally serializes scheduled runs to prevent overlap.
 - Wrap secrets in `secrecy` or `hutool_log::Redacted`; never attach them to
   tracing fields directly.
+- Authenticate diagnostic management routes, enforce bounded profiling
+  durations and response sizes, and never put diagnostic tokens in URLs,
+  logs, spans, or health details.
 - Choose archive and document limits below the host's actual resource budget.
 
 ## Legacy algorithms

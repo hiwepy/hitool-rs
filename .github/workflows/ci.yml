@@ -10,6 +10,9 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  # Required only when the non-default tokio-console feature is selected.
+  # Keeping the cfg present does not compile or activate the console backend.
+  RUSTFLAGS: --cfg tokio_unstable
 
 jobs:
   quality:

@@ -3,17 +3,30 @@
 //!
 //! Rust 版本基于 `quick-xml` 提供 DOM 风格 XML 操作。
 
-use std::fs;
-use std::io::Cursor;
+use std::{
+    fs::File,
+    io::{BufRead, BufReader, Cursor, Write},
+    ops::ControlFlow,
+};
 
 use indexmap::IndexMap;
-use quick_xml::events::{BytesEnd, BytesStart, Event};
-use quick_xml::Reader;
+use quick_xml::{
+    escape::escape,
+    events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event},
+    name::QName,
+};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use crate::{CoreError, Result};
+use crate::xml_stream::{
+    element_name, end_name, is_valid_xml_char, read_attributes, read_bounded_and_sanitize,
+    resolve_reference,
+};
+use crate::{
+    transform_xml, visit_xml, CoreError, Result, XmlEventReader, XmlEventWriter, XmlParseOptions,
+    XmlTransformAction,
+};
 
 /// XML 文档根节点。
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -173,14 +186,33 @@ impl XmlUtil {
 
     /// 对齐 Java: `XmlUtil.parseXml(String)`
     pub fn parse_xml(xml_str: &str) -> Result<XmlDocument> {
-        let cleaned = Self::clean_invalid(xml_str);
-        if cleaned.trim().is_empty() {
+        Self::parse_xml_with_options(xml_str, &XmlParseOptions::default())
+    }
+
+    /// Parses a string using an explicit bounded policy.
+    pub fn parse_xml_with_options(xml_str: &str, options: &XmlParseOptions) -> Result<XmlDocument> {
+        if xml_str.len() > options.max_input_bytes {
+            return Err(CoreError::XmlLimit {
+                resource: "input bytes",
+                max: options.max_input_bytes,
+            });
+        }
+        let cleaned;
+        let input = if options.sanitize_invalid_chars {
+            cleaned = Self::clean_invalid(xml_str);
+            cleaned.as_str()
+        } else {
+            input_or_xml_error(xml_str)?
+        };
+        if input.trim().is_empty() {
             return Err(CoreError::InvalidArgument {
                 name: "xml_str",
                 reason: "XML content string is empty",
             });
         }
-        Self::read_xml_bytes(cleaned.as_bytes())
+        let mut streaming_options = options.clone();
+        streaming_options.sanitize_invalid_chars = false;
+        Self::read_xml_from_with_options(Cursor::new(input.as_bytes()), &streaming_options)
     }
 
     /// 对齐 Java: `XmlUtil.readXML(String)`
@@ -188,8 +220,27 @@ impl XmlUtil {
         if path_or_content.trim_start().starts_with('<') {
             return Self::parse_xml(path_or_content);
         }
-        let content = fs::read_to_string(path_or_content).map_err(CoreError::Io)?;
-        Self::parse_xml(&content)
+        let file = File::open(path_or_content).map_err(CoreError::Io)?;
+        Self::read_xml_from(BufReader::new(file))
+    }
+
+    /// Builds a DOM from a buffered source without first loading it into a `String`.
+    pub fn read_xml_from<R: BufRead>(reader: R) -> Result<XmlDocument> {
+        Self::read_xml_from_with_options(reader, &XmlParseOptions::default())
+    }
+
+    /// Builds a DOM from a buffered source using explicit defensive limits.
+    pub fn read_xml_from_with_options<R: BufRead>(
+        reader: R,
+        options: &XmlParseOptions,
+    ) -> Result<XmlDocument> {
+        if options.sanitize_invalid_chars {
+            let bytes = read_bounded_and_sanitize(reader, options)?;
+            let mut streaming_options = options.clone();
+            streaming_options.sanitize_invalid_chars = false;
+            return Self::read_xml_from_with_options(Cursor::new(bytes), &streaming_options);
+        }
+        Self::read_dom_iterative(reader, options.clone())
     }
 
     /// 对齐 Java: `XmlUtil.cleanComment(String)`
@@ -213,10 +264,7 @@ impl XmlUtil {
     pub fn clean_invalid(xml_content: &str) -> String {
         xml_content
             .chars()
-            .filter(|ch| {
-                let code = *ch as u32;
-                !(code <= 0x08 || code == 0x0B || code == 0x0C || (0x0E..=0x1F).contains(&code))
-            })
+            .filter(|character| is_valid_xml_char(*character))
             .collect()
     }
 
@@ -228,7 +276,7 @@ impl XmlUtil {
     /// 对齐 Java: `XmlUtil.getElement(Element, String)`
     pub fn get_element<'a>(element: &'a XmlNode, tag_name: &str) -> Option<&'a XmlNode> {
         element.children.iter().find_map(|child| match child {
-            XmlChild::Element(node) if node.tag == tag_name => Some(node),
+            XmlChild::Element(node) if name_matches(&node.tag, tag_name) => Some(node),
             _ => None,
         })
     }
@@ -239,14 +287,10 @@ impl XmlUtil {
         let segments: Vec<&str> = path.split('/').filter(|part| !part.is_empty()).collect();
         let mut current = Some(&doc.root);
         for (index, segment) in segments.iter().enumerate() {
-            let local = segment
-                .split_once(':')
-                .map(|(_, local)| local)
-                .unwrap_or(segment);
-            if index == 0 && current.is_some_and(|node| node.tag == local) {
+            if index == 0 && current.is_some_and(|node| name_matches(&node.tag, segment)) {
                 continue;
             }
-            current = current.and_then(|node| Self::find_child_element(node, local));
+            current = current.and_then(|node| Self::find_child_element(node, segment));
         }
         current.map(|node| node.text_content())
     }
@@ -269,20 +313,55 @@ impl XmlUtil {
     }
 
     /// 对齐 Java: `XmlUtil.mapToXmlStr(Map, boolean)`
-    pub fn map_to_xml_str(data: &IndexMap<String, Value>, omit_xml_declaration: bool) -> Result<String> {
+    pub fn map_to_xml_str(
+        data: &IndexMap<String, Value>,
+        omit_xml_declaration: bool,
+    ) -> Result<String> {
         let doc = Self::map_to_xml(data, "xml")?;
         Ok(Self::to_str(&doc, false, omit_xml_declaration))
     }
 
     /// 对齐 Java: `XmlUtil.toStr(Document, boolean)`
     pub fn to_str(doc: &XmlDocument, is_pretty: bool, omit_xml_declaration: bool) -> String {
-        let mut body = String::new();
-        Self::write_node(&mut body, &doc.root, 0, is_pretty);
-        if omit_xml_declaration {
-            body
+        // Writing to an in-memory Vec cannot return an I/O error, and all
+        // emitted content originates from UTF-8 Rust strings.
+        Self::to_string_result(doc, is_pretty, omit_xml_declaration)
+            .expect("writing XML to an in-memory buffer must succeed")
+    }
+
+    /// Serializes a DOM using `quick_xml::Writer`.
+    pub fn to_string_result(
+        doc: &XmlDocument,
+        is_pretty: bool,
+        omit_xml_declaration: bool,
+    ) -> Result<String> {
+        let mut output = Vec::new();
+        Self::write_xml_to(&mut output, doc, is_pretty, omit_xml_declaration)?;
+        String::from_utf8(output).map_err(|error| CoreError::Xml(error.to_string()))
+    }
+
+    /// Writes a DOM directly to an application-owned output stream.
+    pub fn write_xml_to<W: Write>(
+        target: W,
+        doc: &XmlDocument,
+        is_pretty: bool,
+        omit_xml_declaration: bool,
+    ) -> Result<W> {
+        let mut writer = if is_pretty {
+            XmlEventWriter::with_indent(target, b' ', 2)
         } else {
-            format!("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>{body}")
+            XmlEventWriter::new(target)
+        };
+        writer.set_space_before_empty_slash(true);
+        if !omit_xml_declaration {
+            writer.write_event(Event::Decl(BytesDecl::new(
+                "1.0",
+                Some("UTF-8"),
+                Some("no"),
+            )))?;
         }
+        write_dom_iterative(&mut writer, &doc.root)?;
+        Ok(writer.into_inner())
     }
 
     /// 对齐 Java: `XmlUtil.format(Document)`
@@ -301,7 +380,9 @@ impl XmlUtil {
         let map = Self::value_to_map(value, ignore_null);
         let mut doc = Self::map_to_xml(&map, root_name)?;
         if let Some(ns) = namespace {
-            doc.root.attributes.insert("xmlns".to_string(), ns.to_string());
+            doc.root
+                .attributes
+                .insert("xmlns".to_string(), ns.to_string());
         }
         Ok(doc)
     }
@@ -310,118 +391,129 @@ impl XmlUtil {
     pub fn xml_to_bean<T: DeserializeOwned>(doc: &XmlDocument) -> Result<T> {
         let map = Self::xml_node_to_map(&doc.root);
         let json_map: Map<String, Value> = map.into_iter().collect();
-        serde_json::from_value(Value::Object(json_map)).map_err(|err| CoreError::Codec(err.to_string()))
+        serde_json::from_value(Value::Object(json_map))
+            .map_err(|err| CoreError::Codec(err.to_string()))
     }
 
     /// 对齐 Java: `XmlUtil.readBySax(InputStream, ContentHandler)`
     pub fn read_by_sax(xml: &str, mut handler: impl FnMut(&str)) -> Result<()> {
-        let mut reader = Reader::from_reader(Cursor::new(xml.as_bytes()));
-        reader.config_mut().trim_text(true);
-        let mut buf = Vec::new();
-        loop {
-            match reader.read_event_into(&mut buf) {
-                Ok(Event::Start(event)) => {
-                    let name = local_name(&event);
+        let options = XmlParseOptions::default();
+        let _: ControlFlow<()> =
+            visit_xml(Cursor::new(xml.as_bytes()), options.clone(), |event| {
+                if let Event::Start(start) | Event::Empty(start) = event {
+                    let name = element_name(start, options.namespace_mode)?;
                     handler(&name);
                 }
-                Ok(Event::Empty(event)) => {
-                    let name = local_name(&event);
-                    handler(&name);
-                }
-                Ok(Event::Eof) => break,
-                Ok(_) => {}
-                Err(err) => return Err(CoreError::Codec(err.to_string())),
-            }
-            buf.clear();
-        }
+                Ok(ControlFlow::Continue(()))
+            })?;
         Ok(())
     }
 
-    fn read_xml_bytes(bytes: &[u8]) -> Result<XmlDocument> {
-        let mut reader = Reader::from_reader(Cursor::new(bytes));
-        reader.config_mut().trim_text(true);
-        let mut buf = Vec::new();
-        let root = loop {
-            let event = match reader.read_event_into(&mut buf) {
-                Ok(Event::Start(event)) => Some(event),
-                Ok(Event::Empty(event)) => {
-                    break XmlNode {
-                        tag: local_name(&event),
-                        attributes: read_attributes(&event),
-                        children: Vec::new(),
-                    }
-                }
-                Ok(Event::Eof) => {
-                    return Err(CoreError::InvalidArgument {
-                        name: "xml",
-                        reason: "missing root element",
-                    });
-                }
-                Ok(_) => None,
-                Err(err) => return Err(CoreError::Codec(err.to_string())),
-            };
-            if let Some(start) = event {
-                break Self::read_element(&mut reader, start)?;
-            }
-            buf.clear();
-        };
-        Ok(XmlDocument { root })
+    /// Visits a buffered XML source and supports early termination.
+    pub fn visit_xml<R, B, F>(
+        source: R,
+        options: XmlParseOptions,
+        visitor: F,
+    ) -> Result<ControlFlow<B>>
+    where
+        R: BufRead,
+        F: for<'event> FnMut(&Event<'event>) -> Result<ControlFlow<B>>,
+    {
+        visit_xml(source, options, visitor)
     }
 
-    fn read_element(
-        reader: &mut Reader<Cursor<&[u8]>>,
-        start: BytesStart,
-    ) -> Result<XmlNode> {
-        let tag = local_name(&start);
-        let attributes = read_attributes(&start);
-        let mut children = Vec::new();
-        let mut buf = Vec::new();
+    /// Streams validated events through a filtering writer transform.
+    pub fn transform_xml<R, W, F>(
+        source: R,
+        target: W,
+        options: XmlParseOptions,
+        transform: F,
+    ) -> Result<W>
+    where
+        R: BufRead,
+        W: Write,
+        F: for<'event> FnMut(&Event<'event>) -> Result<XmlTransformAction>,
+    {
+        transform_xml(source, target, options, transform)
+    }
+
+    fn read_dom_iterative<R: BufRead>(source: R, options: XmlParseOptions) -> Result<XmlDocument> {
+        let mut reader = XmlEventReader::new(source, options.clone());
+        let mut stack = Vec::new();
+        let mut root = None;
         loop {
-            let event = match reader.read_event_into(&mut buf) {
-                Ok(event) => event,
-                Err(err) => return Err(CoreError::Codec(err.to_string())),
-            };
+            let version = reader.xml_version();
+            let decoder = reader.decoder();
+            let event = reader.read_event()?;
             match event {
-                Event::Start(event) => {
-                    children.push(XmlChild::Element(Self::read_element(reader, event)?));
-                }
-                Event::Empty(event) => children.push(XmlChild::Element(XmlNode {
-                    tag: local_name(&event),
-                    attributes: read_attributes(&event),
+                Event::Start(start) => stack.push(XmlNode {
+                    tag: element_name(&start, options.namespace_mode)?,
+                    attributes: read_attributes(&start, options.namespace_mode, version)?,
                     children: Vec::new(),
-                })),
+                }),
+                Event::Empty(start) => {
+                    let node = XmlNode {
+                        tag: element_name(&start, options.namespace_mode)?,
+                        attributes: read_attributes(&start, options.namespace_mode, version)?,
+                        children: Vec::new(),
+                    };
+                    attach_node(node, &mut stack, &mut root)?;
+                }
                 Event::Text(text) => {
-                    let value = String::from_utf8_lossy(text.as_ref()).into_owned();
+                    let value = text
+                        .decode()
+                        .map_err(|error| CoreError::Xml(error.to_string()))?
+                        .into_owned();
                     if !value.is_empty() {
-                        children.push(XmlChild::Text(value));
+                        let parent = stack
+                            .last_mut()
+                            .ok_or_else(|| CoreError::Xml("text outside root".to_owned()))?;
+                        append_text(parent, value);
                     }
                 }
                 Event::CData(text) => {
-                    children.push(XmlChild::Text(String::from_utf8_lossy(text.as_ref()).into_owned()));
+                    let value = text
+                        .decode()
+                        .map_err(|error| CoreError::Xml(error.to_string()))?
+                        .into_owned();
+                    let parent = stack
+                        .last_mut()
+                        .ok_or_else(|| CoreError::Xml("CDATA outside root".to_owned()))?;
+                    append_text(parent, value);
                 }
-                Event::End(end) if local_name_end(&end) == tag => break,
-                Event::End(_) => {
-                    return Err(CoreError::InvalidArgument {
-                        name: "xml",
-                        reason: "mismatched end tag",
-                    });
+                Event::GeneralRef(reference) => {
+                    let value = resolve_reference(&reference, &options)?;
+                    let parent = stack.last_mut().ok_or_else(|| {
+                        CoreError::Xml("general reference outside root".to_owned())
+                    })?;
+                    append_text(parent, value);
                 }
-                Event::Eof => {
-                    return Err(CoreError::InvalidArgument {
-                        name: "xml",
-                        reason: "unexpected EOF",
-                    });
+                Event::End(end) => {
+                    let expected = end_name(&end, decoder, options.namespace_mode)?;
+                    let node = stack
+                        .pop()
+                        .ok_or_else(|| CoreError::Xml("closing tag outside root".to_owned()))?;
+                    if node.tag != expected {
+                        return Err(CoreError::Xml(format!(
+                            "mismatched end tag: expected {}, got {expected}",
+                            node.tag
+                        )));
+                    }
+                    attach_node(node, &mut stack, &mut root)?;
                 }
-                Event::Decl(_) | Event::PI(_) | Event::DocType(_) | Event::Comment(_) | Event::GeneralRef(_) => {}
+                Event::Eof => break,
+                Event::Decl(_) | Event::PI(_) | Event::DocType(_) | Event::Comment(_) => {}
             }
-            buf.clear();
         }
-        Ok(XmlNode { tag, attributes, children })
+        let root = root.ok_or_else(|| CoreError::Xml("missing root element".to_owned()))?;
+        Ok(XmlDocument { root })
     }
 
     fn find_child_element<'a>(node: &'a XmlNode, tag_name: &str) -> Option<&'a XmlNode> {
         node.children.iter().find_map(|child| match child {
-            XmlChild::Element(child_node) if child_node.tag == tag_name => Some(child_node),
+            XmlChild::Element(child_node) if name_matches(&child_node.tag, tag_name) => {
+                Some(child_node)
+            }
             _ => None,
         })
     }
@@ -431,7 +523,11 @@ impl XmlUtil {
         for child in &node.children {
             if let XmlChild::Element(element) = child {
                 let key = element.tag.clone();
-                let value = if element.children.iter().all(|item| matches!(item, XmlChild::Text(_))) {
+                let value = if element
+                    .children
+                    .iter()
+                    .all(|item| matches!(item, XmlChild::Text(_)))
+                {
                     Value::String(element.text_content())
                 } else {
                     let nested = Self::xml_node_to_map(element);
@@ -510,51 +606,6 @@ impl XmlUtil {
         }
     }
 
-    fn write_node(out: &mut String, node: &XmlNode, depth: usize, pretty: bool) {
-        if pretty {
-            out.push('\n');
-            out.push_str(&"  ".repeat(depth));
-        }
-        out.push('<');
-        out.push_str(&node.tag);
-        for (key, value) in &node.attributes {
-            out.push(' ');
-            out.push_str(key);
-            out.push('=');
-            out.push('"');
-            out.push_str(&Self::escape(value));
-            out.push('"');
-        }
-        if node.children.is_empty() {
-            out.push_str(" />");
-            return;
-        }
-        out.push('>');
-        let only_text = node.children.iter().all(|child| matches!(child, XmlChild::Text(_)));
-        if only_text {
-            for child in &node.children {
-                if let XmlChild::Text(text) = child {
-                    out.push_str(&Self::escape(text));
-                }
-            }
-        } else {
-            for child in &node.children {
-                match child {
-                    XmlChild::Text(text) => out.push_str(&Self::escape(text)),
-                    XmlChild::Element(element) => Self::write_node(out, element, depth + 1, pretty),
-                }
-            }
-            if pretty {
-                out.push('\n');
-                out.push_str(&"  ".repeat(depth));
-            }
-        }
-        out.push('<');
-        out.push('/');
-        out.push_str(&node.tag);
-        out.push('>');
-    }
-
     fn value_to_map(value: Value, ignore_null: bool) -> IndexMap<String, Value> {
         match value {
             Value::Object(map) => map
@@ -585,21 +636,82 @@ impl XmlNode {
     }
 }
 
-fn local_name(event: &BytesStart) -> String {
-    String::from_utf8_lossy(event.name().local_name().as_ref()).into_owned()
-}
-
-fn local_name_end(event: &BytesEnd) -> String {
-    String::from_utf8_lossy(event.name().local_name().as_ref()).into_owned()
-}
-
-fn read_attributes(event: &BytesStart) -> IndexMap<String, String> {
-    let mut attrs = IndexMap::new();
-    for attr in event.attributes().flatten() {
-        attrs.insert(
-            String::from_utf8_lossy(attr.key.local_name().as_ref()).into_owned(),
-            attr.unescape_value().unwrap_or_default().into_owned(),
-        );
+fn input_or_xml_error(input: &str) -> Result<&str> {
+    if input.chars().all(is_valid_xml_char) {
+        Ok(input)
+    } else {
+        Err(CoreError::Xml("illegal XML character".to_owned()))
     }
-    attrs
+}
+
+fn attach_node(node: XmlNode, stack: &mut [XmlNode], root: &mut Option<XmlNode>) -> Result<()> {
+    if let Some(parent) = stack.last_mut() {
+        parent.children.push(XmlChild::Element(node));
+        return Ok(());
+    }
+    if root.replace(node).is_some() {
+        return Err(CoreError::Xml("multiple root elements".to_owned()));
+    }
+    Ok(())
+}
+
+fn append_text(node: &mut XmlNode, value: String) {
+    if let Some(XmlChild::Text(text)) = node.children.last_mut() {
+        text.push_str(&value);
+    } else {
+        node.children.push(XmlChild::Text(value));
+    }
+}
+
+fn name_matches(actual: &str, requested: &str) -> bool {
+    actual == requested || local_part(actual) == local_part(requested)
+}
+
+fn local_part(name: &str) -> &str {
+    name.split_once(':')
+        .map_or(name, |(_, local_name)| local_name)
+}
+
+enum WriteFrame<'node> {
+    Node(&'node XmlNode),
+    Text(&'node str),
+    End(&'node str),
+}
+
+fn write_dom_iterative<W: Write>(writer: &mut XmlEventWriter<W>, root: &XmlNode) -> Result<()> {
+    let mut stack = vec![WriteFrame::Node(root)];
+    while let Some(frame) = stack.pop() {
+        match frame {
+            WriteFrame::Node(node) => {
+                let mut start = BytesStart::new(node.tag.as_str());
+                for (key, value) in &node.attributes {
+                    start.push_attribute(quick_xml::events::attributes::Attribute {
+                        key: QName(key.as_bytes()),
+                        value: escape(value).into_owned().into_bytes().into(),
+                    });
+                }
+                if node.children.is_empty() {
+                    writer.write_event(Event::Empty(start))?;
+                    continue;
+                }
+                writer.write_event(Event::Start(start))?;
+                stack.push(WriteFrame::End(&node.tag));
+                for child in node.children.iter().rev() {
+                    match child {
+                        XmlChild::Element(element) => {
+                            stack.push(WriteFrame::Node(element));
+                        }
+                        XmlChild::Text(text) => stack.push(WriteFrame::Text(text)),
+                    }
+                }
+            }
+            WriteFrame::Text(text) => {
+                writer.write_event(Event::Text(BytesText::new(text)))?;
+            }
+            WriteFrame::End(name) => {
+                writer.write_event(Event::End(BytesEnd::new(name)))?;
+            }
+        }
+    }
+    Ok(())
 }

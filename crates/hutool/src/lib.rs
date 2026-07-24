@@ -41,6 +41,8 @@ pub use hutool_json as json;
 pub use hutool_jwt as jwt;
 #[cfg(feature = "log")]
 pub use hutool_log as log;
+#[cfg(feature = "observability")]
+pub use hutool_observability as observability;
 #[cfg(feature = "script")]
 pub use hutool_script as script;
 #[cfg(feature = "setting")]
@@ -82,7 +84,7 @@ impl Hutool {
         enabled!("aop", "aop");
         enabled!("bloom-filter", "bloom_filter");
         enabled!("cache", "cache");
-        enabled!("hutool-captcha", "hutool-captcha");
+        enabled!("captcha", "captcha");
         enabled!("core", "core");
         enabled!("cron", "cron");
         enabled!("crypto", "crypto");
@@ -94,6 +96,7 @@ impl Hutool {
         enabled!("json", "json");
         enabled!("jwt", "jwt");
         enabled!("log", "log");
+        enabled!("observability", "observability");
         enabled!("script", "script");
         enabled!("setting", "setting");
         enabled!("socket", "socket");
@@ -147,6 +150,8 @@ mod tests {
         assert!(modules.contains("core"));
         #[cfg(feature = "json")]
         assert!(modules.contains("json"));
+        #[cfg(feature = "observability")]
+        assert!(modules.contains("observability"));
 
         let mut output = Vec::new();
         super::Hutool::write_all_utils(&mut output).unwrap();

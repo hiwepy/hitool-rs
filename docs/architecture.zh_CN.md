@@ -90,7 +90,7 @@
 
 ### 2.1 一句话架构
 
-**hutool-rust 是一个按 Rust Workspace 组织的多用途工具箱，通过"按 hutool 模块 1:1 镜像 + Rust 习惯封装"的方式，把 Java 端的字符串、集合、加密、数据库、HTTP、缓存、定时任务、设置、JSON、Excel/DOCX/PDF/OFD 解析与生成能力，转换为纯 Rust 安全（`forbid(unsafe_code)`）的公开 API。**
+**hutool-rust 是一个按 Rust Workspace 组织的多用途工具箱，通过“按 hutool 模块 1:1 镜像 + Rust 习惯封装”的方式，把 Java 端的字符串、集合、加密、数据库、HTTP、缓存、定时任务、设置和 JSON 能力转换为纯 Rust 安全（`forbid(unsafe_code)`）的公开 API。POI/Office 当前只有用于登记 API 形状的占位文件，不属于已实现能力。**
 
 ### 2.2 一眼看懂
 
@@ -114,13 +114,13 @@
 
 | 维度 | 架构结论 | 状态 | 证据 |
 |---|---|---|---|
-| 主体 | 23 个按 hutool 模块 1:1 对齐的 crate | 已确认 | `crates/` 目录 |
+| 主体 | 25 个 workspace crate：20 个已实现能力 crate、1 个 POI 占位 crate，以及 facade、兼容层、宏和测试支持 | 已确认 | `crates/` 目录与 Cargo metadata |
 | 分层 | hutool-core 是底层，其他是适配层 | 已确认 | `Cargo.toml` workspace |
 | 核心主链 | Facade 重新导出 → 子 crate 公开 API → 标准库/生态 | 已实现 | `cargo build` |
 | 数据 | 无状态（pure functions）为主 | 已确认 | 公共 API |
 | 安全 | `#![forbid(unsafe_code)]` + `secrecy` + `zeroize` | 已确认 | 所有 crate 源码 |
 | 部署 | 库型（被 cargo 依赖） | 已验证 | `cargo install` 可行 |
-| 最大风险 | 51 个 `PendingEngine` stub + 部分模块文件缺失 | 处理中 | [docs/MIGRATION_STATUS.md](MIGRATION_STATUS.md) |
+| 最大风险 | `hutool-poi` 有 67 处 `unimplemented!()`，且未接入任何 Office 引擎 | 未实现 | `crates/hutool-poi/` |
 
 ### 2.4 架构质量属性优先级
 
@@ -166,7 +166,7 @@
 |---|---|---|---|---|---|
 | `A-001` | RustCrypto sm3 0.4.2 ~ 0.5.0 字节级输出与 GB/T 32905 一致 | 高 | `sm_byte_level_parity` 测试 | 已验证 | hiwepy |
 | `A-002` | hutool-rust API 与 hutool Java 1:1 兼容（仅命名风格差异） | 中 | 视觉对比 | V1.0 | hiwepy |
-| `A-003` | 51 个 `PendingEngine` stub 可由独立 engine crate 实现 | 中 | 引入 easyexcel-rs 等 | V0.2 | hiwepy |
+| `A-003` | `hutool-poi` 未来可委托给独立 engine crate | 中 | 经单独确认后引入 easyexcel-rs 等 | 延后 | hiwepy |
 
 ## 4. 范围、边界与外部上下文
 
@@ -222,9 +222,9 @@ flowchart LR
 
 | 维度 | 当前 |
 |---|---|
-| workspace crate 数 | 23 |
+| workspace crate 数 | 25，其中包含新增的 `hutool-observability` 和不可用的 `hutool-poi` 占位 crate |
 | 测试数 | 2347+（含 364 字节级对比） |
-| `PendingEngine` stub | 51 个（hutool-core 集中在 `dialect/impls.rs`） |
+| POI 实现 | 无；79 个 Rust 源文件仅登记 API 形状，其中有 67 处 `unimplemented!()` |
 | 文件数缺口 | hutool-db 缺 75、hutool-extra 缺 170、hutool-cron 缺 37 等 |
 | 字节级加密 | ✅ MD5/SHA-1/2/SM3/SM4/AES/ChaCha20/RSA/HMAC 全一致 |
 | unsafe 代码 | 0 |
@@ -234,9 +234,9 @@ flowchart LR
 
 | 维度 | 目标 |
 |---|---|
-| workspace crate 数 | 23（不变） |
+| workspace crate 数 | 25（仅为工程结构统计，不作为完成度指标） |
 | 文件 1:1 对齐 | 全部 hutool 公共 API 镜像 |
-| `PendingEngine` stub | 0（由独立 engine crate 实现） |
+| POI 实现 | 在真实 `easy*` 引擎接入前，不纳入当前完成目标 |
 | 字节级加密 | 全部通过 hutool Java 1:1 对比 |
 | 文档 | 完整 rustdoc + 架构设计 + README 中英文 |
 | 发布 | crates.io |
@@ -248,7 +248,7 @@ flowchart LR
 |---|---|---|---|
 | hutool-db 缺 75 文件 | 无法对接复杂 SQL | P0 | V0.2 补全 |
 | hutool-extra 缺 170 文件 | 扩展能力薄弱 | P1 | V0.3 补全 |
-| 51 个 `PendingEngine` stub | 限制 API 完整性 | P0 | V0.2 用 easyexcel-rs 等引擎替换 |
+| POI API 骨架没有实现 | Office API 不可用且可能 panic | 已排除 | 不宣称能力；后续经单独确认再接入真实 `easy*` 引擎 |
 | hutool-cron 缺 37 文件 | 定时任务能力弱 | P1 | V0.3 |
 | hutool-http 缺 47 文件 | HTTP 客户端能力受限 | P1 | V0.3 |
 
@@ -271,10 +271,10 @@ flowchart LR
 | ADR | 决策 | 原因 | 替代方案 | 状态 |
 |---|---|---|---|---|
 | ADR-001 | 用 RustCrypto 而非 openssl | 纯 Rust、零 FFI、`#![forbid(unsafe_code)]` 可强制 | openssl FFI + 性能 +30% | ✅ |
-| ADR-002 | 删除 `hutool-poi`，迁移到 `hutool-extra` 子模块 | 避免循环依赖、hutool-poi 仅是 facade | 保留 hutool-poi 与 hutool-poi 镜像 | ✅ |
+| ADR-002 | `hutool-poi` 仅保留 API 登记骨架，并从 facade 与完成度统计中排除 | 保留迁移清单但不宣称实现 | 删除骨架或暴露不可用 API | ✅ |
 | ADR-003 | `hutool-compat-hutool` 用 Java 风格命名 | 兼容 Java 迁移 | 仅 Rust 命名 + Java 风格需用户调整 | ✅ |
 | ADR-004 | workspace resolver = 3 | 解决 v3 features 限制 | 2 | ✅ |
-| ADR-005 | 51 个 `PendingEngine` stub 由独立 engine crate 替代 | 解耦核心与引擎 | 在 core 内实现引擎 | V0.2 |
+| ADR-005 | 未来的 POI 实现必须委托给独立 engine crate | 解耦兼容 API 与文档引擎 | 在 facade 内实现引擎 | 延后 |
 
 ## 7. 总体架构与分层
 
@@ -326,7 +326,7 @@ flowchart LR
 
 ## 8. 组件、模块与依赖
 
-### 8.1 workspace crate 全景（23 个）
+### 8.1 workspace crate 全景（24 个）
 
 | Crate | 职责 | 默认 feature | 关键依赖 |
 |---|---|---|---|
@@ -350,9 +350,11 @@ flowchart LR
 | `hutool-socket` | 套接字 | socket | — |
 | `hutool-ai` | AI 集成 | ai | — |
 | `hutool-compat-hutool` | Java 风格兼容层 | hutool-compat | — |
-| `hutool-macros` | 过程宏工具 | — | syn/quote |
+| `hutool-macro` | 过程宏工具 | — | syn/quote |
 | `hutool-test-support` | 测试公共工具 | — | — |
 | `hutool-log` | 日志 | log | tracing |
+| `hutool-observability` | 默认 tracing/metrics/health；授权诊断后端 | observability | tracing/metrics |
+| `hutool-poi` | 仅用于 API 登记的占位骨架；没有可用 Office 实现，也没有 facade feature | — | thiserror |
 
 ### 8.2 依赖关系
 
@@ -379,7 +381,7 @@ flowchart TB
     FACADE --> DFA["hutool-dfa"]
     FACADE --> AI["hutool-ai"]
     FACADE --> COMPAT["hutool-compat-hutool"]
-    CORE --> MACROS["hutool-macros"]
+    CORE --> MACROS["hutool-macro"]
     CORE --> TEST["hutool-test-support"]
 ```
 
@@ -642,7 +644,7 @@ payload_length(8) | crc32(4) | payload(N)
 ### 20.1 扩展点
 
 - `hutool-aop` 提供拦截器接口
-- 用户可通过 `hutool-macros` 自定义宏
+- 用户可通过 `hutool-macro` 自定义宏
 
 ### 20.2 生态边界
 
@@ -713,7 +715,7 @@ flowchart LR
 
 | 风险 | 影响 | 缓解 | 状态 |
 |---|---|---|---|
-| 51 个 `PendingEngine` stub | API 完整性受损 | V0.2 用独立 engine crate 替代 | 处理中 |
+| POI 占位骨架含 67 处 `unimplemented!()` | Office 能力不可用 | 在真实引擎接入前从生产与完成度声明中排除 | 已排除 |
 | hutool-db 缺 75 文件 | SQL 能力薄弱 | V0.2 补全 | 待处理 |
 | hutool-extra 缺 170 文件 | 扩展能力受限 | V0.3 补全 | 待处理 |
 | hutool-cron 缺 37 文件 | 定时任务能力弱 | V0.3 补全 | 待处理 |
@@ -729,11 +731,11 @@ flowchart LR
 
 | 版本 | 重点 | 状态 |
 |---|---|---|
-| V0.1（当前） | 23 crate 骨架 + 2347+ 测试 | ✅ 已发布 |
-| V0.2 | 补全 hutool-db + 51 个 stub 用 engine crate 替代 | 进行中 |
+| V0.1（当前） | 25 个 workspace crate，其中包含 observability 能力和 1 个不可用的 POI 占位骨架 | 实验性 |
+| V0.2 | 补全 hutool-db；POI 继续排除在实现声明之外 | 进行中 |
 | V0.3 | 补全 hutool-extra + hutool-cron | 待处理 |
 | V0.4 | 发布到 crates.io，添加完整 rustdoc | 待处理 |
-| V1.0 | 全部 23 crate 全部稳定，1:1 对齐 hutool Java 字节级 | 目标 |
+| V1.0 | 所有已实现能力 crate 稳定并完成对齐；POI 未单独实现前继续排除 | 目标 |
 
 ## 24. 附录
 
@@ -744,7 +746,7 @@ flowchart LR
 | hutool | hiwepy 工具箱（hi + tool 的缩写） |
 | hutool | Apache Dubbo 工具库（Java） |
 | hutool-compat-hutool | Java 风格兼容层 |
-| PendingEngine | 待独立 engine crate 实现的占位 |
+| POI 占位骨架 | `crates/hutool-poi` 下的 API/文件清单，不是可用实现 |
 
 ### 24.2 参考文档
 

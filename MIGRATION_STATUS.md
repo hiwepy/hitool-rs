@@ -1,6 +1,7 @@
 # hutool-rust ↔ hutool 迁移完成度对比报告
 
-> **生成时间**：2026-07-21
+> **首次生成时间**：2026-07-21
+> **代码同步时间**：2026-07-24
 > **对照基线**：`/Users/wandl/workspaces/workspace-github/hutool`（hutool-5.x）
 > **目标仓库**：`/Users/wandl/workspaces/workspace-github/hutool-rust`
 > **重要说明**：本报告基于 `git status` 的当前工作目录快照，**不包含已 untracked / 未跟踪文件**。
@@ -15,9 +16,9 @@
 
 | 维度 | hutool | hutool-rust | 完成度 |
 |---|---:|---:|---|
-| 模块/crate 数 | 24（含 hutool-bom/hutool-all） | 23 | — |
-| 主源代码文件总数 | **1 553**（Java） | **926**（Rust） | **59.6%** |
-| 仅 hutool-core | 713（Java） | 780（Rust，含 109 个集成测试） | **结构性已对齐**（hutool-core 含双重遗留路径） |
+| 模块/crate 数 | 24（含 hutool-bom/hutool-all） | 25 个 workspace crate（含 Rust 扩展 observability） | — |
+| 主源代码文件总数 | **1 553**（Java） | **1 031**（Rust `crates/*/src`，含 79 个 POI 占位文件和 9 个 observability 文件） | 文件存在不等于功能实现 |
+| 仅 hutool-core | 713（Java） | 731 个 `src` 文件 + 109 个集成测试文件 | **结构性已对齐**（hutool-core 含双重遗留路径） |
 | 仅 hutool-core 测试 | 330 | 109 | 33% |
 | 文档迁移 | docs/ + JavaDoc 注释 | cn/（中文）+ rustdoc 注释 | 已迁移 docs 中文化 |
 | 示例迁移 | — | `crates/hutool/examples/*.rs` + `crates/*/examples/*.rs` | 已迁移 |
@@ -43,13 +44,14 @@
 | hutool-json | `crates/hutool-json` | ✅ 已迁移 | 6 文件（兼容 facade 完整） |
 | hutool-jwt | `crates/hutool-jwt` | ✅ 已迁移 | 2 文件（lib + compat），结构紧凑 |
 | hutool-log | `crates/hutool-log` | 🟡 部分迁移 | 缺 7+ 个 dialect 子模块（log4j/log4j2/slf4j/jboss/jdk/tinylog/logtube），通过 tracing 抽象 |
-| hutool-poi | （**不存在** `crates/hutool-poi`） | 🔴 **未迁移** | 按用户说明：保留空实现待后续完成 |
+| hutool-poi | `crates/hutool-poi` | ⚪ **未实现/不计完成度** | 79 个 Rust 源文件仅登记 API；67 处 `unimplemented!()`；未接入 facade 或文档引擎 |
 | hutool-script | `crates/hutool-script` | ✅ 已迁移 | 基于 rhai 实现 JavaScript 兼容层 |
 | hutool-setting | `crates/hutool-setting` | ✅ 已迁移 | 基于 config crate + serde_yaml |
 | hutool-socket | `crates/hutool-socket` | ✅ 已迁移 | 基于 tokio 实现 |
 | hutool-system | `crates/hutool-system` | ✅ 已迁移 | 基于 sysinfo 实现 |
 | （新增） | `crates/hutool-compat-hutool` | ➕ Rust 扩展 | Java 风格兼容层（无 Java 原型） |
-| （新增） | `crates/hutool-macros` | ➕ Rust 扩展 | proc-macro 工具 |
+| （新增） | `crates/hutool-macro` | ➕ Rust 扩展 | proc-macro 工具 |
+| （新增） | `crates/hutool-observability` | ➕ Rust 扩展 | 默认 tracing/metrics/health；诊断后端按 feature + 授权启用 |
 | （新增） | `crates/hutool-test-support` | ➕ Rust 扩展 | 测试工具 |
 
 ### 0.2 总体完成度结论
@@ -60,7 +62,7 @@
 | 对象/类型命名一致性 | ⭐⭐⭐ 75% | 部分 hutool 类（SetUtil、URLDecodeUtil、RegexUtil、SecureUtil 等）**未在 hutool-rust 中以同名 struct 存在** |
 | 方法签名一致性 | ⭐⭐⭐ 70% | hutool-rust 用 trait/方法组重新切分了原 Java 的静态工具类，参数顺序大致一致，返回值改为 `Result<T>` |
 | 业务逻辑一致性 | ⭐⭐ 50% | hutool-core 实现了原代码骨架但内部细节有简化（如 HashUtil、Codec） |
-| **hutool-poi 迁移** | ⭐ 0% | **不存在** `crates/hutool-poi`，按用户要求保留空实现 |
+| **hutool-poi 迁移** | ⭐ 0% | 存在占位 crate，但没有可用实现，按要求不计入实现完成度 |
 | **示例/文档/注释** | ⭐⭐⭐⭐ 85% | 已有 `crates/hutool/examples/`、`cn/` 中文文档、rustdoc 注释 |
 
 ---
@@ -389,34 +391,20 @@ hutool 的 `StrUtil` 是核心门面类（1200+ 行，180+ 方法）。hutool-ru
 
 ---
 
-## 6. hutool-poi ↔ hutool-poi（**用户特别要求**）
+## 6. hutool-poi ↔ hutool-poi（**实现范围外**）
 
-| 维度 | hutool-poi | hutool-poi |
+| 维度 | hutool-poi | hutool-rust |
 |---|---:|---:|
-| 存在性 | ✅ 78 Java 文件 | ❌ **不存在** `crates/hutool-poi/` |
+| Java 基线 | 78 Java 文件 | — |
+| Rust 工程形态 | — | `crates/hutool-poi` 下 79 个 `.rs` 文件 |
+| 可用实现 | — | **0%** |
+| 运行时事实 | — | 67 个文件含 `unimplemented!()`，构造占位类型时会 panic |
+| 依赖 | — | 仅 `thiserror`，没有接入 `easyexcel-rs`、`easydoc-rs`、`easyofd-rs` 或 `easypdf-rs` |
+| Facade | — | `crates/hutool` 没有 `poi`/`poi-docx` feature，也不依赖 `hutool-poi` |
 
-**结论**：按用户说明，`hutool-poi` 模块**尚未迁移**，"展示只做对象，方法，参数对齐，留着空实现，等待后续完成"。
+**结论**：`hutool-poi` 只有对象/API/文件占位，用于登记迁移形状；它不是实现、不是可用功能，也不计入迁移完成度或生产就绪声明。
 
-**当前状态**：
-- `crates/` 目录下没有 `hutool-poi` 子目录
-- `Cargo.toml` workspace members 不包含 hutool-poi
-- 对应 Java 端的 `easyexcel-rs`、`easydoc-rs`、`easyofd-rs`、`easypdf-rs` 等也已存在但尚未实现完整
-
-**建议下一步**：
-1. 在 `crates/` 下创建 `hutool-poi/` 目录
-2. 在 `Cargo.toml` 中 `members` 添加 `"crates/hutool-poi"`
-3. 按 hutool-poi 的 78 个 .java 文件建立 .rs 占位文件
-4. 每个 .rs 文件实现 `struct Xxx;` 占位 + 对应方法的 `todo!()` / `unimplemented!()` 桩
-5. 在每个方法上添加 rustdoc：
-   ```rust
-   /// 原 Java：`cn.hutool.poi.excel.ExcelUtil#getReader(File)`
-   /// 当前状态：占位实现，等待 easyexcel-rs / easydoc-rs 完成
-   pub fn get_reader(_file: &Path) -> ExcelReader {
-       unimplemented!("等待 easyexcel-rs / easydoc-rs 实现完成后对接")
-   }
-   ```
-
-### 6.1 hutool-poi 待迁移的 78 个类（清单）
+### 6.1 hutool-poi 已登记的占位类（清单）
 
 ```
 excel 包（71 个）：
@@ -636,7 +624,7 @@ package-info × 多
 
 | 问题 | 涉及模块 | 工作量 | 备注 |
 |---|---|---|---|
-| hutool-poi 模块完全缺失 | hutool-poi | 大（78 文件占位） | 按用户说明先做占位 |
+| hutool-poi 没有实现 | hutool-poi | 已有 79 个 `.rs` 占位文件、67 处 `unimplemented!()` | 从实现完成度和生产能力中排除 |
 | `StrUtil` 顶层占位缺失 | hutool-core | 中 | 需补一个 facade struct + re-export 各 text/str_* 子模块 |
 | `SetUtil` / `URLDecodeUtil` / `URLEncodeUtil` / `RegexUtil` 缺失 | hutool-core | 小 | 应作为 facade struct 包装 |
 | `SecureUtil` / `DigestUtil` 缺失（hutool-core 内没有，但常被引用） | hutool-core 或 hutool-crypto | 小 | 在 hutool-core 添加 re-export |
@@ -683,7 +671,7 @@ pub fn get<T>(values: &[T], index: isize) -> Option<&T>
 | hutool-ai providers | 40+ |
 | hutool-bloomFilter filters | 15+ |
 | hutool-cache impls | 12+ |
-| hutool-poi 全部 | 78 |
+| hutool-poi 实现 | 78（Rust 仅占位，功能实现为 0） |
 
 ---
 
@@ -733,33 +721,12 @@ pub fn get<T>(values: &[T], index: isize) -> Option<&T>
 
 ## 10. 行动建议（按用户要求）
 
-### 10.1 立即执行（补 hutool-poi 占位）
+### 10.1 hutool-poi 处理原则
 
-```bash
-# 1. 创建 hutool-poi crate
-mkdir -p crates/hutool-poi/src/{excel,cell,ofd,word,exceptions}
-
-# 2. 在 hutool-poi/src/ 中创建 mod.rs 和 78 个 .rs 占位文件
-# 每个 .rs 文件内容模板：
-```
-
-```rust
-//! 迁移自 hutool 的 `cn.hutool.poi.excel.ExcelUtil`
-//!
-//! - 原 Java 包：`cn.hutool.poi.excel`
-//! - 原 Java 主类：`cn.hutool.poi.excel.ExcelUtil`
-//! - 迁移状态：🟡 占位实现，等待 easyexcel-rs / easydoc-rs 等完成
-
-use std::path::Path;
-
-/// Java 方法：`public static ExcelReader getReader(File file)`
-/// 当前状态：占位
-pub fn get_reader(_file: &Path) -> ExcelReader {
-    unimplemented!("等待 easyexcel-rs / easydoc-rs 完成")
-}
-
-pub struct ExcelReader;
-```
+1. 保留现有占位文件作为 API/文件迁移清单。
+2. 不向 `hutool` facade 增加 `poi` feature。
+3. 不把 `#[should_panic]` 占位测试统计为行为实现。
+4. 在真实文档引擎完成并通过独立验收前，完成度固定为 0%。
 
 ### 10.2 中期（补 hutool-core 缺失的 facade）
 
@@ -793,7 +760,7 @@ pub struct ExcelReader;
 | hutool-json | ✅ 完整迁移 | 85% |
 | hutool-jwt | ✅ 完整迁移 | 95% |
 | hutool-log | 🟡 通过 tracing 抽象，dialect 缺失 | 30% |
-| hutool-poi | 🔴 **不存在** | **0%**（按用户要求保留空实现） |
+| hutool-poi | ⚪ **仅占位、未实现** | **0%**（不计入完成度） |
 | hutool-script | ✅ 完整迁移 | 80% |
 | hutool-setting | ✅ 完整迁移 | 95% |
 | hutool-socket | ✅ 完整迁移 | 85% |
@@ -805,7 +772,7 @@ pub struct ExcelReader;
 ### 关键风险点
 
 1. **hutool-core 内部双重路径**（违反"不删减"原则的潜在风险点，需明确选择策略：保留双份 + re-export）
-2. **hutool-poi 完全缺失**（78 文件需要先建立占位骨架）
+2. **hutool-poi 只有占位骨架**（79 个 Rust 源文件、67 处 `unimplemented!()`，没有可用实现）
 3. **大量 hutool-extra 子模块未迁移**（170+ 文件，主要是第三方适配）
 4. **rustdoc 注释未标注原 Java 文件/方法**（影响可维护性）
 5. **缺失的 facade 类**（SetUtil、URLDecodeUtil、RegexUtil、SecureUtil 等）
@@ -823,6 +790,6 @@ pub struct ExcelReader;
 > **报告生成方法**：
 > - 通过 Explore agents 并行扫描 `hutool/src/main/java` 和 `hutool-rust/crates/*/src` 完整目录树
 > - 用 Python 脚本做 CamelCase ↔ snake_case 自动映射验证
-> - 按 24 个 hutool 模块 × 23 个 hutool crate 逐个比对
+> - 按 24 个 hutool 模块 × 25 个 workspace crate 逐个比对
 > - 对 hutool-core 进行了完整的方法签名对比（命中 80% 类）
-> - 对 hutool-poi 进行了"不存在"事实确认 + 78 个待迁移类的清单梳理
+> - 对 hutool-poi 按“占位存在、实现为 0、排除完成度”口径核对

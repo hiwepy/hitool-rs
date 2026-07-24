@@ -22,6 +22,10 @@ workspace = true
 # `swing` 子包对齐 cn.hutool.core.swing,跨平台桌面/截屏/键鼠模拟。
 # 默认不启用,因为引入平台特定依赖(open/xcap/enigo)。
 default = []
+# XML 基础 DOM/事件能力始终可用；Serde、编码和异步适配显式启用。
+xml-serde = ["quick-xml/serialize"]
+xml-encoding = ["quick-xml/encoding"]
+xml-async = ["async", "quick-xml/async-tokio"]
 swing = ["dep:open", "dep:xcap", "dep:enigo", "dep:image", "dep:url"]
 # `img` 对齐 cn.hutool.core.img.ImgUtil（image crate 字节流语义）。
 img = ["dep:image"]

@@ -35,10 +35,9 @@ outputs** (language/runtime differences aside).
 `#[ignore]` alignment stubs **do not** satisfy behavioral parity. They only keep
 the inventory id registered while APIs are still being ported.
 
-`hutool-poi` may keep signature-only empty bodies until easyexcel-rs /
-easydoc-rs / easyofd-rs / easypdf-rs land, but those tests must still become
-real asserts once the engines exist — empty/`ignore` is temporary, not the
-end state.
+`hutool-poi` is excluded from implementation and completion metrics. Its
+signature-only files record API inventory; they are not usable implementations
+and their `#[should_panic]` tests must not be reported as behavioral parity.
 
 | Artifact | Role |
 | --- | --- |
@@ -79,4 +78,3 @@ fn bar() {}
 
 Name mapping also accepts `snake_case` ↔ `camelCase` when the file header
 contains `对齐: …XxxTest` or the filename is `*_parity.rs`.
-

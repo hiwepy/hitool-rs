@@ -64,7 +64,7 @@ Hutool TEST behavioral:   3266/3292 (99.21%), ignored_stubs=0, planned=26
 | `hutool-json` | 294/294 (100%) | ✅ |
 | `hutool-jwt` | 121/121 (100%) | ✅ |
 | `hutool-log` | 283/283 (100%) | ✅ |
-| `hutool-poi` | 0/555 (0%) | 🔴 **按用户要求豁免** |
+| `hutool-poi` | 0/555 (0%) | ⚪ **仅有占位文件，未实现并排除完成度** |
 | `hutool-script` | 79/79 (100%) | ✅ |
 | `hutool-setting` | 225/225 (100%) | ✅ |
 | `hutool-socket` | 102/102 (100%) | ✅ |
@@ -108,7 +108,7 @@ hutool-rust 已经拥有**完整的迁移验证体系**：
 |---|---|---|
 | 总体完成度 | "≈ 59.6% 文件数 / ≈ 50% 加权方法数" | **API 83.53% / feasible 97.55% / TEST 99.21%** |
 | 缺口最大模块 | "hutool-extra 缺 170 文件" | **hutool-extra 36% API 缺口（确认）** |
-| hutool-poi | "待建 78 文件" | **555 个 API 待覆盖（按用户豁免）** |
+| hutool-poi | 79 个 Rust 源文件、67 处 `unimplemented!()` | **555 个 API 未实现；占位登记不算覆盖** |
 
 **结论**：IMPLEMENTATION_PLAN.md 是基于早期估算的规划，实际迁移进度远超文档描述。后续 Phase 应以**本文档基线**为起点。
 
@@ -124,10 +124,10 @@ hutool-rust 已经拥有**完整的迁移验证体系**：
 | Phase 3（hutool-http） | 458/695 (66%) | 237 API | 2~3 周 |
 | Phase 3（hutool-crypto） | 735/745 (99%) | 10 API | 0.5 周 |
 | Phase 4（hutool-ai provider） | 281/281 (100%) | ✅ 已完成 |
-| Phase 4（hutool-poi 占位） | 0/555 (0%) | 555 API（**用户豁免**） | 不做 |
+| Phase 4（hutool-poi） | 0/555 (0%) | 555 API（**实现范围外**） | 不做 |
 | Phase 5（命名收尾） | — | — | 1~2 周 |
 
-**总剩余工作量估算**：**8~12 周**（hutool-poi 豁免后）
+**总剩余工作量估算**：**8~12 周**（不包含 hutool-poi 实现）
 
 ---
 

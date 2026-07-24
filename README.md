@@ -35,7 +35,7 @@
 
 ## 1. Project Position and Status
 
-`hutool-rust` is a Rust multi-purpose utility toolkit, **1:1 aligned with Apache Dubbo Hutool 5.8.46 API and usage conventions**, providing string, collection, crypto, database, HTTP, cache, scheduling, settings, JSON, Excel/DOCX/PDF/OFD parsing and generation capabilities.
+`hutool-rust` is a Rust multi-purpose utility toolkit aligned with Apache Hutool 5.8.46 API and usage conventions. It provides string, collection, crypto, database, HTTP, cache, scheduling, settings, and JSON capabilities. POI/Office APIs are excluded from implementation claims and exist only as placeholder inventory.
 
 ### 1.1 What It Is
 
@@ -65,7 +65,7 @@
 | workspace builds | ✅ | `cargo check` |
 | Unit tests | ✅ 2000+ | `cargo test --tests` 2347 passed / 0 failed |
 | hutool-crypto byte-level parity | ✅ 364 tests | `crypto_byte_level_parity.rs` + `sm_byte_level_parity.rs` |
-| 1:1 facade alignment | ✅ hutool-poi removed | `crates/hutool-compat-hutool/` provides Java-style compat layer |
+| 1:1 facade alignment | 🟡 POI excluded from implementation scope | `crates/hutool-poi/` is an API-only placeholder crate and is not exposed by the `hutool` facade |
 | MSRV CI | `1.85` | `rust-version = "1.85"` |
 
 ## 2. Features and Maturity
@@ -85,15 +85,17 @@
 | Setting | `hutool-setting` | ✅ Stable | Setting/Props multi-source merge | config |
 | Cron | `hutool-cron` | ✅ Stable | CronSchedule parsing | cron |
 | System | `hutool-system` | ✅ Stable | SystemUtil/OsInfo | sysinfo |
+| Observability | `hutool-observability` | 🧪 Experimental | Tracing, Prometheus metrics, health, authorized diagnostics | tracing/metrics |
 | AOP | `hutool-aop` | 🧪 Experimental | Proxy/interceptor | — |
 | DFA | `hutool-dfa` | ✅ Stable | DFA state machine | — |
 | Script | `hutool-script` | ✅ Stable | ScriptUtil script execution | rhai |
+| POI | `hutool-poi` | ⚪ Not implemented | API/file placeholders only; constructors panic | thiserror only |
 | Captcha | `hutool-captcha` | 🧪 Preview | Captcha generation | — |
 | BloomFilter | `hutool-bloom-filter` | ✅ Stable | BloomFilter | bloomfilter |
 | Socket | `hutool-socket` | 🧪 Experimental | SocketUtil | — |
 | AI | `hutool-ai` | 🚧 Partial | OpenAI-compatible proxy | — |
 | Compat | `hutool-compat-hutool` | ✅ Stable | Hutool Java API compat layer | — |
-| Macros | `hutool-macros` | 🧪 Experimental | Procedural macro utilities | — |
+| Macros | `hutool-macro` | 🧪 Experimental | Procedural macro utilities | — |
 
 ### 2.2 Status Definitions
 
@@ -171,7 +173,7 @@ If you need these capabilities, use dedicated Rust crates (e.g., `redis-rs`, `la
 │ hutool              Facade, re-exports sub-crates by feature │
 │ hutool-core         Types, traits, errors, public contracts │
 │ hutool-compat-hutool Java-style compat layer              │
-│ hutool-macros       Procedural macro utility set            │
+│ hutool-macro        Procedural macro utility set            │
 │ hutool-test-support Common test utilities                 │
 │ hutool-{aop,bloom-filter,cache,...}  Each domain capability │
 └──────────────────────────────────────────────────────────┘
@@ -199,24 +201,25 @@ flowchart TB
     FACADE --> CACHE["hutool-cache"]
     FACADE --> CAPTCH["hutool-captcha"]
     FACADE --> LOG["hutool-log"]
+    FACADE --> OBS["hutool-observability"]
     FACADE --> SOCKET["hutool-socket"]
     FACADE --> SCRIPT["hutool-script"]
     FACADE --> BLOOM["hutool-bloom-filter"]
     FACADE --> DFA["hutool-dfa"]
     FACADE --> AI["hutool-ai"]
     FACADE --> COMPAT["hutool-compat-hutool"]
-    CORE --> MACROS["hutool-macros"]
+    CORE --> MACROS["hutool-macro"]
     CORE --> TEST["hutool-test-support"]
 ```
 
-### 4.3 Crate Map (23 crates)
+### 4.3 Crate Map (25 workspace crates)
 
 | Crate | Path | Status | Responsibility |
 |---|---|---|---|
 | `hutool` | `crates/hutool` | ✅ | Facade, re-exports by feature |
 | `hutool-core` | `crates/hutool-core` | ✅ | Public types, traits, errors, cipher, hash, compression, JSON, HTTP, cache, etc. core |
 | `hutool-compat-hutool` | `crates/hutool-compat-hutool` | ✅ | Hutool Java-style compat layer |
-| `hutool-macros` | `crates/hutool-macros` | 🧪 | Procedural macro utility set |
+| `hutool-macro` | `crates/hutool-macro` | 🧪 | Procedural macro utility set |
 | `hutool-test-support` | `crates/hutool-test-support` | ✅ | Common test utilities |
 | `hutool-aop` | `crates/hutool-aop` | 🧪 | Proxy/interceptor |
 | `hutool-bloom-filter` | `crates/hutool-bloom-filter` | ✅ | Bloom filter |
@@ -231,6 +234,8 @@ flowchart TB
 | `hutool-json` | `crates/hutool-json` | ✅ | JSON processing |
 | `hutool-jwt` | `crates/hutool-jwt` | 🧪 | JWT auth |
 | `hutool-log` | `crates/hutool-log` | 🧪 | Logging |
+| `hutool-observability` | `crates/hutool-observability` | 🧪 | Default tracing/metrics/health; diagnostic backends require a feature and authorization |
+| `hutool-poi` | `crates/hutool-poi` | ⚪ | API registration skeleton only; no Office engine implementation and no facade feature |
 | `hutool-script` | `crates/hutool-script` | ✅ | Script execution |
 | `hutool-setting` | `crates/hutool-setting` | ✅ | Settings/config |
 | `hutool-socket` | `crates/hutool-socket` | 🧪 | Socket |
@@ -294,7 +299,7 @@ hutool-rust's core principle is **1:1 alignment with the Hutool Java version's A
 Only self-implemented parts:
 - Hutool convenience facade (Rust naming: `StrUtil::is_empty`)
 - `hutool-compat-hutool` Java-style compat layer
-- `hutool-macros` utility macros
+- `hutool-macro` utility macros
 
 ## 6. Quick Start
 
@@ -367,6 +372,10 @@ Features of the `hutool` Facade crate:
 | `hutool-compat` | hutool-compat-hutool | Java-style compat layer |
 | `jwt` | hutool-jwt | JWT |
 | `log` | hutool-log | Logging |
+| `observability` | hutool-observability | Default tracing, metrics, and health |
+| `observability-pprof` | hutool-observability/pprof | Explicitly compiled and authorized CPU profiling |
+| `observability-tokio-console` | hutool-observability/tokio-console | Explicitly compiled and authorized Tokio Console |
+| `observability-heap-profiler` | hutool-observability/heap-profiler | Explicitly compiled and authorized DHAT heap profiling |
 | `script` | hutool-script | Script execution |
 | `setting` | hutool-setting | Settings/config |
 | `socket` | hutool-socket | Socket |
@@ -431,7 +440,7 @@ Why hutool-rust chooses RustCrypto over openssl: pure Rust, zero FFI, `#![forbid
 - **V0.2**: Fill in hutool-db (missing 75 files), hutool-extra (missing 170 files)
 - **V0.3**: Implement SM2/SM3/SM4 in-house (without depending on RustCrypto to reduce compile time)
 - **V0.4**: Publish to crates.io, add complete rustdoc
-- **V1.0**: All 23 crates stable, 1:1 aligned with Hutool
+- **V1.0**: All implemented capability crates stable and aligned with Hutool; `hutool-poi` remains outside completion claims until real engines are integrated
 
 ## 13. Build Test and Quality Gates
 
@@ -467,7 +476,7 @@ CI gates:
 
 ## 14. Known Issues
 
-- `hutool-poi` has been removed as required; document format handling migrated to submodules under `hutool-extra`
+- `hutool-poi` exists only as an API/file placeholder skeleton. It is not exposed by the `hutool` facade, has no `poi` feature, depends only on `thiserror`, and contains no usable Excel/Word/OFD/PDF engine implementation.
 - Some Hutool APIs are not ported due to Rust semantic differences (e.g. `RuntimeException` → `Result<T, E>`)
 - Some stub functions use `PendingEngine` error placeholders, awaiting upper-layer engine completion
 
@@ -479,6 +488,8 @@ CI gates:
 | [README.zh-CN.md](README.zh-CN.md) | Chinese README |
 | [docs/architecture.md](docs/architecture.md) | System architecture design |
 | [docs/feature-matrix.md](docs/feature-matrix.md) | Complete feature matrix |
+| [docs/observability.md](docs/observability.md) | Tracing, metrics, health, and authorized diagnostics |
+| [docs/xml.md](docs/xml.md) | Bounded XML streaming, DOM compatibility, Serde and security policy |
 | [docs/hutool-parity.md](docs/hutool-parity.md) | 1:1 alignment status with Hutool |
 | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Implementation plan |
 | [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) | Migration progress |

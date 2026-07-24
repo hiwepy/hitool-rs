@@ -8,13 +8,13 @@ method-for-method Hutool compatibility.
 
 | Requirement | Status | Evidence or boundary |
 |---|---|---|
-| Hutool-aligned public crates | complete | 20 capability crates plus facade, compatibility, macros, and test support |
+| Workspace structure | complete | 25 workspace crates: 20 implemented capability crates, one non-functional `hutool-poi` placeholder, facade, compatibility, macro, and test support |
 | Minimal facade defaults | complete | `hutool` defaults to `core` and `json`; `full` is explicit |
 | Additive feature model | complete | every facade and component feature is checked independently in CI |
 | No reverse/cyclic component dependency | complete | facade-only aggregation; components never depend on `hutool` |
 | Idiomatic and compatibility APIs separated | complete | `hutool-compat-hutool` delegates to core/JSON implementations |
 | No hidden global client, pool, config, or runtime | complete | stateful resources are constructed and injected explicitly |
-| Complete Hutool functional parity | ledger DoD met | pinned v5.8.46: **13,871** APIs, **registered 100%**, **covered ~11,684 idiomatic/native (~84%)**. Unportable JVM glue (Swing/Servlet/SSH/FTP/Spring/CGLIB/template/tokenizer/SOAP/server/JDBC-SPI/JNDI/BC-only/poi-engines) stays `planned`/`unsafe-to-copy` — see Unportable matrix in `docs/hutool-parity.md`. `feasible_covered` ≈ **97%+** via `python3 scripts/verify-parity.py --feasible`. poi remains planned stubs until `easyexcel-rs` / `easydoc-rs` / `easyofd-rs` / `easypdf-rs` |
+| Complete Hutool functional parity | ledger only; not implementation parity | pinned v5.8.46 APIs are registered in the parity ledger, but registration includes planned and unportable entries. `hutool-poi` is explicitly excluded: its 79 Rust source files are API placeholders, 67 calls use `unimplemented!()`, it is absent from the facade features, and it has no document-engine dependencies. |
 
 ## Runtime boundaries
 
@@ -25,8 +25,11 @@ method-for-method Hutool compatibility.
 | Explicit SQLx pools and transactions | complete | driver features plus real PostgreSQL/MySQL/SQLite transaction tests |
 | Cron external runtime, shutdown, timeout, non-overlap, tracing | complete | `spawn_on`, `JobHandle`, `JobPolicy`, per-run spans |
 | Cron retry independent from job implementation | complete | `RetryPolicy` and fallible spawn APIs with bounded exponential delay |
-| Bounded network/parser/media inputs | complete for current APIs | HTTP, SSE, sockets, ZIP, XLSX, DOCX, image, mail, CAPTCHA, Rhai |
+| Bounded network/parser/media inputs | complete for current exposed APIs | HTTP, SSE, sockets, ZIP, image, mail, CAPTCHA, Rhai; POI/Office is not implemented or exposed |
 | Bounded binary serialization | complete when enabled | 16 MiB default payload limit, exact length, schema/version, codec, flags, trailing-byte and CRC32 validation |
+| Default observability | complete | `hutool-observability` defaults to reloadable tracing, explicit Prometheus recorder installation, and application-owned health registry |
+| Diagnostic backends | feature and authorization gated | pprof, tokio-console, and DHAT each require a non-default Cargo feature plus a matching runtime permit; console binds only to loopback |
+| External profilers | external only | samply, perf, eBPF/bpftrace, gdb, and lldb are documented tools and never Cargo dependencies |
 
 ## Security and quality
 

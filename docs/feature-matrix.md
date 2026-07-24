@@ -6,6 +6,9 @@
 | Feature | Adds | Compile cost | Runtime/platform notes | Security impact |
 |---|---|---:|---|---|
 | `core` | `hutool-core` | low | portable | parsers enforce typed errors |
+| `xml-serde` | direct `quick-xml` typed serialization/deserialization | low | portable; requires `core` | avoids the legacy JSON-value intermediate |
+| `xml-encoding` | non-UTF-8 XML decoding | low | portable; requires `core` | input, depth, node, attribute and text limits still apply |
+| `xml-async` | upstream Tokio XML adapter | medium | Tokio; requires `core` | transport and timeout policy remain caller-owned |
 | `json` | `hutool-json` | low | portable | full-input parsing; callers bound input transport |
 | `aop` | interceptor chains | low | synchronous | advice can observe context by design |
 | `bloom-filter` | probabilistic lookup | low | portable | false positives are expected |
@@ -24,11 +27,13 @@
 | `http` | async Reqwest/Rustls | high | Tokio runtime supplied by caller | limits and URL policy; retries require an explicit policy and idempotent method |
 | `http-blocking` | blocking Reqwest client | high | blocks current thread | explicit opt-in |
 | `log` | tracing setup/redaction | medium | portable | sensitive values require `Redacted` wrapper |
+| `observability` | `hutool-observability` default tracing/metrics/health | medium | installs no global state until explicitly requested | management transports remain application-owned |
+| `observability-pprof` | in-process CPU sampler | high | Unix-oriented native sampler; profiling build recommended | compile-time opt-in plus `CpuProfile` permit |
+| `observability-tokio-console` | Tokio task/resource console | high | requires `--cfg tokio_unstable`; loopback only | compile-time opt-in plus `TokioConsole` permit |
+| `observability-heap-profiler` | DHAT heap profiler adapter | high | final binary must select allocator | compile-time opt-in plus `HeapProfile` permit |
 | `script` | constrained Rhai | medium | in-process | operation/depth/container limits; dynamic eval disabled |
 | `setting` | layered config | medium | filesystem/environment | do not log secret config values |
 | `system` | host metrics | medium | OS-specific backends | may expose host metadata |
-| `poi` | bounded XLSX read/write and CSV read/write | high | pure Rust | archive, expanded XML, row, column and materialized-cell ceilings |
-| `poi-docx` | bounded DOCX generation | medium | pure Rust | paragraphs, runs, text, cells and output bytes are bounded; no macros or external relationships |
 | `captcha` | code generation, verification and SVG rendering | low | OS randomness | storage/rate limits remain caller-owned; CAPTCHA alone is not a high-assurance bot defense |
 | `captcha-raster` | randomized bitmap glyph PNG rendering | high | pure Rust image codec | dimensions, pixels and code length are bounded |
 | `captcha-audio` | injected speech PCM to noisy WAV | low | caller supplies speech engine | sample rate, duration and sample count are bounded; synthesized content remains caller-owned |
@@ -40,3 +45,16 @@
 MSRV is Rust 1.85. Feature additions must not change semantics of already
 enabled functions. Database drivers and alternative blocking behavior remain
 explicit opt-ins.
+
+`full` enables `observability`, but never enables `observability-pprof`,
+`observability-tokio-console`, or `observability-heap-profiler`.
+
+The XML DOM and bounded streaming APIs are included by `core`. `xml-serde`,
+`xml-encoding` and `xml-async` are additive and are not enabled by `full`.
+See [xml.md](xml.md) for the API layers, defensive defaults and performance
+verification boundary.
+
+`hutool-poi` is intentionally absent from this table because the `hutool`
+facade defines neither a `poi` nor a `poi-docx` feature. The workspace directory
+is an API-registration placeholder only and provides no usable document
+implementation.

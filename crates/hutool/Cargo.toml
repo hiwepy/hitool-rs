@@ -38,6 +38,9 @@ default = ["core", "json"]
 core = ["dep:hutool-core", "dep:hutool-macro"]
 annotation = ["dep:hutool-macro"]
 serialization = ["core", "hutool-core/serialization"]
+xml-serde = ["core", "hutool-core/xml-serde"]
+xml-encoding = ["core", "hutool-core/xml-encoding"]
+xml-async = ["core", "hutool-core/xml-async"]
 serialization-musli = ["serialization", "hutool-core/serialization-musli"]
 musli-wire = ["serialization-musli", "hutool-core/musli-wire"]
 musli-storage = ["serialization-musli", "hutool-core/musli-storage"]
@@ -60,12 +63,17 @@ extra-mail = ["extra", "hutool-extra/mail"]
 http = ["json", "dep:hutool-http"]
 http-blocking = ["http", "hutool-http/blocking"]
 log = ["dep:hutool-log"]
+observability = ["dep:hutool-observability"]
+observability-pprof = ["observability", "hutool-observability/pprof"]
+observability-tokio-console = ["observability", "hutool-observability/tokio-console"]
+observability-heap-profiler = ["observability", "hutool-observability/heap-profiler"]
 script = ["core", "dep:hutool-script"]
 setting = ["json", "dep:hutool-setting"]
 system = ["core", "dep:hutool-system"]
 json = ["core", "dep:hutool-json"]
-captcha-audio = ["hutool-captcha/audio"]
-captcha-raster = ["hutool-captcha/raster"]
+captcha = ["dep:hutool-captcha"]
+captcha-audio = ["captcha", "hutool-captcha/audio"]
+captcha-raster = ["captcha", "hutool-captcha/raster"]
 socket = ["log", "dep:hutool-socket"]
 jwt = ["json", "crypto", "dep:hutool-jwt"]
 ai = ["http", "json", "dep:hutool-ai"]
@@ -84,10 +92,12 @@ full = [
     "extra-mail",
     "http",
     "log",
+    "observability",
     "script",
     "setting",
     "system",
     "json",
+    "captcha",
     "captcha-audio",
     "captcha-raster",
     "socket",
@@ -113,6 +123,7 @@ hutool-http = { workspace = true, optional = true }
 hutool-json = { workspace = true, optional = true }
 hutool-jwt = { workspace = true, optional = true }
 hutool-log = { workspace = true, optional = true }
+hutool-observability = { workspace = true, optional = true }
 hutool-script = { workspace = true, optional = true }
 hutool-setting = { workspace = true, optional = true }
 hutool-socket = { workspace = true, optional = true }
