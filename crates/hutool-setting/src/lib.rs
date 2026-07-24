@@ -7,7 +7,8 @@
     clippy::struct_field_names
 )]
 
-mod grouped;
+mod grouped_map;
+mod grouped_set;
 mod profile;
 mod props;
 mod props_util;
@@ -15,7 +16,8 @@ mod setting;
 mod yaml;
 
 pub use config::{Config, ConfigError, Environment, File, FileFormat};
-pub use grouped::{GroupedMap, GroupedSet};
+pub use grouped_map::GroupedMap;
+pub use grouped_set::GroupedSet;
 pub use profile::{GlobalProfile, Profile};
 pub use props::Props;
 pub use props_util::PropsUtil;
