@@ -8,6 +8,7 @@ mod asymmetric;
 mod bc_util;
 mod chacha_util;
 mod cipher_wrapper;
+mod provider_factory;
 mod digest_util;
 mod ecies_util;
 mod hutool_facade;
@@ -22,7 +23,8 @@ mod sm2_util;
 mod spec_util;
 mod symmetric_legacy;
 
-pub use cipher_wrapper::{CipherWrapper, ProviderFactory, StubCipherWrapper};
+pub use cipher_wrapper::{CipherWrapper, StubCipherWrapper};
+pub use provider_factory::ProviderFactory;
 
 use aes_gcm::{
     Aes256Gcm, Nonce,
