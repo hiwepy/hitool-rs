@@ -7,19 +7,20 @@ use std::{hash::Hash, sync::Arc, time::Duration};
 
 mod compat;
 mod file_cache;
+mod cache_util;
 
 pub use compat::{
-    AbstractCache, CacheListener, CacheObj, CachePolicy, CacheUtil, FIFOCache, GlobalPruneTimer,
-    LFUCache, LRUCache, NoCache, PruneHandle, ReentrantCache, ScheduledTimedCache, StampedCache,
+    CacheListener, ReentrantCache, FIFOCache, GlobalPruneTimer,
+    LFUCache, LRUCache, NoCache, PruneHandle, ScheduledTimedCache, StampedCache,
     TimedCache, WeakCache,
 };
-pub use file_cache::{AbstractFileCache, FileCachePolicy, LFUFileCache, LRUFileCache};
+pub use file_cache::{AbstractFileCache, LFUFileCache, LRUFileCache};
 
 /// Hutool-aligned implementation namespace.
 pub mod r#impl {
     pub use crate::{
-        AbstractCache, CacheObj, FIFOCache, LFUCache, LRUCache, NoCache, ReentrantCache,
-        StampedCache, TimedCache, WeakCache,
+        FIFOCache, LFUCache, LRUCache, NoCache, ReentrantCache,
+        TimedCache, WeakCache,
     };
 }
 
