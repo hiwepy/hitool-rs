@@ -295,42 +295,7 @@ impl Props {
     }
 }
 
-/// Properties lookup helpers.
-pub struct PropsUtil;
-impl PropsUtil {
-    /// Loads a properties file, appending `.properties` when absent.
-    pub fn get(name: impl AsRef<Path>) -> Result<Props, SettingError> {
-        Props::from_path(super::setting::fix_extension(name.as_ref(), "properties"))
-    }
-    /// Loads the first existing file.
-    pub fn get_first_found<I, P>(names: I) -> Result<Option<Props>, SettingError>
-    where
-        I: IntoIterator<Item = P>,
-        P: AsRef<Path>,
-    {
-        let names: Vec<PathBuf> = names
-            .into_iter()
-            .map(|name| name.as_ref().to_path_buf())
-            .collect();
-        Self::get_first_found_paths(&names)
-    }
-    fn get_first_found_paths(names: &[PathBuf]) -> Result<Option<Props>, SettingError> {
-        for name in names {
-            let path = super::setting::fix_extension(name, "properties");
-            if path.is_file() {
-                return Props::from_path(path).map(Some);
-            }
-        }
-        Ok(None)
-    }
-    /// Captures environment variables as explicit properties.
-    #[must_use]
-    pub fn get_system_props() -> Props {
-        Props::from_map(std::env::vars().collect())
-    }
-}
-
-fn unescape(input: &str) -> Result<String, SettingError> {
+pub(crate) fn unescape(input: &str) -> Result<String, SettingError> {
     let mut output = String::new();
     let mut chars = input.chars();
     while let Some(ch) = chars.next() {
@@ -376,13 +341,13 @@ fn unescape(input: &str) -> Result<String, SettingError> {
     }
     Ok(output)
 }
-fn invalid_unicode_escape(_: std::num::ParseIntError) -> SettingError {
+pub(crate) fn invalid_unicode_escape(_: std::num::ParseIntError) -> SettingError {
     SettingError::Invalid("invalid unicode escape".into())
 }
-fn invalid_low_surrogate(_: std::num::ParseIntError) -> SettingError {
+pub(crate) fn invalid_low_surrogate(_: std::num::ParseIntError) -> SettingError {
     SettingError::Invalid("invalid low surrogate".into())
 }
-fn find_property_split(line: &str) -> usize {
+pub(crate) fn find_property_split(line: &str) -> usize {
     let mut escaped = false;
     for (index, character) in line.char_indices() {
         if escaped {
@@ -395,7 +360,7 @@ fn find_property_split(line: &str) -> usize {
     }
     line.len()
 }
-fn escape(input: &str) -> String {
+pub(crate) fn escape(input: &str) -> String {
     let mut output = String::new();
     for ch in input.chars() {
         match ch {
@@ -421,7 +386,7 @@ fn escape(input: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::DEFAULT_ENCODING;
+    use crate::{DEFAULT_ENCODING, PropsUtil};
     use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Serialize, Deserialize, PartialEq)]

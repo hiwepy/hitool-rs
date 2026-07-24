@@ -10,13 +10,15 @@
 mod grouped;
 mod profile;
 mod props;
+mod props_util;
 mod setting;
 mod yaml;
 
 pub use config::{Config, ConfigError, Environment, File, FileFormat};
 pub use grouped::{GroupedMap, GroupedSet};
 pub use profile::{GlobalProfile, Profile};
-pub use props::{Props, PropsUtil};
+pub use props::Props;
+pub use props_util::PropsUtil;
 pub use setting::{AutoLoadHandle, Setting, SettingLoader, SettingUtil};
 pub use yaml::YamlUtil;
 
