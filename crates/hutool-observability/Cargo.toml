@@ -1,0 +1,38 @@
+[package]
+name = "hutool-observability"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+description = "Composable tracing, metrics, health, and authorized diagnostics for Hutool-Rust."
+
+[lints]
+workspace = true
+
+[features]
+default = ["tracing", "metrics", "health"]
+tracing = ["dep:tracing", "dep:tracing-subscriber"]
+metrics = ["dep:metrics", "dep:metrics-exporter-prometheus"]
+health = ["dep:serde"]
+pprof = ["dep:pprof"]
+tokio-console = ["tracing", "dep:console-subscriber"]
+heap-profiler = ["dep:dhat"]
+
+[dependencies]
+console-subscriber = { workspace = true, optional = true }
+dhat = { workspace = true, optional = true }
+metrics = { workspace = true, optional = true }
+metrics-exporter-prometheus = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+subtle.workspace = true
+thiserror.workspace = true
+tracing = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
+zeroize.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+pprof = { workspace = true, optional = true }
